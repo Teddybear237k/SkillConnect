@@ -1,0 +1,26 @@
+# Dépendances
+node_modules/
+
+# Variables d'environnement (clés API — ne jamais publier)
+.env
+
+# Données locales
+db/data.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Claude Code
+.claude/
+
+# Fichiers temporaires serveur
+server.err
+*.err
