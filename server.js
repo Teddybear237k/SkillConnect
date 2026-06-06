@@ -8,6 +8,7 @@ const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const rateLimit  = require('express-rate-limit');
 const db         = require('./db/database');
+const campay     = require('./campay');
 
 const app    = express();
 const server = http.createServer(app);
@@ -293,10 +294,46 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
     if (req.user.userId !== parseInt(req.body.senderId))
       return res.status(403).json({ error: 'Accès refusé.' });
 
+    const sender   = db.getTalentById(parseInt(req.body.senderId));
+    const receiver = db.getTalentById(parseInt(req.body.receiverId));
+
+    if (campay.isConfigured() && sender?.phone) {
+      // Initie le paiement Campay (prompt USSD sur le téléphone du client)
+      let campayResult;
+      try {
+        campayResult = await campay.collect({
+          amount: parseInt(req.body.amount),
+          phone:  sender.phone,
+          description: `Mission : ${req.body.description}`,
+          externalRef: `sc-pay-${Date.now()}`,
+        });
+      } catch (campayErr) {
+        return res.status(502).json({ error: 'Erreur Campay : ' + campayErr.message });
+      }
+
+      const tx = db.createTransaction({ ...req.body, campay_reference: campayResult.reference });
+      const net = tx.amount - tx.commission;
+
+      emitToUser(tx.receiver_id, 'new_notification', {
+        type: 'payment',
+        message: `Paiement de ${net.toLocaleString('fr-FR')} FCFA attendu pour "${tx.description}"`,
+      });
+
+      return res.json({
+        success: true,
+        transaction: tx,
+        campay: {
+          reference:  campayResult.reference,
+          ussd_code:  campayResult.ussd_code,
+          operator:   campayResult.operator,
+          message:    `Confirmez ${tx.amount.toLocaleString('fr-FR')} FCFA sur votre téléphone (${campayResult.operator || req.body.network || 'MoMo'})`,
+        },
+      });
+    }
+
+    // Mode simulation
     const tx = db.createTransaction(req.body);
-    const sender   = db.getTalentById(tx.sender_id);
-    const receiver = db.getTalentById(tx.receiver_id);
-    const net      = tx.amount - tx.commission;
+    const net = tx.amount - tx.commission;
 
     emitToUser(tx.receiver_id, 'new_notification', {
       type: 'payment',
@@ -304,17 +341,13 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
     });
 
     if (sender?.phone) {
-      sendSMS(sender.phone,
-        `SkillConnect : Paiement de ${tx.amount.toLocaleString('fr-FR')} FCFA envoyé. Fonds en séquestre.`
-      );
+      sendSMS(sender.phone, `SkillConnect : Paiement de ${tx.amount.toLocaleString('fr-FR')} FCFA envoyé. Fonds en séquestre.`);
     }
     if (receiver?.phone) {
-      sendSMS(receiver.phone,
-        `SkillConnect : Vous allez recevoir ${net.toLocaleString('fr-FR')} FCFA. Libéré après validation.`
-      );
+      sendSMS(receiver.phone, `SkillConnect : Vous allez recevoir ${net.toLocaleString('fr-FR')} FCFA. Libéré après validation.`);
     }
 
-    res.json({ success: true, transaction: tx });
+    res.json({ success: true, transaction: tx, simulated: true });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
@@ -373,7 +406,7 @@ app.put('/api/transactions/:id/status', authenticateToken, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ─── Retrait ──────────────────────────────────────────────────────────────────
+// ─── Retrait (Campay transfer ou simulation) ──────────────────────────────────
 app.post('/api/withdraw', authenticateToken, async (req, res) => {
   try {
     const err = validateFields(req.body, ['userId', 'amount', 'network', 'phone']);
@@ -386,12 +419,36 @@ app.post('/api/withdraw', authenticateToken, async (req, res) => {
     if (isNaN(amount) || amount < 500)
       return res.status(400).json({ error: 'Montant minimum : 500 FCFA.' });
 
+    // Crée la transaction en DB (vérifie le solde)
     const tx = db.createWithdrawal({
       userId: parseInt(req.body.userId),
       amount,
       network: req.body.network,
       phone: req.body.phone,
     });
+
+    if (campay.isConfigured()) {
+      try {
+        const result = await campay.transfer({
+          amount,
+          phone: req.body.phone,
+          description: `Retrait SkillConnect #${tx.id}`,
+          externalRef: `sc-withdraw-${tx.id}`,
+        });
+        // Met à jour la tx avec la référence Campay
+        db.updateTransactionStatus(tx.id, result.status === 'SUCCESSFUL' ? 'completed' : 'pending');
+        tx.campay_reference = result.reference;
+        tx.campay_status    = result.status;
+        console.log(`💸 Campay transfer initié : ${result.reference}`);
+      } catch (campayErr) {
+        console.error('Campay transfer error:', campayErr.message);
+        // La tx reste pending — l'admin peut la traiter manuellement
+      }
+    } else {
+      // Mode simulation : auto-compléter
+      db.updateTransactionStatus(tx.id, 'completed');
+      console.log('ℹ️  Retrait simulé (Campay non configuré)');
+    }
 
     sendSMS(req.body.phone,
       `SkillConnect : Retrait de ${amount.toLocaleString('fr-FR')} FCFA via ${req.body.network} initié. Vous recevrez les fonds sous peu.`
@@ -401,7 +458,7 @@ app.post('/api/withdraw', authenticateToken, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// ─── Dépôt ────────────────────────────────────────────────────────────────────
+// ─── Dépôt (Campay collect — prompt USSD sur le téléphone) ────────────────────
 app.post('/api/deposit', authenticateToken, async (req, res) => {
   try {
     const err = validateFields(req.body, ['userId', 'amount', 'network', 'phone']);
@@ -414,19 +471,128 @@ app.post('/api/deposit', authenticateToken, async (req, res) => {
     if (isNaN(amount) || amount < 100)
       return res.status(400).json({ error: 'Montant minimum : 100 FCFA.' });
 
-    const tx = db.createDeposit({
-      userId: parseInt(req.body.userId),
-      amount,
-      network: req.body.network,
-      phone: req.body.phone,
-    });
+    if (campay.isConfigured()) {
+      // Initie le paiement Campay (le client reçoit un prompt USSD)
+      let campayResult;
+      try {
+        campayResult = await campay.collect({
+          amount,
+          phone: req.body.phone,
+          description: `Dépôt SkillConnect`,
+          externalRef: `sc-deposit-${Date.now()}`,
+        });
+      } catch (campayErr) {
+        return res.status(502).json({ error: 'Erreur Campay : ' + campayErr.message });
+      }
 
-    sendSMS(req.body.phone,
-      `SkillConnect : Dépôt de ${amount.toLocaleString('fr-FR')} FCFA via ${req.body.network} confirmé !`
-    );
+      // Crée la tx en DB avec statut pending + référence Campay
+      const tx = db.createDeposit({
+        userId: parseInt(req.body.userId),
+        amount,
+        network: req.body.network,
+        phone: req.body.phone,
+        campay_reference: campayResult.reference,
+      });
 
-    res.json({ success: true, transaction: tx });
+      console.log(`📲 Campay collect initié : ${campayResult.reference} (${campayResult.operator})`);
+      res.json({
+        success: true,
+        transaction: tx,
+        campay: {
+          reference:  campayResult.reference,
+          ussd_code:  campayResult.ussd_code,
+          operator:   campayResult.operator,
+          message:    `Confirmez ${amount.toLocaleString('fr-FR')} FCFA sur votre téléphone (${campayResult.operator || req.body.network})`,
+        },
+      });
+    } else {
+      // Mode simulation
+      const tx = db.createDeposit({
+        userId: parseInt(req.body.userId),
+        amount,
+        network: req.body.network,
+        phone: req.body.phone,
+      });
+      console.log('ℹ️  Dépôt simulé (Campay non configuré)');
+      res.json({ success: true, transaction: tx, simulated: true });
+    }
   } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// ─── Statut d'une transaction Campay (polling) ────────────────────────────────
+app.get('/api/transactions/:id/campay-status', authenticateToken, async (req, res) => {
+  try {
+    const txList = db.getTransactions(req.user.userId);
+    const tx = txList.find(t => String(t.id) === String(req.params.id));
+    if (!tx) return res.status(404).json({ error: 'Transaction non trouvée.' });
+
+    if (!tx.campay_reference)
+      return res.json({ status: tx.status, campay_status: null });
+
+    if (!campay.isConfigured())
+      return res.json({ status: tx.status, campay_status: null });
+
+    const result = await campay.checkTransaction(tx.campay_reference);
+    if (!result) return res.json({ status: tx.status, campay_status: null });
+
+    // Mettre à jour la DB si le paiement est confirmé/échoué
+    if (result.status === 'SUCCESSFUL' && tx.status !== 'completed') {
+      db.updateTransactionStatus(tx.id, 'completed');
+
+      // Notifie l'utilisateur
+      const notif = db.createNotification({
+        userId: req.user.userId,
+        type: 'payment',
+        message: `Dépôt de ${Number(result.amount).toLocaleString('fr-FR')} FCFA confirmé !`,
+      });
+      emitToUser(req.user.userId, 'new_notification', notif);
+    } else if (result.status === 'FAILED' && tx.status === 'pending') {
+      db.updateTransactionStatus(tx.id, 'cancelled');
+    }
+
+    res.json({ status: result.status === 'SUCCESSFUL' ? 'completed' : result.status.toLowerCase(), campay_status: result.status });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Webhook Campay (confirmation asynchrone) ─────────────────────────────────
+app.post('/api/campay/webhook', (req, res) => {
+  // Campay envoie: { reference, status, amount, operator, external_reference, ... }
+  try {
+    const { reference, status, external_reference } = req.body;
+    console.log(`🔔 Campay webhook : ref=${reference} status=${status}`);
+
+    if (!reference || !status) return res.status(400).json({ error: 'Données manquantes' });
+
+    // Trouver la transaction par référence Campay
+    const data = require('./db/database');
+    // On itère les transactions pour trouver la campay_reference
+    // (accès direct au fichier car on n'a pas de getter par campay_reference)
+    const fs   = require('fs');
+    const dbPath = require('path').join(__dirname, 'db', 'data.json');
+    const dbData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    const tx = (dbData.transactions || []).find(t => t.campay_reference === reference);
+
+    if (tx) {
+      if (status === 'SUCCESSFUL' && tx.status !== 'completed') {
+        db.updateTransactionStatus(tx.id, 'completed');
+        const userId = tx.type === 'deposit' ? tx.receiver_id : tx.sender_id;
+        const notif = db.createNotification({
+          userId,
+          type: 'payment',
+          message: `Paiement de ${Number(tx.amount).toLocaleString('fr-FR')} FCFA confirmé via ${tx.network} !`,
+        });
+        emitToUser(userId, 'new_notification', notif);
+        emitToUser(userId, 'payment_confirmed', { txId: tx.id, amount: tx.amount });
+      } else if (status === 'FAILED') {
+        db.updateTransactionStatus(tx.id, 'cancelled');
+      }
+    }
+
+    res.json({ received: true });
+  } catch (e) {
+    console.error('Webhook error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────

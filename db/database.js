@@ -251,24 +251,26 @@ function createWithdrawal({ userId, amount, network, phone }) {
   return tx;
 }
 
-function createDeposit({ userId, amount, network, phone }) {
+function createDeposit({ userId, amount, network, phone, campay_reference }) {
   const data = load();
   const uid = parseInt(userId);
   const amt = parseInt(amount);
 
   const tx = {
-    id: data._nextId.transactions++,
-    sender_id: 0,
-    receiver_id: uid,
-    amount: amt,
-    commission: 0,
-    net_amount: amt,
-    description: 'Dépôt depuis ' + (network || 'Mobile Money'),
-    network: network || 'MTN MoMo',
-    phone: phone || '',
-    type: 'deposit',
-    status: 'completed',
-    created_at: fmtISO(),
+    id:               data._nextId.transactions++,
+    sender_id:        0,
+    receiver_id:      uid,
+    amount:           amt,
+    commission:       0,
+    net_amount:       amt,
+    description:      'Dépôt depuis ' + (network || 'Mobile Money'),
+    network:          network || 'MTN MoMo',
+    phone:            phone || '',
+    type:             'deposit',
+    campay_reference: campay_reference || null,
+    // pending si Campay est utilisé, completed en mode simulation
+    status:           campay_reference ? 'pending' : 'completed',
+    created_at:       fmtISO(),
   };
   if (!data.transactions) data.transactions = [];
   data.transactions.push(tx);
@@ -506,10 +508,11 @@ function createTransaction(body) {
     amount:      parseInt(amount),
     commission,
     net_amount,
-    description: description || '',
-    network:     network || 'MTN MoMo',
-    status:      'escrow',
-    created_at:  fmtISO(),
+    description:       description || '',
+    network:           network || 'MTN MoMo',
+    status:            'escrow',
+    campay_reference:  body.campay_reference || null,
+    created_at:        fmtISO(),
   };
   if (!data.transactions) data.transactions = [];
   data.transactions.push(tx);

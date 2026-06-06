@@ -3323,17 +3323,20 @@ async function confirmPayment(){
   if(result && result.success){
     const comm = Math.round(amount * 0.07);
     const net  = amount - comm;
-    document.getElementById('paySuccessMsg').textContent =
-      `${net.toLocaleString('fr-FR')} FCFA en séquestre via ${paySelectedMM} MoMo. Ils seront libérés après validation de la mission.`;
+    let msg = `${net.toLocaleString('fr-FR')} FCFA en séquestre via ${paySelectedMM} MoMo. Ils seront libérés après validation de la mission.`;
+    if(result.campay){
+      msg = `📲 Confirmez ${amount.toLocaleString('fr-FR')} FCFA sur votre téléphone (${result.campay.operator||paySelectedMM}). Code USSD : ${result.campay.ussd_code||'—'}`;
+    }
+    document.getElementById('paySuccessMsg').textContent = msg;
     document.getElementById('payFormBody').style.display = 'none';
     const succ = document.getElementById('paySuccess');
     succ.style.display = 'block';
     succ.classList.add('show');
-    toast('Paiement enregistré avec succès !');
+    toast(result.campay ? 'Confirmez sur votre téléphone !' : 'Paiement enregistré avec succès !');
   } else {
     btn.disabled = false;
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Confirmer le paiement sécurisé';
-    toast('Erreur lors du paiement. Réessayez.');
+    toast(result?.error || 'Erreur lors du paiement. Réessayez.');
   }
 }
 
@@ -3396,17 +3399,68 @@ async function requestDeposit(){
   const amount = parseInt(document.getElementById('depositAmount').value);
   const msg    = document.getElementById('depositMsg');
   msg.className = 'withdraw-msg';
-  if(!userId){ msg.className='withdraw-msg error'; msg.textContent='Connectez-vous d\'abord.'; return; }
-  if(!amount || amount < 500){ msg.className='withdraw-msg error'; msg.textContent='Montant minimum : 500 FCFA'; return; }
+  if(!userId||userId.startsWith('local_')){ msg.className='withdraw-msg error'; msg.textContent='Connectez-vous d\'abord.'; return; }
+  if(!amount || amount < 100){ msg.className='withdraw-msg error'; msg.textContent='Montant minimum : 100 FCFA'; return; }
+
   const btn = document.querySelector('[onclick="requestDeposit()"]');
   const orig = btn.textContent;
-  btn.textContent = '⟳';
-  await new Promise(r => setTimeout(r, 1400));
-  btn.textContent = orig;
-  msg.className = 'withdraw-msg success';
-  msg.textContent = `✅ Dépôt de ${amount.toLocaleString('fr-FR')} FCFA confirmé. Votre portefeuille sera crédité dans quelques instants.`;
-  document.getElementById('depositAmount').value = '';
-  toast('Dépôt effectué avec succès !');
+  btn.disabled = true; btn.textContent = '⟳ Connexion Campay…';
+
+  // Récupère le numéro de téléphone de l'utilisateur
+  const dashData = await api('/dashboard/' + userId);
+  const phone = dashData?.user?.phone;
+  const network = dashData?.user?.mm_network || 'MTN MoMo';
+  if(!phone){ msg.className='withdraw-msg error'; msg.textContent='Numéro de téléphone non trouvé dans votre profil.'; btn.disabled=false; btn.textContent=orig; return; }
+
+  const result = await api('/deposit', { method:'POST', body:{ userId, amount, phone, network } });
+
+  btn.disabled = false; btn.textContent = orig;
+
+  if(result && result.success){
+    if(result.campay){
+      // Campay actif — demander la confirmation sur le téléphone
+      msg.className = 'withdraw-msg success';
+      msg.innerHTML = `📲 <strong>Confirmez sur votre téléphone !</strong><br>
+        Un prompt de paiement a été envoyé sur le <strong>${network}</strong> (${phone}).<br>
+        Montant : <strong>${amount.toLocaleString('fr-FR')} FCFA</strong><br>
+        <small style="color:var(--muted)">Code USSD : ${result.campay.ussd_code||'—'}</small>`;
+      startPollingDeposit(result.transaction.id, msg);
+    } else {
+      // Mode simulation
+      msg.className = 'withdraw-msg success';
+      msg.textContent = `✅ Dépôt de ${amount.toLocaleString('fr-FR')} FCFA confirmé (mode simulation).`;
+      setTimeout(()=>loadWallet(), 800);
+    }
+    document.getElementById('depositAmount').value = '';
+    toast('Demande de dépôt envoyée !');
+  } else {
+    msg.className = 'withdraw-msg error';
+    msg.textContent = result?.error || 'Erreur lors du dépôt. Réessayez.';
+  }
+}
+
+// Polling — vérifie si le paiement Campay a été confirmé
+function startPollingDeposit(txId, msgEl){
+  let attempts = 0;
+  const max = 20; // 20 × 3s = 60s
+  const timer = setInterval(async ()=>{
+    attempts++;
+    const status = await api('/transactions/'+txId+'/campay-status');
+    if(status && status.status === 'completed'){
+      clearInterval(timer);
+      msgEl.innerHTML = `✅ <strong>Paiement confirmé !</strong> Votre portefeuille a été crédité.`;
+      loadWallet();
+      loadTransactions();
+      toast('Dépôt confirmé !');
+    } else if(status && status.status === 'cancelled'){
+      clearInterval(timer);
+      msgEl.className = 'withdraw-msg error';
+      msgEl.textContent = '❌ Paiement échoué ou annulé. Veuillez réessayer.';
+    } else if(attempts >= max){
+      clearInterval(timer);
+      msgEl.innerHTML += '<br><small style="color:var(--muted)">Délai dépassé — le paiement sera crédité automatiquement si confirmé.</small>';
+    }
+  }, 3000);
 }
 
 async function requestWithdraw(){
@@ -3414,18 +3468,37 @@ async function requestWithdraw(){
   const amount = parseInt(document.getElementById('withdrawAmount').value);
   const msg    = document.getElementById('withdrawMsg');
   msg.className = 'withdraw-msg';
-  if(!userId){ msg.className='withdraw-msg error'; msg.textContent='Connectez-vous d\'abord.'; return; }
+  if(!userId||userId.startsWith('local_')){ msg.className='withdraw-msg error'; msg.textContent='Connectez-vous d\'abord.'; return; }
   if(!amount || amount < 500){ msg.className='withdraw-msg error'; msg.textContent='Montant minimum : 500 FCFA'; return; }
-  msg.style.display = 'none';
+
   const btn = document.querySelector('[onclick="requestWithdraw()"]');
   const orig = btn.textContent;
-  btn.textContent = '⟳';
-  await new Promise(r => setTimeout(r, 1400));
-  btn.textContent = orig;
-  msg.className = 'withdraw-msg success';
-  msg.textContent = `✅ Retrait de ${amount.toLocaleString('fr-FR')} FCFA initié. Vous recevrez les fonds sous 24h.`;
-  document.getElementById('withdrawAmount').value = '';
-  toast('Demande de retrait envoyée !');
+  btn.disabled = true; btn.textContent = '⟳ Traitement…';
+
+  const dashData = await api('/dashboard/' + userId);
+  const phone = dashData?.user?.phone;
+  const network = dashData?.user?.mm_network || 'MTN MoMo';
+  if(!phone){ msg.className='withdraw-msg error'; msg.textContent='Numéro de téléphone non trouvé dans votre profil.'; btn.disabled=false; btn.textContent=orig; return; }
+
+  const result = await api('/withdraw', { method:'POST', body:{ userId, amount, phone, network } });
+
+  btn.disabled = false; btn.textContent = orig;
+
+  if(result && result.success){
+    msg.className = 'withdraw-msg success';
+    if(result.transaction?.campay_status === 'SUCCESSFUL'){
+      msg.textContent = `✅ ${amount.toLocaleString('fr-FR')} FCFA envoyés sur ${phone} via ${network} !`;
+    } else {
+      msg.textContent = `✅ Retrait de ${amount.toLocaleString('fr-FR')} FCFA initié. Vous recevrez les fonds sous peu.`;
+    }
+    document.getElementById('withdrawAmount').value = '';
+    loadWallet();
+    loadTransactions();
+    toast('Demande de retrait envoyée !');
+  } else {
+    msg.className = 'withdraw-msg error';
+    msg.textContent = result?.error || 'Erreur lors du retrait. Réessayez.';
+  }
 }
 
 // ── Onglet Historique ─────────────────────────────────────────────────
