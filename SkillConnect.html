@@ -2597,10 +2597,16 @@ footer{
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></svg>
         <span>Paiement MTN MoMo & Orange Money accepté. Séquestre sécurisé.</span>
       </div>
-      <button class="modal-book-btn" onclick="bookSession()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-        Réserver une session
-      </button>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.25rem">
+        <button class="modal-book-btn" style="flex:1" onclick="bookSession()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Contacter
+        </button>
+        <button class="modal-book-btn" style="flex:1;background:var(--g600)" onclick="payTalentFromModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+          Payer directement
+        </button>
+      </div>
       <!-- Section avis -->
       <div class="reviews-section" id="modalReviewsSection">
         <h4>Avis clients</h4>
@@ -2954,29 +2960,65 @@ function closeModal(e){
   }
 }
 async function bookSession(){
+  const token    = localStorage.getItem('sc_token');
+  const userId   = localStorage.getItem('sc_user_id');
   const talentId = currentModalTalentId;
-  closeModal();
 
-  const senderId = parseInt(localStorage.getItem('sc_user_id')) || 1;
+  // Vérification connexion — obligatoire pour envoyer un message
+  if (!token || !userId || userId.startsWith('local_')) {
+    closeModal();
+    toast('Connectez-vous pour contacter ce talent.');
+    openLoginModal();
+    return;
+  }
 
-  // Trouver le talent pour personnaliser le message
-  let talentName = 'le talent';
+  const senderId = parseInt(userId);
+  if (senderId === talentId) {
+    toast('Vous ne pouvez pas vous envoyer un message à vous-même.');
+    return;
+  }
+
+  // Désactiver le bouton pendant l'envoi
+  const btn = document.querySelector('.modal-book-btn');
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Envoi…'; }
+
   const t = await api('/talents/' + talentId);
-  if (t) talentName = t.prenom + ' ' + t.nom;
+  const msg = `Bonjour${t ? ' ' + t.prenom : ''} ! Je souhaite réserver une session avec vous. Êtes-vous disponible prochainement ?`;
 
-  const msg = `Bonjour ${t ? t.prenom : ''} ! Je souhaite réserver une session avec vous. Êtes-vous disponible prochainement ?`;
-
-  // Créer le message de réservation (crée la conversation si elle n'existe pas)
-  await api('/messages', {
+  const result = await api('/messages', {
     method: 'POST',
     body: { senderId, receiverId: talentId, text: msg }
   });
 
-  toast('Réservation envoyée ! La conversation a été créée.');
+  if (result && result.success) {
+    closeModal();
+    toast('Message envoyé ! Retrouvez la conversation dans Messages.');
+    showPage('messages', document.querySelectorAll('.nav-link')[5]);
+    setTimeout(() => selectWAContact(talentId), 400);
+  } else {
+    if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+    toast(result?.error || 'Erreur lors de l\'envoi. Réessayez.');
+  }
+}
 
-  // Aller sur la page messages et ouvrir directement cette conversation
-  showPage('messages', document.querySelectorAll('.nav-link')[5]);
-  setTimeout(() => selectWAContact(talentId), 400);
+function payTalentFromModal(){
+  const talentId = currentModalTalentId;
+  const token  = localStorage.getItem('sc_token');
+  const userId = localStorage.getItem('sc_user_id');
+  if (!token || !userId || userId.startsWith('local_')) {
+    closeModal();
+    toast('Connectez-vous pour payer ce talent.');
+    openLoginModal();
+    return;
+  }
+  closeModal();
+  payCurrentTalentId = talentId;
+  showPage('paiement', document.querySelectorAll('.nav-link')[3]);
+  setTimeout(() => {
+    const sel = document.getElementById('payTalentSel');
+    if (sel) { sel.value = talentId; updatePayBreakdown(); updatePhonePreview(); }
+  }, 400);
 }
 
 // ═══ FORM ════════════════════════════════════════════════════════════
@@ -3360,7 +3402,7 @@ function resetPayForm(){
 // ── Onglet Portefeuille ──────────────────────────────────────────────
 async function loadWallet(){
   const userId = localStorage.getItem('sc_user_id');
-  if(!userId){ setWallet(0,0,0,0); return; }
+  if(!userId || userId.startsWith('local_')){ setWallet(0,0,0,0); return; }
   const w = await api('/wallet/' + userId);
   if(w) setWallet(w.available, w.inEscrow, w.totalEarned, w.totalSpent);
   else  setWallet(0,0,0,0);
@@ -3505,7 +3547,7 @@ async function requestWithdraw(){
 async function loadTransactions(){
   const userId = localStorage.getItem('sc_user_id');
   const list   = document.getElementById('txList');
-  if(!userId){
+  if(!userId || userId.startsWith('local_')){
     list.innerHTML=`<div class="tx-empty"><div class="tx-empty-icon">🔐</div><p>Connectez-vous pour voir vos transactions.</p></div>`;
     return;
   }
@@ -3516,7 +3558,7 @@ async function loadTransactions(){
 
 function renderTxList(userId){
   const list = document.getElementById('txList');
-  const uid  = parseInt(localStorage.getItem('sc_user_id')) || parseInt(userId);
+  const uid  = parseInt(localStorage.getItem('sc_user_id') || userId);
   let filtered = allTxs;
   if(txFilter==='in')  filtered = allTxs.filter(t => t.receiver_id === uid);
   if(txFilter==='out') filtered = allTxs.filter(t => t.sender_id   === uid);
@@ -3662,11 +3704,23 @@ function renderDashActivity(acts){
 
 // ═══ WHATSAPP MESSAGERIE ═════════════════════════════════════════════
 async function initWA(){
-  waCurrentUserId=parseInt(localStorage.getItem('sc_user_id'))||1;
-  const myInitials=localStorage.getItem('sc_user_initials')||'AM';
-  const myBg=localStorage.getItem('sc_user_bg')||'var(--g500)';
-  const myEl=document.getElementById('waMySelfAvatar');
-  if(myEl){myEl.textContent=myInitials;myEl.style.background=myBg;myEl.style.color='#fff'}
+  const storedId = localStorage.getItem('sc_user_id');
+  if (!storedId || storedId.startsWith('local_')) {
+    // Pas connecté — afficher un message d'invitation
+    const container = document.getElementById('waContacts');
+    if (container) container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--muted);font-size:.875rem">
+      <div style="font-size:2rem;margin-bottom:.75rem">💬</div>
+      <div style="font-weight:600;color:var(--ink);margin-bottom:.5rem">Connectez-vous</div>
+      <div>pour accéder à vos conversations</div>
+      <button class="modal-book-btn" style="margin-top:1rem;font-size:.8rem;padding:.5rem 1rem" onclick="openLoginModal()">Se connecter</button>
+    </div>`;
+    return;
+  }
+  waCurrentUserId = parseInt(storedId);
+  const myInitials = localStorage.getItem('sc_user_initials') || '?';
+  const myBg       = localStorage.getItem('sc_user_bg') || 'var(--g500)';
+  const myEl       = document.getElementById('waMySelfAvatar');
+  if (myEl) { myEl.textContent = myInitials; myEl.style.background = myBg; myEl.style.color = '#fff'; }
   await loadWAContacts();
 }
 
