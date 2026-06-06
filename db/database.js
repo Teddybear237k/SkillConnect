@@ -179,6 +179,7 @@ function createUser(body) {
     cat, validated: 1,
     availability: 'available',
     photo: null,
+    password_hash: body.password_hash || null,
     created_at: fmtISO(),
   };
 
@@ -191,13 +192,88 @@ function updateUser(id, body) {
   const data = load();
   const idx = data.users.findIndex(u => u.id === id);
   if (idx === -1) return;
-  const { bio, tarif, tarif_unit, availability, photo } = body;
+  const { bio, tarif, tarif_unit, availability, photo, mm_network, phone } = body;
   if (bio !== undefined) data.users[idx].bio = bio;
   if (tarif !== undefined) data.users[idx].tarif = parseInt(tarif) || 0;
   if (tarif_unit !== undefined) data.users[idx].tarif_unit = tarif_unit;
   if (availability !== undefined) data.users[idx].availability = availability;
   if (photo !== undefined) data.users[idx].photo = photo;
+  if (mm_network !== undefined) data.users[idx].mm_network = mm_network;
+  if (phone !== undefined) data.users[idx].phone = phone;
   save(data);
+}
+
+function findUserByEmail(email) {
+  if (!email) return null;
+  const data = load();
+  return data.users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase()) || null;
+}
+
+function deleteUser(userId) {
+  const data = load();
+  const idx = data.users.findIndex(u => u.id === parseInt(userId));
+  if (idx === -1) return false;
+  data.users.splice(idx, 1);
+  save(data);
+  return true;
+}
+
+function createWithdrawal({ userId, amount, network, phone }) {
+  const data = load();
+  const uid = parseInt(userId);
+  const amt = parseInt(amount);
+
+  // Vérifier le solde disponible (revenus + dépôts - retraits)
+  const txs = data.transactions || [];
+  const credits = txs.filter(t => t.receiver_id === uid && t.status === 'completed');
+  const debits  = txs.filter(t => t.sender_id === uid && t.type === 'withdrawal');
+  const available = credits.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0)
+                  - debits.reduce((s, t) => s + t.amount, 0);
+  if (available < amt) throw new Error('Solde insuffisant');
+
+  const tx = {
+    id: data._nextId.transactions++,
+    sender_id: uid,
+    receiver_id: 0,
+    amount: amt,
+    commission: 0,
+    net_amount: amt,
+    description: 'Retrait vers ' + (network || 'Mobile Money'),
+    network: network || 'MTN MoMo',
+    phone: phone || '',
+    type: 'withdrawal',
+    status: 'pending',
+    created_at: fmtISO(),
+  };
+  if (!data.transactions) data.transactions = [];
+  data.transactions.push(tx);
+  save(data);
+  return tx;
+}
+
+function createDeposit({ userId, amount, network, phone }) {
+  const data = load();
+  const uid = parseInt(userId);
+  const amt = parseInt(amount);
+
+  const tx = {
+    id: data._nextId.transactions++,
+    sender_id: 0,
+    receiver_id: uid,
+    amount: amt,
+    commission: 0,
+    net_amount: amt,
+    description: 'Dépôt depuis ' + (network || 'Mobile Money'),
+    network: network || 'MTN MoMo',
+    phone: phone || '',
+    type: 'deposit',
+    status: 'completed',
+    created_at: fmtISO(),
+  };
+  if (!data.transactions) data.transactions = [];
+  data.transactions.push(tx);
+  save(data);
+  return tx;
 }
 
 function getDashboardData(userId) {
@@ -457,13 +533,16 @@ function getWallet(userId) {
   const data = load();
   const txs = data.transactions || [];
   const uid = parseInt(userId);
-  const earned  = txs.filter(t => t.receiver_id === uid && t.status === 'completed');
-  const escrow  = txs.filter(t => t.receiver_id === uid && t.status === 'escrow');
-  const spent   = txs.filter(t => t.sender_id   === uid && t.status !== 'cancelled');
+  const earned      = txs.filter(t => t.receiver_id === uid && t.status === 'completed');
+  const escrow      = txs.filter(t => t.receiver_id === uid && t.status === 'escrow');
+  const spent       = txs.filter(t => t.sender_id   === uid && t.status !== 'cancelled');
+  const withdrawals = txs.filter(t => t.sender_id   === uid && t.type === 'withdrawal');
+  const totalEarned = earned.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0);
+  const totalWithdrawn = withdrawals.reduce((s, t) => s + t.amount, 0);
   return {
-    available:   earned.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0),
+    available:   totalEarned - totalWithdrawn,
     inEscrow:    escrow.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0),
-    totalEarned: earned.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0),
+    totalEarned,
     totalSpent:  spent.reduce((s, t) => s + t.amount, 0),
   };
 }
@@ -531,9 +610,11 @@ seedIfEmpty();
 migrateData();
 
 module.exports = {
-  getTalents, getTalentById, createUser, updateUser, getDashboardData,
+  getTalents, getTalentById, createUser, updateUser, findUserByEmail, deleteUser,
+  getDashboardData,
   getContacts, getMessages, sendMessage, markAsRead,
   createTransaction, getWallet, getTransactions, updateTransactionStatus,
+  createWithdrawal, createDeposit,
   createReview, getReviews,
   createNotification, getNotifications, markNotificationRead, markAllNotificationsRead,
 };

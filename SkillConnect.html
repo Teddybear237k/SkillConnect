@@ -70,6 +70,12 @@ html.dark .nav { background: rgba(15,17,23,.92); }
 html.dark .nav-link:hover, html.dark .nav-link.active { background: rgba(255,255,255,.07); color: var(--ink); }
 html.dark .nav-mobile-toggle span { background: var(--ink); }
 html.dark .nav-links { background: #0F1117; border-color: #232836; }
+html.dark .nav-login { border-color: var(--g400); color: var(--g400); }
+html.dark .nav-login:hover { background: rgba(29,158,117,.12); }
+html.dark .btn-logout { border-color: var(--hairline); color: var(--muted); }
+html.dark .btn-logout:hover { background: rgba(255,255,255,.05); color: var(--ink); }
+html.dark .btn-delete-account { border-color: rgba(229,62,62,.25); }
+html.dark .btn-delete-account:hover { background: rgba(229,62,62,.12); }
 
 /* ── Theme toggle button ────────────────────────────────────── */
 .theme-toggle {
@@ -460,8 +466,25 @@ body:has(button:hover) .cursor{background:var(--a400);width:16px;height:16px}
 }
 .nav-cta:hover{background:var(--g600);transform:translateY(-1px);box-shadow:0 4px 16px rgba(29,158,117,.4)}
 .nav-cta:active{transform:translateY(0)}
+.nav-login{
+  padding:.5rem 1.2rem;border-radius:var(--r-full);font-size:.875rem;font-weight:600;
+  background:transparent;color:var(--g500);border:1.5px solid var(--g500);cursor:pointer;
+  transition:all .2s var(--ease-spring);
+}
+.nav-login:hover{background:var(--g50);transform:translateY(-1px)}
 .nav-mobile-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
 .nav-mobile-toggle span{width:22px;height:2px;background:var(--ink);border-radius:1px;transition:transform .3s,opacity .3s}
+/* ─── Dashboard account actions ─────────────────────────────── */
+.dash-account-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--hairline)}
+.btn-logout{padding:.6rem 1.25rem;border-radius:var(--r-full);border:1.5px solid var(--hairline);background:transparent;color:var(--muted);font-size:.875rem;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:.5rem;transition:all .2s}
+.btn-logout:hover{background:var(--surface);color:var(--ink);border-color:var(--muted)}
+.btn-delete-account{padding:.6rem 1.25rem;border-radius:var(--r-full);border:1.5px solid rgba(229,62,62,.3);background:transparent;color:#e53e3e;font-size:.875rem;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:.5rem;transition:all .2s}
+.btn-delete-account:hover{background:rgba(229,62,62,.08);border-color:#e53e3e}
+/* ─── Login modal ───────────────────────────────────────────── */
+.login-modal{max-width:420px}
+/* ─── Validate mission button ───────────────────────────────── */
+.validate-btn{padding:.35rem .85rem;border-radius:var(--r-full);border:none;background:var(--g500);color:#fff;font-size:.75rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;transition:all .2s}
+.validate-btn:hover{background:var(--g600);transform:translateY(-1px)}
 
 /* ═══════════════════════════════════════════════════════════════
    SECTIONS (pages)
@@ -1697,7 +1720,8 @@ footer{
     <div class="nav-link" onclick="showPage('paiement',this)">Paiement</div>
     <div class="nav-link" onclick="showPage('dashboard',this)">Tableau de bord</div>
     <div class="nav-link" onclick="showPage('messages',this)">Messages</div>
-    <button class="nav-cta" onclick="showPage('inscription',document.querySelectorAll('.nav-link')[2])">Créer un profil</button>
+    <button class="nav-login" id="navLoginBtn" onclick="openLoginModal()">Se connecter</button>
+    <button class="nav-cta" id="navCreateBtn" onclick="showPage('inscription',document.querySelectorAll('.nav-link')[2])">Créer un profil</button>
   </div>
   <!-- Cloche notifications -->
   <div class="notif-wrap" id="notifWrap">
@@ -2033,6 +2057,10 @@ footer{
             <div class="form-group full">
               <label class="form-label">Email</label>
               <input type="email" class="form-input" placeholder="ton@email.com" id="fEmail"/>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Mot de passe <sup>*</sup></label>
+              <input type="password" class="form-input" placeholder="Minimum 6 caractères" id="fPassword"/>
             </div>
           </div>
           <button class="form-submit" onclick="submitForm()">
@@ -2431,6 +2459,16 @@ footer{
         <div id="dashActivity"></div>
       </div>
     </div>
+    <div class="dash-account-actions fade-up">
+      <button class="btn-logout" onclick="logoutUser()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Se déconnecter
+      </button>
+      <button class="btn-delete-account" onclick="deleteAccount()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Supprimer mon compte
+      </button>
+    </div>
     </div><!-- /dashMain -->
   </section>
 </div>
@@ -2572,6 +2610,40 @@ footer{
   </div>
 </div>
 
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginOverlay" onclick="closeLoginModal(event)">
+  <div class="modal login-modal" id="loginModal">
+    <div class="modal-header" style="border-bottom:1px solid var(--hairline);padding-bottom:1rem;margin-bottom:1.5rem">
+      <div>
+        <div class="modal-name">Se connecter</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:.2rem">Accédez à votre compte SkillConnect</div>
+      </div>
+      <button class="modal-close" onclick="closeLoginModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <div class="form-group full" style="margin-bottom:1rem">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="loginEmail" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')loginUser()"/>
+      </div>
+      <div class="form-group full" style="margin-bottom:1.5rem">
+        <label class="form-label">Mot de passe</label>
+        <input type="password" class="form-input" id="loginPassword" placeholder="Votre mot de passe" onkeydown="if(event.key==='Enter')loginUser()"/>
+      </div>
+      <div id="loginError" style="display:none;color:#e53e3e;font-size:.82rem;margin-bottom:1rem;padding:.75rem;background:rgba(229,62,62,.08);border-radius:var(--r-sm)"></div>
+      <button class="form-submit" style="width:100%;margin:0" onclick="loginUser()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Se connecter
+      </button>
+      <p style="text-align:center;font-size:.82rem;color:var(--muted);margin-top:1rem">
+        Pas encore de compte ?
+        <a style="color:var(--g500);cursor:pointer;font-weight:500" onclick="closeLoginModal();showPage('inscription',document.querySelectorAll('.nav-link')[2])">Créer un profil</a>
+      </p>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══ DATA STATIQUE (fallback si le serveur est hors ligne) ════════════
 const TALENTS = [
@@ -2636,11 +2708,19 @@ let currentModalTalentId = null;
 // ═══ API ═════════════════════════════════════════════════════════════
 async function api(path, opts = {}) {
   try {
+    const token = localStorage.getItem('sc_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
     const res = await fetch('/api' + path, {
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       ...opts,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
+    if (res.status === 401) {
+      // Token expiré ou révoqué — déconnexion silencieuse
+      localStorage.removeItem('sc_token');
+      if (!res.ok) return null;
+    }
     if (!res.ok) return null;
     return await res.json();
   } catch { return null; }
@@ -2917,14 +2997,17 @@ async function submitForm(){
   const mm=document.getElementById('fMM').value;
   const bio=document.getElementById('fBio').value;
   const email=document.getElementById('fEmail').value;
+  const password=document.getElementById('fPassword').value;
 
   if(!prenom||!nom||!ville||!skill||!phone){toast('Veuillez remplir tous les champs obligatoires');return}
+  if(!password||password.length<6){toast('Mot de passe requis (minimum 6 caractères)');return}
   if(skill==='Autres'&&!skillCustom){toast('Veuillez préciser votre compétence');return}
 
-  const result=await api('/register',{method:'POST',body:{prenom,nom,ville,skill,skill_custom:skillCustom,tarif:parseInt(tarif)||0,tarif_unit:unit,phone,mm_network:mm,bio,email}});
+  const result=await api('/register',{method:'POST',body:{prenom,nom,ville,skill,skill_custom:skillCustom,tarif:parseInt(tarif)||0,tarif_unit:unit,phone,mm_network:mm,bio,email,password}});
 
   if(result&&result.success){
     const u=result.user;
+    if(result.token) localStorage.setItem('sc_token',result.token);
     localStorage.setItem('sc_user_id',u.id);
     localStorage.setItem('sc_user_name',u.prenom+' '+u.nom);
     localStorage.setItem('sc_user_initials',u.initials);
@@ -2933,13 +3016,7 @@ async function submitForm(){
     localStorage.setItem('sc_user_skill',u.skill);
     localStorage.setItem('sc_user_ville',u.ville);
   } else {
-    const initials=((prenom[0]||'')+(nom[0]||'')).toUpperCase();
-    const skillName=skill==='Autres'?skillCustom:skill;
-    localStorage.setItem('sc_user_id','local_'+Date.now());
-    localStorage.setItem('sc_user_name',prenom+' '+nom);
-    localStorage.setItem('sc_user_initials',initials);
-    localStorage.setItem('sc_user_skill',skillName);
-    localStorage.setItem('sc_user_ville',ville);
+    toast(result?.error||'Erreur lors de la création du profil');return;
   }
 
   document.getElementById('formContent').style.display='none';
@@ -2952,17 +3029,99 @@ async function submitForm(){
 function resetForm(){
   document.getElementById('formContent').style.display='block';
   document.getElementById('formSuccess').classList.remove('show');
-  ['fPrenom','fNom','fPhone','fEmail','fTarif','fBio','fSkillCustom'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  ['fPrenom','fNom','fPhone','fEmail','fTarif','fBio','fSkillCustom','fPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
   ['fVille','fSkill','fUnit','fMM'].forEach(id=>document.getElementById(id).selectedIndex=0);
   document.getElementById('skillCustomGroup')?.classList.remove('visible');
 }
 
 function updateNavUser(){
   const name=localStorage.getItem('sc_user_name');
+  const loginBtn=document.getElementById('navLoginBtn');
+  const createBtn=document.getElementById('navCreateBtn');
   if(name){
-    const cta=document.querySelector('.nav-cta');
-    if(cta)cta.textContent='Mon tableau de bord';
-    if(cta)cta.onclick=()=>showPage('dashboard',document.querySelectorAll('.nav-link')[4]);
+    if(loginBtn) loginBtn.style.display='none';
+    if(createBtn){createBtn.textContent='Mon tableau de bord';createBtn.onclick=()=>showPage('dashboard',document.querySelectorAll('.nav-link')[4]);}
+  } else {
+    if(loginBtn) loginBtn.style.display='';
+    if(createBtn){createBtn.textContent='Créer un profil';createBtn.onclick=()=>showPage('inscription',document.querySelectorAll('.nav-link')[2]);}
+  }
+}
+
+// ═══ AUTHENTIFICATION ════════════════════════════════════════════════
+function openLoginModal(){
+  document.getElementById('loginOverlay').classList.add('open');
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('loginEmail').value='';
+  document.getElementById('loginPassword').value='';
+  setTimeout(()=>document.getElementById('loginEmail').focus(),200);
+}
+function closeLoginModal(e){
+  if(e&&e.target!==document.getElementById('loginOverlay'))return;
+  document.getElementById('loginOverlay').classList.remove('open');
+}
+
+async function loginUser(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  const errEl=document.getElementById('loginError');
+  errEl.style.display='none';
+
+  if(!email||!password){errEl.textContent='Veuillez remplir tous les champs.';errEl.style.display='block';return;}
+
+  const result=await api('/login',{method:'POST',body:{email,password}});
+  if(result&&result.success){
+    const u=result.user;
+    if(result.token) localStorage.setItem('sc_token',result.token);
+    localStorage.setItem('sc_user_id',u.id);
+    localStorage.setItem('sc_user_name',u.prenom+' '+u.nom);
+    localStorage.setItem('sc_user_initials',u.initials||((u.prenom[0]||'')+(u.nom[0]||'')).toUpperCase());
+    localStorage.setItem('sc_user_bg',u.bg_color||'#C8EFE3');
+    localStorage.setItem('sc_user_col',u.text_color||'#085041');
+    localStorage.setItem('sc_user_skill',u.skill||'');
+    localStorage.setItem('sc_user_ville',u.ville||'');
+    document.getElementById('loginOverlay').classList.remove('open');
+    updateNavUser();
+    toast('Bienvenue '+u.prenom+' !');
+    showPage('dashboard',document.querySelectorAll('.nav-link')[4]);
+  } else {
+    errEl.textContent=result?.error||'Email ou mot de passe incorrect.';
+    errEl.style.display='block';
+  }
+}
+
+async function logoutUser(){
+  if(!confirm('Voulez-vous vraiment vous déconnecter ?')) return;
+  await api('/logout',{method:'POST'});
+  ['sc_token','sc_user_id','sc_user_name','sc_user_initials','sc_user_bg','sc_user_col','sc_user_skill','sc_user_ville'].forEach(k=>localStorage.removeItem(k));
+  updateNavUser();
+  toast('Vous avez été déconnecté.');
+  showPage('accueil',document.querySelectorAll('.nav-link')[0]);
+}
+
+async function deleteAccount(){
+  const userId=parseInt(localStorage.getItem('sc_user_id'));
+  if(!userId||isNaN(userId)){toast('Aucun compte à supprimer.');return;}
+  if(!confirm('⚠️ Cette action est irréversible. Supprimer définitivement votre compte ?')) return;
+  const result=await api('/users/'+userId,{method:'DELETE'});
+  if(result&&result.success){
+    ['sc_token','sc_user_id','sc_user_name','sc_user_initials','sc_user_bg','sc_user_col','sc_user_skill','sc_user_ville'].forEach(k=>localStorage.removeItem(k));
+    updateNavUser();
+    toast('Compte supprimé.');
+    showPage('accueil',document.querySelectorAll('.nav-link')[0]);
+  } else {
+    toast(result?.error||'Erreur lors de la suppression.');
+  }
+}
+
+async function validateMission(txId){
+  if(!confirm('Confirmer la validation de cette mission ? Les fonds seront libérés au talent.')) return;
+  const result=await api('/transactions/'+txId+'/validate',{method:'PUT'});
+  if(result&&result.success){
+    toast('Mission validée ! Les fonds ont été libérés.');
+    const userId=localStorage.getItem('sc_user_id');
+    loadTransactions(userId);
+  } else {
+    toast(result?.error||'Erreur lors de la validation.');
   }
 }
 
@@ -3316,6 +3475,10 @@ function renderTxList(userId){
       <div class="tx-right">
         <div class="tx-amount ${dir}">${sign}${(tx.amount||0).toLocaleString('fr-FR')} FCFA</div>
         <span class="tx-badge ${tx.status}">${STATUS[tx.status]||tx.status}</span>
+        ${tx.status==='escrow'&&tx.sender_id===uid?`<button class="validate-btn" onclick="event.stopPropagation();validateMission('${tx.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Valider mission
+        </button>`:''}
         <button class="invoice-btn" onclick="event.stopPropagation();generateInvoicePDF(${JSON.stringify(tx).replace(/"/g,'&quot;')})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Reçu PDF
