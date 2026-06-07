@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
 <link rel="manifest" href="/manifest.json"/>
 <meta name="theme-color" content="#1D9E75"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -485,6 +486,13 @@ body:has(button:hover) .cursor{background:var(--a400);width:16px;height:16px}
 /* ─── Validate mission button ───────────────────────────────── */
 .validate-btn{padding:.35rem .85rem;border-radius:var(--r-full);border:none;background:var(--g500);color:#fff;font-size:.75rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;transition:all .2s}
 .validate-btn:hover{background:var(--g600);transform:translateY(-1px)}
+/* ─── Legal modal content ────────────────────────────────────── */
+.legal-section{margin-bottom:1.5rem}
+.legal-section h3{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:.5rem}
+.legal-section p{margin-bottom:.6rem}
+.legal-section ul{padding-left:1.25rem;margin-bottom:.6rem}
+.legal-section ul li{margin-bottom:.3rem}
+.legal-badge{display:inline-block;padding:.2rem .65rem;border-radius:var(--r-full);background:var(--g50);color:var(--g600);font-size:.75rem;font-weight:600;margin-bottom:1rem}
 
 /* ═══════════════════════════════════════════════════════════════
    SECTIONS (pages)
@@ -1916,12 +1924,25 @@ footer{
     <div class="footer-bottom">
       <div class="footer-copy">© 2026 SkillConnect Cameroun. Tous droits réservés.</div>
       <div class="footer-bottom-links">
-        <a>Confidentialité</a>
-        <a>CGU</a>
-        <a>Cookies</a>
+        <a onclick="openLegal('privacy')">Confidentialité</a>
+        <a onclick="openLegal('cgu')">CGU</a>
+        <a onclick="openLegal('cookies')">Cookies</a>
       </div>
     </div>
   </footer>
+</div>
+
+<!-- ════════════════════════ MODAL LÉGAL ════════════════════════ -->
+<div class="modal-overlay" id="legalOverlay" onclick="closeLegal(event)" style="z-index:9999">
+  <div class="modal" id="legalModal" style="max-width:680px;max-height:82vh;overflow-y:auto">
+    <div class="modal-header" style="position:sticky;top:0;background:var(--card);z-index:1;border-bottom:1px solid var(--hairline);padding-bottom:1rem;margin-bottom:1.5rem">
+      <div class="modal-name" id="legalTitle">Confidentialité</div>
+      <button class="modal-close" onclick="closeLegal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="legalBody" style="padding:0;font-size:.9rem;line-height:1.75;color:var(--muted)"></div>
+  </div>
 </div>
 
 <!-- ════════════════════════ EXPLORER ════════════════════════ -->
@@ -4092,6 +4113,198 @@ async function loadExchangeRates(){
   } catch(e){
     console.log('Taux de change non disponibles (mode hors-ligne)');
   }
+}
+
+// ═══ PAGES LÉGALES ═══════════════════════════════════════════════════
+const LEGAL_CONTENT = {
+  privacy: {
+    title: 'Politique de confidentialité',
+    body: `
+      <span class="legal-badge">Mise à jour : juin 2026</span>
+      <div class="legal-section">
+        <h3>1. Qui sommes-nous ?</h3>
+        <p>SkillConnect Cameroun est une plateforme de mise en relation entre talents freelance et clients au Cameroun. Nous traitons vos données personnelles dans le cadre de la fourniture de nos services.</p>
+      </div>
+      <div class="legal-section">
+        <h3>2. Données collectées</h3>
+        <p>Lors de votre inscription et utilisation, nous collectons :</p>
+        <ul>
+          <li><strong>Données d'identité</strong> : nom, prénom, photo de profil</li>
+          <li><strong>Données de contact</strong> : numéro de téléphone Mobile Money, adresse email</li>
+          <li><strong>Données de localisation</strong> : ville (Cameroun)</li>
+          <li><strong>Données financières</strong> : historique des transactions, montants, réseaux Mobile Money (MTN MoMo, Orange Money)</li>
+          <li><strong>Données de profil</strong> : compétences, tarifs, biographie, avis reçus</li>
+          <li><strong>Messages</strong> : conversations entre utilisateurs sur la plateforme</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>3. Utilisation de vos données</h3>
+        <p>Vos données sont utilisées pour :</p>
+        <ul>
+          <li>Créer et gérer votre compte sur SkillConnect</li>
+          <li>Faciliter la mise en relation avec des talents ou des clients</li>
+          <li>Traiter les paiements Mobile Money via Campay (partenaire agréé)</li>
+          <li>Vous envoyer des notifications et confirmations de paiement par SMS</li>
+          <li>Améliorer nos services et la sécurité de la plateforme</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>4. Partage des données</h3>
+        <p>Nous ne vendons jamais vos données. Elles peuvent être partagées avec :</p>
+        <ul>
+          <li><strong>Campay</strong> : notre prestataire de paiement Mobile Money, pour le traitement des transactions MTN MoMo et Orange Money</li>
+          <li><strong>Africa's Talking</strong> : notre prestataire SMS pour les notifications</li>
+          <li>Les autorités compétentes, uniquement si requis par la loi camerounaise</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>5. Vos droits</h3>
+        <p>Conformément aux lois en vigueur, vous disposez des droits suivants :</p>
+        <ul>
+          <li>Droit d'accès à vos données personnelles</li>
+          <li>Droit de rectification en cas d'inexactitude</li>
+          <li>Droit à l'effacement (suppression de compte)</li>
+          <li>Droit à la portabilité de vos données</li>
+        </ul>
+        <p>Pour exercer ces droits, contactez-nous à : <strong>tddmodo@gmail.com</strong></p>
+      </div>
+      <div class="legal-section">
+        <h3>6. Sécurité</h3>
+        <p>Vos mots de passe sont chiffrés (bcrypt). Les tokens d'authentification sont sécurisés (JWT). Nous n'avons jamais accès à votre code PIN Mobile Money — les paiements sont traités directement par Campay.</p>
+      </div>
+      <div class="legal-section">
+        <h3>7. Contact</h3>
+        <p>SkillConnect Cameroun — <strong>tddmodo@gmail.com</strong> — <strong>+237 697 956 903</strong></p>
+      </div>
+    `
+  },
+  cgu: {
+    title: 'Conditions Générales d\'Utilisation',
+    body: `
+      <span class="legal-badge">Version 1.0 — juin 2026</span>
+      <div class="legal-section">
+        <h3>1. Objet</h3>
+        <p>Les présentes Conditions Générales d'Utilisation (CGU) régissent l'utilisation de la plateforme SkillConnect Cameroun, accessible à tous les utilisateurs (talents freelance et clients).</p>
+      </div>
+      <div class="legal-section">
+        <h3>2. Accès au service</h3>
+        <p>Pour utiliser SkillConnect vous devez :</p>
+        <ul>
+          <li>Être âgé de 18 ans ou plus</li>
+          <li>Résider au Cameroun ou y exercer une activité professionnelle</li>
+          <li>Disposer d'un numéro de téléphone Mobile Money valide (MTN MoMo ou Orange Money)</li>
+          <li>Fournir des informations exactes lors de votre inscription</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>3. Services proposés</h3>
+        <p>SkillConnect permet de :</p>
+        <ul>
+          <li>Créer un profil talent et proposer vos compétences</li>
+          <li>Rechercher et contacter des freelances locaux</li>
+          <li>Payer des missions via Mobile Money (MTN MoMo / Orange Money) avec un système de séquestre sécurisé</li>
+          <li>Laisser des avis et évaluations après chaque mission</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>4. Système de séquestre (Escrow)</h3>
+        <p>Lors d'un paiement de mission :</p>
+        <ul>
+          <li>Les fonds sont placés en séquestre (bloqués) après paiement du client</li>
+          <li>Le talent n'est crédité que lorsque le client valide la mission comme complétée</li>
+          <li>SkillConnect prélève une commission de <strong>7%</strong> sur chaque transaction</li>
+          <li>En cas de litige, contactez-nous à tddmodo@gmail.com dans les 72h</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>5. Comportement interdit</h3>
+        <p>Il est interdit de :</p>
+        <ul>
+          <li>Créer de faux profils ou fournir des informations mensongères</li>
+          <li>Effectuer des transactions en dehors de la plateforme pour contourner les commissions</li>
+          <li>Harceler, menacer ou insulter d'autres utilisateurs</li>
+          <li>Utiliser la plateforme à des fins illégales ou frauduleuses</li>
+          <li>Publier du contenu offensant, discriminatoire ou illicite</li>
+        </ul>
+        <p>Tout manquement entraîne la suspension ou suppression définitive du compte.</p>
+      </div>
+      <div class="legal-section">
+        <h3>6. Responsabilité</h3>
+        <p>SkillConnect est une plateforme d'intermédiation. Nous ne sommes pas responsables de la qualité des prestations entre les parties. Nous agissons uniquement comme tiers de confiance pour la sécurisation des paiements.</p>
+      </div>
+      <div class="legal-section">
+        <h3>7. Modification des CGU</h3>
+        <p>Nous nous réservons le droit de modifier ces CGU. Les utilisateurs seront informés par email ou notification sur la plateforme. La poursuite de l'utilisation vaut acceptation des nouvelles conditions.</p>
+      </div>
+      <div class="legal-section">
+        <h3>8. Droit applicable</h3>
+        <p>Les présentes CGU sont soumises au droit camerounais. Tout litige relève des tribunaux compétents de Yaoundé, Cameroun.</p>
+      </div>
+      <div class="legal-section">
+        <h3>9. Contact</h3>
+        <p>SkillConnect Cameroun — <strong>tddmodo@gmail.com</strong> — <strong>+237 697 956 903</strong></p>
+      </div>
+    `
+  },
+  cookies: {
+    title: 'Politique des cookies',
+    body: `
+      <span class="legal-badge">Mise à jour : juin 2026</span>
+      <div class="legal-section">
+        <h3>Qu'est-ce qu'un cookie ?</h3>
+        <p>Un cookie est un petit fichier stocké sur votre appareil par votre navigateur. SkillConnect utilise principalement le <strong>stockage local (localStorage)</strong> de votre navigateur, qui fonctionne de manière similaire aux cookies.</p>
+      </div>
+      <div class="legal-section">
+        <h3>Ce que nous stockons</h3>
+        <p>SkillConnect stocke localement dans votre navigateur uniquement :</p>
+        <ul>
+          <li><strong>sc_user_id</strong> — votre identifiant utilisateur (pour rester connecté)</li>
+          <li><strong>sc_token</strong> — votre jeton d'authentification JWT (valable 7 jours)</li>
+          <li><strong>sc_user_name, sc_user_initials</strong> — votre nom et initiales (affichage)</li>
+          <li><strong>sc_theme</strong> — votre préférence de thème clair/sombre</li>
+        </ul>
+        <p>Ces données restent uniquement sur votre appareil et ne sont jamais partagées avec des tiers à des fins publicitaires.</p>
+      </div>
+      <div class="legal-section">
+        <h3>Cookies tiers</h3>
+        <p>Nous utilisons des ressources externes limitées :</p>
+        <ul>
+          <li><strong>Google Fonts</strong> — pour les polices d'écriture (Syne, DM Sans). Google peut déposer des cookies de performance</li>
+          <li><strong>Campay</strong> — notre prestataire de paiement gère ses propres cookies lors du traitement des transactions</li>
+        </ul>
+        <p>Nous n'utilisons <strong>aucun cookie publicitaire, de suivi ou d'analytique</strong> (pas de Google Analytics, pas de Facebook Pixel).</p>
+      </div>
+      <div class="legal-section">
+        <h3>Gestion et suppression</h3>
+        <p>Vous pouvez supprimer les données stockées par SkillConnect à tout moment :</p>
+        <ul>
+          <li><strong>En vous déconnectant</strong> depuis votre tableau de bord — efface vos données de session</li>
+          <li><strong>Via votre navigateur</strong> : Paramètres → Confidentialité → Effacer les données de navigation</li>
+          <li><strong>Via les outils développeur</strong> (F12) → Application → Local Storage → Supprimer</li>
+        </ul>
+        <p>La suppression de ces données vous déconnectera de la plateforme.</p>
+      </div>
+      <div class="legal-section">
+        <h3>Contact</h3>
+        <p>Pour toute question concernant notre politique des cookies : <strong>tddmodo@gmail.com</strong></p>
+      </div>
+    `
+  }
+};
+
+function openLegal(type) {
+  const content = LEGAL_CONTENT[type];
+  if (!content) return;
+  document.getElementById('legalTitle').textContent = content.title;
+  document.getElementById('legalBody').innerHTML = content.body;
+  document.getElementById('legalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLegal(e) {
+  if (e && e.target !== document.getElementById('legalOverlay')) return;
+  document.getElementById('legalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 // ═══ INIT ════════════════════════════════════════════════════════════
