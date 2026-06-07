@@ -1,112 +1,23 @@
-const fs = require('fs');
-const path = require('path');
+require('dotenv').config();
+const mysql = require('mysql2/promise');
 
-const DATA_FILE = path.join(__dirname, 'data.json');
+const pool = mysql.createPool({
+  host:               process.env.DB_HOST     || 'localhost',
+  port:               parseInt(process.env.DB_PORT) || 3306,
+  user:               process.env.DB_USER     || 'root',
+  password:           process.env.DB_PASSWORD || '',
+  database:           process.env.DB_NAME     || 'SkillConnect',
+  waitForConnections: true,
+  connectionLimit:    10,
+  charset:            'utf8mb4',
+  dateStrings:        true,
+});
 
-const DEFAULT_DATA = {
-  users: [],
-  messages: [],
-  missions: [],
-  transactions: [],
-  reviews: [],
-  notifications: [],
-  _nextId: { users: 11, messages: 100, missions: 20, transactions: 10, reviews: 1, notifications: 1 }
-};
-
-function load() {
-  try {
-    if (fs.existsSync(DATA_FILE)) return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-  } catch (e) { console.error('Erreur lecture DB:', e.message); }
-  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+function fmtISO() {
+  return new Date().toISOString().slice(0, 19).replace('T', ' ');
 }
 
-function save(data) {
-  try { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8'); }
-  catch (e) { console.error('Erreur écriture DB:', e.message); }
-}
-
-function nextId(data, table) {
-  if (!data._nextId[table]) data._nextId[table] = 1;
-  const id = data._nextId[table]++;
-  save(data);
-  return id;
-}
-
-// ─── Seed données initiales ───────────────────────────────────────────────────
-function seedIfEmpty() {
-  const data = load();
-  if (data.users.length > 0) return;
-
-  const COLORS = [
-    {bg:'#C8EFE3',col:'#085041'},{bg:'#EEEDFE',col:'#3C3489'},
-    {bg:'#FAEEDA',col:'#633806'},{bg:'#FAECE7',col:'#712B13'},
-    {bg:'#E8F4FD',col:'#1A5276'},{bg:'#FEF9E7',col:'#7D6608'},
-  ];
-
-  data.users = [
-    {id:1,prenom:'Amina',nom:'Mbarga',ville:'Yaoundé',skill:'Cours de maths',tarif:5000,tarif_unit:'par heure',phone:'677000001',mm_network:'MTN MoMo',bio:"Diplômée de l'université de Yaoundé I en mathématiques. 4 ans d'expérience en cours particuliers pour lycéens et étudiants.",email:'amina@skillconnect.cm',initials:'AM',bg_color:'#C8EFE3',text_color:'#085041',rating:4.9,reviews:38,badge:'mm',cat:'Cours',validated:1,availability:'available',photo:null},
-    {id:2,prenom:'Kevin',nom:'Nkomo',ville:'Douala',skill:'Graphiste UI/UX',tarif:15000,tarif_unit:'par mission',phone:'677000002',mm_network:'MTN MoMo',bio:"Designer UI/UX avec 3 ans d'expérience dans la création de logos, flyers et interfaces web pour des PME camerounaises.",email:'kevin@skillconnect.cm',initials:'KN',bg_color:'#EEEDFE',text_color:'#3C3489',rating:4.7,reviews:21,badge:'mm',cat:'Design',validated:1,availability:'available',photo:null},
-    {id:3,prenom:'Sandrine',nom:'Foto',ville:'Bafoussam',skill:'Couture & retouches',tarif:8000,tarif_unit:'par mission',phone:'677000003',mm_network:'Orange Money',bio:'Couturière diplômée spécialisée en retouches et confection sur mesure pour hommes et femmes.',email:'sandrine@skillconnect.cm',initials:'SF',bg_color:'#FAEEDA',text_color:'#633806',rating:5.0,reviews:4,badge:'new',cat:'Couture',validated:1,availability:'busy',photo:null},
-    {id:4,prenom:'Eric',nom:'Biya',ville:'Yaoundé',skill:'Dev web (React/Node)',tarif:25000,tarif_unit:'par mission',phone:'677000004',mm_network:'MTN MoMo',bio:"Développeur full-stack avec 4 ans d'expérience. Spécialisé React, Node.js et bases de données.",email:'eric@skillconnect.cm',initials:'EB',bg_color:'#FAECE7',text_color:'#712B13',rating:4.8,reviews:12,badge:'mm',cat:'Informatique',validated:1,availability:'available',photo:null},
-    {id:5,prenom:'Fatima',nom:'Coulibaly',ville:'Douala',skill:"Cours d'anglais",tarif:4000,tarif_unit:'par heure',phone:'677000005',mm_network:'Orange Money',bio:"Professeure d'anglais certifiée (DELF B2). 5 ans d'expérience dans la préparation aux examens.",email:'fatima@skillconnect.cm',initials:'FC',bg_color:'#C8EFE3',text_color:'#085041',rating:4.6,reviews:29,badge:'mm',cat:'Cours',validated:1,availability:'available',photo:null},
-    {id:6,prenom:'René-Luc',nom:'Atanga',ville:'Yaoundé',skill:'Photographie pro',tarif:20000,tarif_unit:'par mission',phone:'677000006',mm_network:'MTN MoMo',bio:"Photographe professionnel spécialisé dans les portraits, les événements d'entreprise et la publicité.",email:'rene@skillconnect.cm',initials:'RL',bg_color:'#EEEDFE',text_color:'#3C3489',rating:4.9,reviews:8,badge:'new',cat:'Photo',validated:1,availability:'pause',photo:null},
-    {id:7,prenom:'Jean-Paul',nom:'Tchamba',ville:'Douala',skill:'Réparation informatique',tarif:10000,tarif_unit:'par mission',phone:'677000007',mm_network:'MTN MoMo',bio:"Technicien informatique avec 6 ans d'expérience. Réparation PC, Mac, installation logiciels.",email:'jptchamba@skillconnect.cm',initials:'JT',bg_color:'#FAEEDA',text_color:'#633806',rating:4.5,reviews:17,badge:'mm',cat:'Informatique',validated:1,availability:'available',photo:null},
-    {id:8,prenom:'Marie',nom:'Ngo Biyong',ville:'Yaoundé',skill:'Traduction FR/EN',tarif:3000,tarif_unit:'par page',phone:'677000008',mm_network:'Orange Money',bio:'Traductrice certifiée français-anglais avec spécialisation juridique et commerciale.',email:'marie@skillconnect.cm',initials:'MN',bg_color:'#FAECE7',text_color:'#712B13',rating:4.8,reviews:11,badge:'mm',cat:'Autres',validated:1,availability:'available',photo:null},
-    {id:9,prenom:'Blaise',nom:'Kamga',ville:'Bafoussam',skill:'Coaching sportif',tarif:6000,tarif_unit:'par heure',phone:'677000009',mm_network:'MTN MoMo',bio:"Coach sportif certifié, spécialisé fitness et musculation. 7 ans d'expérience.",email:'blaise@skillconnect.cm',initials:'BK',bg_color:'#E8F4FD',text_color:'#1A5276',rating:4.7,reviews:15,badge:'mm',cat:'Autres',validated:1,availability:'available',photo:null},
-    {id:10,prenom:'Carine',nom:'Essama',ville:'Yaoundé',skill:'Cuisine & traiteur',tarif:12000,tarif_unit:'par événement',phone:'677000010',mm_network:'MTN MoMo',bio:'Cheffe cuisinière spécialisée dans la cuisine camerounaise et internationale.',email:'carine@skillconnect.cm',initials:'CE',bg_color:'#FEF9E7',text_color:'#7D6608',rating:4.9,reviews:23,badge:'mm',cat:'Autres',validated:1,availability:'available',photo:null},
-  ];
-
-  data.messages = [
-    {id:1,sender_id:2,receiver_id:1,text:"Bonjour ! J'ai vu votre profil sur SkillConnect. Est-ce que vous êtes disponible pour un cours de maths ce samedi ?",read:1,sent_at:'2026-06-05T10:32:00'},
-    {id:2,sender_id:1,receiver_id:2,text:"Bonjour ! Oui, je suis disponible samedi. Quel niveau et quelle durée souhaitez-vous ?",read:1,sent_at:'2026-06-05T10:35:00'},
-    {id:3,sender_id:2,receiver_id:1,text:"Mon fils est en terminale C. On aurait besoin d'environ 2h de cours sur les intégrales.",read:1,sent_at:'2026-06-05T10:38:00'},
-    {id:4,sender_id:1,receiver_id:2,text:"Parfait ! Ça sera 10 000 FCFA pour 2h. Vous pouvez payer via MTN MoMo directement sur la plateforme.",read:1,sent_at:'2026-06-05T10:40:00'},
-    {id:5,sender_id:2,receiver_id:1,text:"D'accord, c'est bon pour moi. Je vais réserver tout de suite via SkillConnect.",read:1,sent_at:'2026-06-05T10:42:00'},
-    {id:6,sender_id:4,receiver_id:1,text:"Bonjour Amina, j'ai besoin d'un prof de maths pour ma petite sœur. Vous êtes disponible en semaine ?",read:0,sent_at:'2026-06-05T14:20:00'},
-    {id:7,sender_id:1,receiver_id:4,text:"Oui, je suis disponible du lundi au vendredi de 16h à 19h. Quel niveau est-elle ?",read:0,sent_at:'2026-06-05T14:25:00'},
-    {id:8,sender_id:5,receiver_id:1,text:"Salut ! Est-ce que tu fais aussi des cours de physique-chimie ?",read:0,sent_at:'2026-06-05T15:05:00'},
-  ];
-
-  data.missions = [
-    {id:1,client_id:2,talent_id:1,title:'Cours de maths (2h)',amount:10000,status:'completed'},
-    {id:2,client_id:3,talent_id:1,title:"Cours d'algèbre (1h)",amount:5000,status:'completed'},
-    {id:3,client_id:4,talent_id:1,title:'BAC blanc maths',amount:15000,status:'completed'},
-    {id:4,client_id:5,talent_id:1,title:'Cours statistiques (1h)',amount:5000,status:'completed'},
-    {id:5,client_id:6,talent_id:1,title:'Préparation examen (3h)',amount:15000,status:'completed'},
-    {id:6,client_id:7,talent_id:1,title:'Cours de maths (1h)',amount:5000,status:'in_progress'},
-    {id:7,client_id:8,talent_id:1,title:'Session révisions BAC',amount:10000,status:'pending'},
-  ];
-
-  data.transactions = [
-    {id:1,sender_id:2,receiver_id:1,amount:10000,commission:700,net_amount:9300,description:'Cours de maths (2h)',network:'MTN MoMo',status:'completed',created_at:'2026-06-01T10:00:00'},
-    {id:2,sender_id:3,receiver_id:1,amount:5000,commission:350,net_amount:4650,description:"Cours d'algèbre (1h)",network:'Orange Money',status:'completed',created_at:'2026-06-02T14:00:00'},
-    {id:3,sender_id:4,receiver_id:1,amount:15000,commission:1050,net_amount:13950,description:'BAC blanc maths (3h)',network:'MTN MoMo',status:'escrow',created_at:'2026-06-04T09:00:00'},
-    {id:4,sender_id:5,receiver_id:1,amount:5000,commission:350,net_amount:4650,description:'Cours statistiques (1h)',network:'Orange Money',status:'completed',created_at:'2026-06-03T16:00:00'},
-    {id:5,sender_id:6,receiver_id:1,amount:15000,commission:1050,net_amount:13950,description:'Préparation examen (3h)',network:'MTN MoMo',status:'completed',created_at:'2026-05-28T10:00:00'},
-    {id:6,sender_id:1,receiver_id:2,amount:15000,commission:1050,net_amount:13950,description:'Logo entreprise',network:'MTN MoMo',status:'completed',created_at:'2026-05-20T09:00:00'},
-    {id:7,sender_id:1,receiver_id:4,amount:25000,commission:1750,net_amount:23250,description:'Site vitrine (5 pages)',network:'MTN MoMo',status:'escrow',created_at:'2026-06-03T11:00:00'},
-  ];
-
-  data.reviews = [
-    {id:1,talent_id:1,reviewer_id:2,reviewer_name:'Kevin N.',reviewer_initials:'KN',reviewer_bg:'#EEEDFE',reviewer_col:'#3C3489',rating:5,comment:'Amina est une excellente prof ! Très patiente et pédagogue. Mon fils a eu 14/20 à son examen.',transaction_id:1,created_at:'2026-06-01T12:00:00'},
-    {id:2,talent_id:1,reviewer_id:3,reviewer_name:'Sandrine F.',reviewer_initials:'SF',reviewer_bg:'#FAEEDA',reviewer_col:'#633806',rating:5,comment:'Cours très bien expliqués, ma fille progresse vite. Je recommande vivement !',transaction_id:2,created_at:'2026-06-02T16:30:00'},
-    {id:3,talent_id:1,reviewer_id:5,reviewer_name:'Fatima C.',reviewer_initials:'FC',reviewer_bg:'#C8EFE3',reviewer_col:'#085041',rating:4,comment:'Très compétente et disponible. Le seul bémol est la ponctualité mais les cours sont top.',transaction_id:4,created_at:'2026-06-03T18:00:00'},
-  ];
-
-  data.notifications = [
-    {id:1,user_id:1,type:'payment',message:'Vous avez reçu 9 300 FCFA de Kevin N. pour "Cours de maths (2h)"',read:1,created_at:'2026-06-01T10:05:00'},
-    {id:2,user_id:1,type:'review',message:'Kevin N. vous a laissé un avis 5 étoiles ⭐',read:1,created_at:'2026-06-01T12:00:00'},
-    {id:3,user_id:1,type:'message',message:'Nouveau message de Eric Biya',read:0,created_at:'2026-06-05T14:20:00'},
-    {id:4,user_id:1,type:'message',message:'Nouveau message de Fatima Coulibaly',read:0,created_at:'2026-06-05T15:05:00'},
-  ];
-
-  data._nextId = { users: 11, messages: 9, missions: 8, transactions: 8, reviews: 4, notifications: 5 };
-  save(data);
-  console.log('✅ Base de données initialisée avec les données de démo');
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const MAIN_CATS = ['Cours','Design','Informatique','Couture','Photo'];
+const MAIN_CATS = ['Cours', 'Design', 'Informatique', 'Couture', 'Photo'];
 
 function mapSkillToCat(skill) {
   if (!skill) return 'Autres';
@@ -125,170 +36,315 @@ const COLORS = [
   {bg:'#E8F4FD',col:'#1A5276'},{bg:'#FEF9E7',col:'#7D6608'},
 ];
 
-function fmtISO() { return new Date().toISOString(); }
+// ─── Init : création des tables + seed ────────────────────────────────────────
+async function init() {
+  // Connexion sans DB pour créer la base si elle n'existe pas
+  const temp = await mysql.createConnection({
+    host:     process.env.DB_HOST     || 'localhost',
+    port:     parseInt(process.env.DB_PORT) || 3306,
+    user:     process.env.DB_USER     || 'root',
+    password: process.env.DB_PASSWORD || '',
+    charset:  'utf8mb4',
+  });
+  const dbName = process.env.DB_NAME || 'SkillConnect';
+  await temp.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+  await temp.end();
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id            INT AUTO_INCREMENT PRIMARY KEY,
+      prenom        VARCHAR(100),
+      nom           VARCHAR(100),
+      ville         VARCHAR(100),
+      skill         VARCHAR(200),
+      skill_custom  VARCHAR(200),
+      tarif         INT DEFAULT 0,
+      tarif_unit    VARCHAR(50)  DEFAULT 'par heure',
+      phone         VARCHAR(30),
+      mm_network    VARCHAR(50)  DEFAULT 'MTN MoMo',
+      bio           TEXT,
+      email         VARCHAR(200),
+      initials      VARCHAR(10),
+      bg_color      VARCHAR(20),
+      text_color    VARCHAR(20),
+      rating        DECIMAL(3,1) DEFAULT 5.0,
+      reviews       INT          DEFAULT 0,
+      badge         VARCHAR(20)  DEFAULT 'new',
+      cat           VARCHAR(100) DEFAULT 'Autres',
+      validated     TINYINT      DEFAULT 1,
+      availability  VARCHAR(20)  DEFAULT 'available',
+      photo         LONGTEXT,
+      password_hash VARCHAR(200),
+      created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_email (email)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id          INT AUTO_INCREMENT PRIMARY KEY,
+      sender_id   INT DEFAULT 0,
+      receiver_id INT DEFAULT 0,
+      text        TEXT,
+      \`read\`    TINYINT  DEFAULT 0,
+      sent_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS missions (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      client_id  INT DEFAULT 0,
+      talent_id  INT DEFAULT 0,
+      title      VARCHAR(200),
+      amount     INT DEFAULT 0,
+      status     VARCHAR(50) DEFAULT 'pending',
+      created_at DATETIME    DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS transactions (
+      id                INT AUTO_INCREMENT PRIMARY KEY,
+      sender_id         INT DEFAULT 0,
+      receiver_id       INT DEFAULT 0,
+      amount            INT DEFAULT 0,
+      commission        INT DEFAULT 0,
+      net_amount        INT DEFAULT 0,
+      description       TEXT,
+      network           VARCHAR(50)  DEFAULT 'MTN MoMo',
+      phone             VARCHAR(30),
+      type              VARCHAR(30)  DEFAULT 'payment',
+      status            VARCHAR(30)  DEFAULT 'escrow',
+      campay_reference  VARCHAR(200),
+      created_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
+      completed_at      DATETIME
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id                INT AUTO_INCREMENT PRIMARY KEY,
+      talent_id         INT DEFAULT 0,
+      reviewer_id       INT DEFAULT 0,
+      reviewer_name     VARCHAR(200),
+      reviewer_initials VARCHAR(10),
+      reviewer_bg       VARCHAR(20),
+      reviewer_col      VARCHAR(20),
+      rating            TINYINT DEFAULT 5,
+      comment           TEXT,
+      transaction_id    INT,
+      created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      user_id    INT DEFAULT 0,
+      type       VARCHAR(50),
+      message    TEXT,
+      \`read\`   TINYINT  DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  const [[{ cnt }]] = await pool.execute('SELECT COUNT(*) as cnt FROM users');
+  if (cnt === 0) await seedData();
+
+  console.log('✅ Base de données MySQL connectée et initialisée');
+}
+
+async function seedData() {
+  const users = [
+    [1,'Amina','Mbarga','Yaoundé','Cours de maths',null,5000,'par heure','677000001','MTN MoMo',"Diplômée de l'université de Yaoundé I en mathématiques. 4 ans d'expérience en cours particuliers pour lycéens et étudiants.",'amina@skillconnect.cm','AM','#C8EFE3','#085041',4.9,38,'mm','Cours',1,'available',null,null],
+    [2,'Kevin','Nkomo','Douala','Graphiste UI/UX',null,15000,'par mission','677000002','MTN MoMo',"Designer UI/UX avec 3 ans d'expérience dans la création de logos, flyers et interfaces web pour des PME camerounaises.",'kevin@skillconnect.cm','KN','#EEEDFE','#3C3489',4.7,21,'mm','Design',1,'available',null,null],
+    [3,'Sandrine','Foto','Bafoussam','Couture & retouches',null,8000,'par mission','677000003','Orange Money','Couturière diplômée spécialisée en retouches et confection sur mesure pour hommes et femmes.','sandrine@skillconnect.cm','SF','#FAEEDA','#633806',5.0,4,'new','Couture',1,'busy',null,null],
+    [4,'Eric','Biya','Yaoundé','Dev web (React/Node)',null,25000,'par mission','677000004','MTN MoMo',"Développeur full-stack avec 4 ans d'expérience. Spécialisé React, Node.js et bases de données.",'eric@skillconnect.cm','EB','#FAECE7','#712B13',4.8,12,'mm','Informatique',1,'available',null,null],
+    [5,'Fatima','Coulibaly','Douala',"Cours d'anglais",null,4000,'par heure','677000005','Orange Money',"Professeure d'anglais certifiée (DELF B2). 5 ans d'expérience dans la préparation aux examens.",'fatima@skillconnect.cm','FC','#C8EFE3','#085041',4.6,29,'mm','Cours',1,'available',null,null],
+    [6,'René-Luc','Atanga','Yaoundé','Photographie pro',null,20000,'par mission','677000006','MTN MoMo',"Photographe professionnel spécialisé dans les portraits, les événements d'entreprise et la publicité.",'rene@skillconnect.cm','RL','#EEEDFE','#3C3489',4.9,8,'new','Photo',1,'pause',null,null],
+    [7,'Jean-Paul','Tchamba','Douala','Réparation informatique',null,10000,'par mission','677000007','MTN MoMo',"Technicien informatique avec 6 ans d'expérience. Réparation PC, Mac, installation logiciels.",'jptchamba@skillconnect.cm','JT','#FAEEDA','#633806',4.5,17,'mm','Informatique',1,'available',null,null],
+    [8,'Marie','Ngo Biyong','Yaoundé','Traduction FR/EN',null,3000,'par page','677000008','Orange Money','Traductrice certifiée français-anglais avec spécialisation juridique et commerciale.','marie@skillconnect.cm','MN','#FAECE7','#712B13',4.8,11,'mm','Autres',1,'available',null,null],
+    [9,'Blaise','Kamga','Bafoussam','Coaching sportif',null,6000,'par heure','677000009','MTN MoMo',"Coach sportif certifié, spécialisé fitness et musculation. 7 ans d'expérience.",'blaise@skillconnect.cm','BK','#E8F4FD','#1A5276',4.7,15,'mm','Autres',1,'available',null,null],
+    [10,'Carine','Essama','Yaoundé','Cuisine & traiteur',null,12000,'par événement','677000010','MTN MoMo','Cheffe cuisinière spécialisée dans la cuisine camerounaise et internationale.','carine@skillconnect.cm','CE','#FEF9E7','#7D6608',4.9,23,'mm','Autres',1,'available',null,null],
+  ];
+  for (const u of users) {
+    await pool.execute(
+      `INSERT INTO users (id,prenom,nom,ville,skill,skill_custom,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      u
+    );
+  }
+  await pool.query('ALTER TABLE users AUTO_INCREMENT = 11');
+
+  const messages = [
+    [1,2,1,"Bonjour ! J'ai vu votre profil sur SkillConnect. Est-ce que vous êtes disponible pour un cours de maths ce samedi ?",1,'2026-06-05 10:32:00'],
+    [2,1,2,"Bonjour ! Oui, je suis disponible samedi. Quel niveau et quelle durée souhaitez-vous ?",1,'2026-06-05 10:35:00'],
+    [3,2,1,"Mon fils est en terminale C. On aurait besoin d'environ 2h de cours sur les intégrales.",1,'2026-06-05 10:38:00'],
+    [4,1,2,"Parfait ! Ça sera 10 000 FCFA pour 2h. Vous pouvez payer via MTN MoMo directement sur la plateforme.",1,'2026-06-05 10:40:00'],
+    [5,2,1,"D'accord, c'est bon pour moi. Je vais réserver tout de suite via SkillConnect.",1,'2026-06-05 10:42:00'],
+    [6,4,1,"Bonjour Amina, j'ai besoin d'un prof de maths pour ma petite sœur. Vous êtes disponible en semaine ?",0,'2026-06-05 14:20:00'],
+    [7,1,4,"Oui, je suis disponible du lundi au vendredi de 16h à 19h. Quel niveau est-elle ?",0,'2026-06-05 14:25:00'],
+    [8,5,1,"Salut ! Est-ce que tu fais aussi des cours de physique-chimie ?",0,'2026-06-05 15:05:00'],
+  ];
+  for (const m of messages) {
+    await pool.execute('INSERT INTO messages (id,sender_id,receiver_id,text,`read`,sent_at) VALUES (?,?,?,?,?,?)', m);
+  }
+  await pool.query('ALTER TABLE messages AUTO_INCREMENT = 9');
+
+  const missions = [
+    [1,2,1,'Cours de maths (2h)',10000,'completed'],
+    [2,3,1,"Cours d'algèbre (1h)",5000,'completed'],
+    [3,4,1,'BAC blanc maths',15000,'completed'],
+    [4,5,1,'Cours statistiques (1h)',5000,'completed'],
+    [5,6,1,'Préparation examen (3h)',15000,'completed'],
+    [6,7,1,'Cours de maths (1h)',5000,'in_progress'],
+    [7,8,1,'Session révisions BAC',10000,'pending'],
+  ];
+  for (const m of missions) {
+    await pool.execute('INSERT INTO missions (id,client_id,talent_id,title,amount,status) VALUES (?,?,?,?,?,?)', m);
+  }
+  await pool.query('ALTER TABLE missions AUTO_INCREMENT = 8');
+
+  const transactions = [
+    [1,2,1,10000,700,9300,'Cours de maths (2h)','MTN MoMo',null,'payment','completed',null,'2026-06-01 10:00:00',null],
+    [2,3,1,5000,350,4650,"Cours d'algèbre (1h)",'Orange Money',null,'payment','completed',null,'2026-06-02 14:00:00',null],
+    [3,4,1,15000,1050,13950,'BAC blanc maths (3h)','MTN MoMo',null,'payment','escrow',null,'2026-06-04 09:00:00',null],
+    [4,5,1,5000,350,4650,'Cours statistiques (1h)','Orange Money',null,'payment','completed',null,'2026-06-03 16:00:00',null],
+    [5,6,1,15000,1050,13950,'Préparation examen (3h)','MTN MoMo',null,'payment','completed',null,'2026-05-28 10:00:00',null],
+    [6,1,2,15000,1050,13950,'Logo entreprise','MTN MoMo',null,'payment','completed',null,'2026-05-20 09:00:00',null],
+    [7,1,4,25000,1750,23250,'Site vitrine (5 pages)','MTN MoMo',null,'payment','escrow',null,'2026-06-03 11:00:00',null],
+  ];
+  for (const t of transactions) {
+    await pool.execute(
+      'INSERT INTO transactions (id,sender_id,receiver_id,amount,commission,net_amount,description,network,phone,type,status,campay_reference,created_at,completed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      t
+    );
+  }
+  await pool.query('ALTER TABLE transactions AUTO_INCREMENT = 8');
+
+  const reviews_data = [
+    [1,1,2,'Kevin N.','KN','#EEEDFE','#3C3489',5,"Amina est une excellente prof ! Très patiente et pédagogue. Mon fils a eu 14/20 à son examen.",1,'2026-06-01 12:00:00'],
+    [2,1,3,'Sandrine F.','SF','#FAEEDA','#633806',5,"Cours très bien expliqués, ma fille progresse vite. Je recommande vivement !",2,'2026-06-02 16:30:00'],
+    [3,1,5,'Fatima C.','FC','#C8EFE3','#085041',4,"Très compétente et disponible. Le seul bémol est la ponctualité mais les cours sont top.",4,'2026-06-03 18:00:00'],
+  ];
+  for (const r of reviews_data) {
+    await pool.execute(
+      'INSERT INTO reviews (id,talent_id,reviewer_id,reviewer_name,reviewer_initials,reviewer_bg,reviewer_col,rating,comment,transaction_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      r
+    );
+  }
+  await pool.query('ALTER TABLE reviews AUTO_INCREMENT = 4');
+
+  const notifications_data = [
+    [1,1,'payment','Vous avez reçu 9 300 FCFA de Kevin N. pour "Cours de maths (2h)"',1,'2026-06-01 10:05:00'],
+    [2,1,'review','Kevin N. vous a laissé un avis 5 étoiles ⭐',1,'2026-06-01 12:00:00'],
+    [3,1,'message','Nouveau message de Eric Biya',0,'2026-06-05 14:20:00'],
+    [4,1,'message','Nouveau message de Fatima Coulibaly',0,'2026-06-05 15:05:00'],
+  ];
+  for (const n of notifications_data) {
+    await pool.execute('INSERT INTO notifications (id,user_id,type,message,`read`,created_at) VALUES (?,?,?,?,?,?)', n);
+  }
+  await pool.query('ALTER TABLE notifications AUTO_INCREMENT = 5');
+
+  console.log('✅ Données de démo insérées dans MySQL');
+}
 
 // ─── Talents ──────────────────────────────────────────────────────────────────
-function getTalents({ cat, q } = {}) {
-  const data = load();
-  let list = data.users.filter(u => u.validated === 1);
+async function getTalents({ cat, q } = {}) {
+  let sql = 'SELECT * FROM users WHERE validated = 1';
+  const params = [];
 
   if (cat && cat !== 'Tous') {
     if (cat === 'Autres') {
-      list = list.filter(u => !MAIN_CATS.includes(u.cat));
+      sql += ` AND cat NOT IN (${MAIN_CATS.map(() => '?').join(',')})`;
+      params.push(...MAIN_CATS);
     } else {
-      list = list.filter(u => u.cat === cat);
+      sql += ' AND cat = ?';
+      params.push(cat);
     }
   }
 
   if (q) {
-    const lq = q.toLowerCase();
-    list = list.filter(u =>
-      u.prenom.toLowerCase().includes(lq) ||
-      u.nom.toLowerCase().includes(lq) ||
-      u.skill.toLowerCase().includes(lq) ||
-      u.ville.toLowerCase().includes(lq)
-    );
+    sql += ' AND (prenom LIKE ? OR nom LIKE ? OR skill LIKE ? OR ville LIKE ?)';
+    const lq = `%${q}%`;
+    params.push(lq, lq, lq, lq);
   }
 
-  return list.sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
+  sql += ' ORDER BY rating DESC, reviews DESC';
+  const [rows] = await pool.execute(sql, params);
+  return rows;
 }
 
-function getTalentById(id) {
-  return load().users.find(u => u.id === id) || null;
+async function getTalentById(id) {
+  const [rows] = await pool.execute('SELECT * FROM users WHERE id = ?', [id]);
+  return rows[0] || null;
 }
 
-function createUser(body) {
-  const data = load();
-  const { prenom, nom, ville, skill, skill_custom, tarif, tarif_unit, phone, mm_network, bio, email } = body;
+async function createUser(body) {
+  const { prenom, nom, ville, skill, skill_custom, tarif, tarif_unit, phone, mm_network, bio, email, password_hash } = body;
   const skillName = skill === 'Autres' ? (skill_custom || 'Autre compétence') : skill;
   const cat = mapSkillToCat(skillName);
   const initials = ((prenom || ' ')[0] + (nom || ' ')[0]).toUpperCase();
-  const color = COLORS[data.users.length % COLORS.length];
+  const [[{ cnt }]] = await pool.execute('SELECT COUNT(*) as cnt FROM users');
+  const color = COLORS[cnt % COLORS.length];
 
-  const user = {
-    id: data._nextId.users++,
+  const [result] = await pool.execute(
+    `INSERT INTO users (prenom,nom,ville,skill,skill_custom,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,created_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,1,'available',null,?,?)`,
+    [prenom, nom, ville, skillName, skill_custom||null, parseInt(tarif)||0, tarif_unit||'par heure',
+     phone, mm_network||'MTN MoMo', bio||'', email||'', initials, color.bg, color.col,
+     cat, password_hash||null, fmtISO()]
+  );
+
+  return {
+    id: result.insertId,
     prenom, nom, ville,
-    skill: skillName,
-    skill_custom: skill_custom || null,
-    tarif: parseInt(tarif) || 0,
-    tarif_unit: tarif_unit || 'par heure',
-    phone, mm_network: mm_network || 'MTN MoMo',
-    bio: bio || '', email: email || '',
+    skill: skillName, cat,
     initials, bg_color: color.bg, text_color: color.col,
-    rating: 5.0, reviews: 0, badge: 'new',
-    cat, validated: 1,
-    availability: 'available',
-    photo: null,
-    password_hash: body.password_hash || null,
-    created_at: fmtISO(),
+    email: email || '', phone,
   };
-
-  data.users.push(user);
-  save(data);
-  return { id: user.id, prenom, nom, ville, skill: skillName, cat, initials, bg_color: color.bg, text_color: color.col };
 }
 
-function updateUser(id, body) {
-  const data = load();
-  const idx = data.users.findIndex(u => u.id === id);
-  if (idx === -1) return;
+async function updateUser(id, body) {
   const { bio, tarif, tarif_unit, availability, photo, mm_network, phone } = body;
-  if (bio !== undefined) data.users[idx].bio = bio;
-  if (tarif !== undefined) data.users[idx].tarif = parseInt(tarif) || 0;
-  if (tarif_unit !== undefined) data.users[idx].tarif_unit = tarif_unit;
-  if (availability !== undefined) data.users[idx].availability = availability;
-  if (photo !== undefined) data.users[idx].photo = photo;
-  if (mm_network !== undefined) data.users[idx].mm_network = mm_network;
-  if (phone !== undefined) data.users[idx].phone = phone;
-  save(data);
+  const sets = [];
+  const params = [];
+  if (bio          !== undefined) { sets.push('bio = ?');          params.push(bio); }
+  if (tarif        !== undefined) { sets.push('tarif = ?');        params.push(parseInt(tarif)||0); }
+  if (tarif_unit   !== undefined) { sets.push('tarif_unit = ?');   params.push(tarif_unit); }
+  if (availability !== undefined) { sets.push('availability = ?'); params.push(availability); }
+  if (photo        !== undefined) { sets.push('photo = ?');        params.push(photo); }
+  if (mm_network   !== undefined) { sets.push('mm_network = ?');   params.push(mm_network); }
+  if (phone        !== undefined) { sets.push('phone = ?');        params.push(phone); }
+  if (sets.length === 0) return;
+  params.push(id);
+  await pool.execute(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
 }
 
-function findUserByEmail(email) {
+async function findUserByEmail(email) {
   if (!email) return null;
-  const data = load();
-  return data.users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase()) || null;
+  const [rows] = await pool.execute('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [email]);
+  return rows[0] || null;
 }
 
-function deleteUser(userId) {
-  const data = load();
-  const idx = data.users.findIndex(u => u.id === parseInt(userId));
-  if (idx === -1) return false;
-  data.users.splice(idx, 1);
-  save(data);
-  return true;
+async function deleteUser(userId) {
+  const [result] = await pool.execute('DELETE FROM users WHERE id = ?', [parseInt(userId)]);
+  return result.affectedRows > 0;
 }
 
-function createWithdrawal({ userId, amount, network, phone }) {
-  const data = load();
-  const uid = parseInt(userId);
-  const amt = parseInt(amount);
-
-  // Vérifier le solde disponible (revenus + dépôts - retraits)
-  const txs = data.transactions || [];
-  const credits = txs.filter(t => t.receiver_id === uid && t.status === 'completed');
-  const debits  = txs.filter(t => t.sender_id === uid && t.type === 'withdrawal');
-  const available = credits.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0)
-                  - debits.reduce((s, t) => s + t.amount, 0);
-  if (available < amt) throw new Error('Solde insuffisant');
-
-  const tx = {
-    id: data._nextId.transactions++,
-    sender_id: uid,
-    receiver_id: 0,
-    amount: amt,
-    commission: 0,
-    net_amount: amt,
-    description: 'Retrait vers ' + (network || 'Mobile Money'),
-    network: network || 'MTN MoMo',
-    phone: phone || '',
-    type: 'withdrawal',
-    status: 'pending',
-    created_at: fmtISO(),
-  };
-  if (!data.transactions) data.transactions = [];
-  data.transactions.push(tx);
-  save(data);
-  return tx;
-}
-
-function createDeposit({ userId, amount, network, phone, campay_reference }) {
-  const data = load();
-  const uid = parseInt(userId);
-  const amt = parseInt(amount);
-
-  const tx = {
-    id:               data._nextId.transactions++,
-    sender_id:        0,
-    receiver_id:      uid,
-    amount:           amt,
-    commission:       0,
-    net_amount:       amt,
-    description:      'Dépôt depuis ' + (network || 'Mobile Money'),
-    network:          network || 'MTN MoMo',
-    phone:            phone || '',
-    type:             'deposit',
-    campay_reference: campay_reference || null,
-    // pending si Campay est utilisé, completed en mode simulation
-    status:           campay_reference ? 'pending' : 'completed',
-    created_at:       fmtISO(),
-  };
-  if (!data.transactions) data.transactions = [];
-  data.transactions.push(tx);
-  save(data);
-  return tx;
-}
-
-function getDashboardData(userId) {
-  const data = load();
-  const user = data.users.find(u => u.id === userId);
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+async function getDashboardData(userId) {
+  const user = await getTalentById(userId);
   if (!user) return null;
 
-  const missions = data.missions.filter(m => m.talent_id === userId);
+  const [missions] = await pool.execute('SELECT * FROM missions WHERE talent_id = ?', [userId]);
   const completed = missions.filter(m => m.status === 'completed');
   const revenue = completed.reduce((s, m) => s + m.amount, 0);
-  const netRevenue = Math.round(revenue * 0.93);
 
-  const unread = data.messages.filter(m => m.receiver_id === userId && !m.read).length;
+  const [[{ unread }]] = await pool.execute(
+    'SELECT COUNT(*) as unread FROM messages WHERE receiver_id = ? AND `read` = 0',
+    [userId]
+  );
 
   const skillMap = {};
   missions.forEach(m => { skillMap[m.title] = (skillMap[m.title] || 0) + 1; });
@@ -297,11 +353,15 @@ function getDashboardData(userId) {
     .sort((a, b) => b.cnt - a.cnt)
     .slice(0, 5);
 
-  const unreadNotifs = (data.notifications || []).filter(n => n.user_id === userId && !n.read).length;
+  const [[{ unreadNotifs }]] = await pool.execute(
+    'SELECT COUNT(*) as unreadNotifs FROM notifications WHERE user_id = ? AND `read` = 0',
+    [userId]
+  );
 
+  const { password_hash: _ph, ...safeUser } = user;
   return {
-    user,
-    revenue: netRevenue,
+    user: safeUser,
+    revenue: Math.round(revenue * 0.93),
     missions: completed.length,
     pending: missions.filter(m => m.status === 'pending').length,
     rating: user.rating,
@@ -312,235 +372,206 @@ function getDashboardData(userId) {
   };
 }
 
-// ─── Messagerie ───────────────────────────────────────────────────────────────
-function getContacts(userId) {
-  const data = load();
-  const seen = new Set();
+// ─── Messagerie ────────────────────────────────────────────────────────────────
+async function getContacts(userId) {
+  const [rows] = await pool.execute(
+    `SELECT DISTINCT CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END as other_id
+     FROM messages WHERE sender_id = ? OR receiver_id = ?`,
+    [userId, userId, userId]
+  );
+
   const contacts = [];
+  for (const row of rows) {
+    const otherId = row.other_id;
+    if (otherId === userId) continue;
 
-  data.messages.forEach(m => {
-    const otherId = m.sender_id === userId ? m.receiver_id : (m.receiver_id === userId ? m.sender_id : null);
-    if (!otherId || otherId === userId || seen.has(otherId)) return;
-    seen.add(otherId);
+    const other = await getTalentById(otherId);
+    if (!other) continue;
 
-    const other = data.users.find(u => u.id === otherId);
-    if (!other) return;
+    const [lastRows] = await pool.execute(
+      `SELECT * FROM messages
+       WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+       ORDER BY sent_at DESC LIMIT 1`,
+      [userId, otherId, otherId, userId]
+    );
 
-    const thread = data.messages.filter(x =>
-      (x.sender_id === userId && x.receiver_id === otherId) ||
-      (x.sender_id === otherId && x.receiver_id === userId)
-    ).sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at));
-
-    const unread = data.messages.filter(x => x.sender_id === otherId && x.receiver_id === userId && !x.read).length;
+    const [[{ unread }]] = await pool.execute(
+      'SELECT COUNT(*) as unread FROM messages WHERE sender_id = ? AND receiver_id = ? AND `read` = 0',
+      [otherId, userId]
+    );
 
     contacts.push({
-      id: other.id,
-      prenom: other.prenom,
-      nom: other.nom,
-      initials: other.initials,
-      bg_color: other.bg_color,
-      text_color: other.text_color,
-      photo: other.photo || null,
-      skill: other.skill,
-      ville: other.ville,
+      id: other.id, prenom: other.prenom, nom: other.nom,
+      initials: other.initials, bg_color: other.bg_color, text_color: other.text_color,
+      photo: other.photo || null, skill: other.skill, ville: other.ville,
       availability: other.availability || 'available',
-      last_message: thread[0]?.text || '',
-      last_time: thread[0]?.sent_at || null,
+      last_message: lastRows[0]?.text || '',
+      last_time:    lastRows[0]?.sent_at || null,
       unread,
     });
-  });
+  }
 
   return contacts.sort((a, b) => new Date(b.last_time || 0) - new Date(a.last_time || 0));
 }
 
-function getMessages(userId, contactId) {
-  const data = load();
-  return data.messages
-    .filter(m =>
-      (m.sender_id === userId && m.receiver_id === contactId) ||
-      (m.sender_id === contactId && m.receiver_id === userId)
-    )
-    .sort((a, b) => new Date(a.sent_at) - new Date(b.sent_at))
-    .map(m => {
-      const sender = data.users.find(u => u.id === m.sender_id) || {};
-      return {
-        ...m,
-        sender_initials: sender.initials || '?',
-        sender_bg: sender.bg_color || '#ccc',
-        sender_col: sender.text_color || '#000',
-        sender_prenom: sender.prenom || '',
-        sender_nom: sender.nom || '',
-        sender_photo: sender.photo || null,
-      };
-    });
+async function getMessages(userId, contactId) {
+  const [rows] = await pool.execute(
+    `SELECT m.*, u.initials AS sender_initials, u.bg_color AS sender_bg,
+            u.text_color AS sender_col, u.prenom AS sender_prenom,
+            u.nom AS sender_nom, u.photo AS sender_photo
+     FROM messages m
+     LEFT JOIN users u ON u.id = m.sender_id
+     WHERE (m.sender_id = ? AND m.receiver_id = ?)
+        OR (m.sender_id = ? AND m.receiver_id = ?)
+     ORDER BY m.sent_at ASC`,
+    [userId, contactId, contactId, userId]
+  );
+  return rows;
 }
 
-function sendMessage(senderId, receiverId, text) {
-  const data = load();
-  const msg = {
-    id: data._nextId.messages++,
-    sender_id: senderId,
-    receiver_id: receiverId,
-    text,
-    read: 0,
-    sent_at: fmtISO(),
-  };
-  data.messages.push(msg);
-  save(data);
-  return msg;
+async function sendMessage(senderId, receiverId, text) {
+  const now = fmtISO();
+  const [result] = await pool.execute(
+    'INSERT INTO messages (sender_id,receiver_id,text,`read`,sent_at) VALUES (?,?,?,0,?)',
+    [senderId, receiverId, text, now]
+  );
+  return { id: result.insertId, sender_id: senderId, receiver_id: receiverId, text, read: 0, sent_at: now };
 }
 
-function markAsRead(userId, contactId) {
-  const data = load();
-  data.messages.forEach(m => {
-    if (m.sender_id === contactId && m.receiver_id === userId) m.read = 1;
-  });
-  save(data);
+async function markAsRead(userId, contactId) {
+  await pool.execute(
+    'UPDATE messages SET `read` = 1 WHERE sender_id = ? AND receiver_id = ?',
+    [contactId, userId]
+  );
 }
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────
-function createReview(body) {
-  const data = load();
-  if (!data.reviews) data.reviews = [];
+async function createReview(body) {
   const { talentId, reviewerId, rating, comment, transactionId } = body;
-  const reviewer = data.users.find(u => u.id === parseInt(reviewerId));
+  const reviewer = await getTalentById(parseInt(reviewerId));
+  const now = fmtISO();
 
-  const review = {
-    id: data._nextId.reviews++,
-    talent_id: parseInt(talentId),
-    reviewer_id: parseInt(reviewerId),
-    reviewer_name: reviewer ? `${reviewer.prenom} ${reviewer.nom[0]}.` : 'Anonyme',
-    reviewer_initials: reviewer ? reviewer.initials : '?',
-    reviewer_bg: reviewer ? reviewer.bg_color : '#ccc',
-    reviewer_col: reviewer ? reviewer.text_color : '#000',
-    rating: parseInt(rating),
-    comment: comment || '',
-    transaction_id: parseInt(transactionId) || null,
-    created_at: fmtISO(),
-  };
+  const [result] = await pool.execute(
+    `INSERT INTO reviews (talent_id,reviewer_id,reviewer_name,reviewer_initials,reviewer_bg,reviewer_col,rating,comment,transaction_id,created_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    [
+      parseInt(talentId), parseInt(reviewerId),
+      reviewer ? `${reviewer.prenom} ${reviewer.nom[0]}.` : 'Anonyme',
+      reviewer ? reviewer.initials : '?',
+      reviewer ? reviewer.bg_color : '#ccc',
+      reviewer ? reviewer.text_color : '#000',
+      parseInt(rating), comment || '',
+      parseInt(transactionId) || null, now,
+    ]
+  );
 
-  data.reviews.push(review);
+  const [[{ avg, cnt }]] = await pool.execute(
+    'SELECT AVG(rating) as avg, COUNT(*) as cnt FROM reviews WHERE talent_id = ?',
+    [parseInt(talentId)]
+  );
+  await pool.execute('UPDATE users SET rating = ?, reviews = ? WHERE id = ?', [
+    Math.round(avg * 10) / 10, cnt, parseInt(talentId),
+  ]);
 
-  // Recalculate talent rating
-  const talentReviews = data.reviews.filter(r => r.talent_id === parseInt(talentId));
-  const avgRating = talentReviews.reduce((s, r) => s + r.rating, 0) / talentReviews.length;
-  const tIdx = data.users.findIndex(u => u.id === parseInt(talentId));
-  if (tIdx !== -1) {
-    data.users[tIdx].rating = Math.round(avgRating * 10) / 10;
-    data.users[tIdx].reviews = talentReviews.length;
-  }
-
-  // Notification for talent
   if (reviewer) {
-    createNotificationInternal(data, {
+    await createNotification({
       userId: parseInt(talentId),
       type: 'review',
       message: `${reviewer.prenom} ${reviewer.nom[0]}. vous a laissé un avis ${rating} étoile${rating > 1 ? 's' : ''} ⭐`,
     });
   }
 
-  save(data);
-  return review;
+  return {
+    id: result.insertId, talent_id: parseInt(talentId), reviewer_id: parseInt(reviewerId),
+    reviewer_name: reviewer ? `${reviewer.prenom} ${reviewer.nom[0]}.` : 'Anonyme',
+    reviewer_initials: reviewer ? reviewer.initials : '?',
+    reviewer_bg: reviewer ? reviewer.bg_color : '#ccc',
+    reviewer_col: reviewer ? reviewer.text_color : '#000',
+    rating: parseInt(rating), comment: comment || '',
+    transaction_id: parseInt(transactionId) || null, created_at: now,
+  };
 }
 
-function getReviews(talentId) {
-  const data = load();
-  return (data.reviews || [])
-    .filter(r => r.talent_id === parseInt(talentId))
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+async function getReviews(talentId) {
+  const [rows] = await pool.execute(
+    'SELECT * FROM reviews WHERE talent_id = ? ORDER BY created_at DESC',
+    [parseInt(talentId)]
+  );
+  return rows;
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
-function createNotificationInternal(data, { userId, type, message }) {
-  if (!data.notifications) data.notifications = [];
-  if (!data._nextId.notifications) data._nextId.notifications = 1;
-  const notif = {
-    id: data._nextId.notifications++,
-    user_id: parseInt(userId),
-    type,
-    message,
-    read: 0,
-    created_at: fmtISO(),
-  };
-  data.notifications.push(notif);
-  return notif;
+async function createNotification({ userId, type, message }) {
+  const now = fmtISO();
+  const [result] = await pool.execute(
+    'INSERT INTO notifications (user_id,type,message,`read`,created_at) VALUES (?,?,?,0,?)',
+    [parseInt(userId), type, message, now]
+  );
+  return { id: result.insertId, user_id: parseInt(userId), type, message, read: 0, created_at: now };
 }
 
-function createNotification(body) {
-  const data = load();
-  const notif = createNotificationInternal(data, body);
-  save(data);
-  return notif;
+async function getNotifications(userId) {
+  const [rows] = await pool.execute(
+    'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50',
+    [parseInt(userId)]
+  );
+  return rows;
 }
 
-function getNotifications(userId) {
-  const data = load();
-  return (data.notifications || [])
-    .filter(n => n.user_id === parseInt(userId))
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 50);
+async function markNotificationRead(notifId) {
+  await pool.execute('UPDATE notifications SET `read` = 1 WHERE id = ?', [parseInt(notifId)]);
 }
 
-function markNotificationRead(notifId) {
-  const data = load();
-  const n = (data.notifications || []).find(n => n.id === parseInt(notifId));
-  if (n) { n.read = 1; save(data); }
-}
-
-function markAllNotificationsRead(userId) {
-  const data = load();
-  (data.notifications || []).forEach(n => {
-    if (n.user_id === parseInt(userId)) n.read = 1;
-  });
-  save(data);
+async function markAllNotificationsRead(userId) {
+  await pool.execute('UPDATE notifications SET `read` = 1 WHERE user_id = ?', [parseInt(userId)]);
 }
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
-function createTransaction(body) {
-  const data = load();
-  const { senderId, receiverId, amount, description, network } = body;
-  const commission = Math.round(amount * 0.07);
-  const net_amount = amount - commission;
-  const tx = {
-    id: data._nextId.transactions++,
-    sender_id:   parseInt(senderId),
-    receiver_id: parseInt(receiverId),
-    amount:      parseInt(amount),
-    commission,
-    net_amount,
-    description:       description || '',
-    network:           network || 'MTN MoMo',
-    status:            'escrow',
-    campay_reference:  body.campay_reference || null,
-    created_at:        fmtISO(),
-  };
-  if (!data.transactions) data.transactions = [];
-  data.transactions.push(tx);
+async function createTransaction(body) {
+  const { senderId, receiverId, amount, description, network, campay_reference } = body;
+  const amt = parseInt(amount);
+  const commission = Math.round(amt * 0.07);
+  const net_amount = amt - commission;
+  const now = fmtISO();
 
-  // Notifications
-  const sender = data.users.find(u => u.id === parseInt(senderId));
-  const receiver = data.users.find(u => u.id === parseInt(receiverId));
+  const [result] = await pool.execute(
+    `INSERT INTO transactions (sender_id,receiver_id,amount,commission,net_amount,description,network,type,status,campay_reference,created_at)
+     VALUES (?,?,?,?,?,?,?,'payment','escrow',?,?)`,
+    [parseInt(senderId), parseInt(receiverId), amt, commission, net_amount,
+     description||'', network||'MTN MoMo', campay_reference||null, now]
+  );
+
+  const sender   = await getTalentById(parseInt(senderId));
+  const receiver = await getTalentById(parseInt(receiverId));
   if (sender && receiver) {
-    createNotificationInternal(data, {
+    await createNotification({
       userId: parseInt(receiverId),
       type: 'payment',
       message: `${sender.prenom} ${sender.nom[0]}. vous a envoyé ${net_amount.toLocaleString('fr-FR')} FCFA pour "${description}"`,
     });
   }
 
-  save(data);
-  return tx;
+  return {
+    id: result.insertId,
+    sender_id: parseInt(senderId), receiver_id: parseInt(receiverId),
+    amount: amt, commission, net_amount,
+    description: description||'', network: network||'MTN MoMo',
+    type: 'payment', status: 'escrow',
+    campay_reference: campay_reference||null, created_at: now,
+  };
 }
 
-function getWallet(userId) {
-  const data = load();
-  const txs = data.transactions || [];
+async function getWallet(userId) {
   const uid = parseInt(userId);
+  const [txs] = await pool.execute(
+    'SELECT * FROM transactions WHERE sender_id = ? OR receiver_id = ?',
+    [uid, uid]
+  );
   const earned      = txs.filter(t => t.receiver_id === uid && t.status === 'completed');
   const escrow      = txs.filter(t => t.receiver_id === uid && t.status === 'escrow');
   const spent       = txs.filter(t => t.sender_id   === uid && t.status !== 'cancelled');
   const withdrawals = txs.filter(t => t.sender_id   === uid && t.type === 'withdrawal');
-  const totalEarned = earned.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0);
+  const totalEarned    = earned.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0);
   const totalWithdrawn = withdrawals.reduce((s, t) => s + t.amount, 0);
   return {
     available:   totalEarned - totalWithdrawn,
@@ -550,74 +581,85 @@ function getWallet(userId) {
   };
 }
 
-function getTransactions(userId) {
-  const data = load();
-  const txs = data.transactions || [];
+async function getTransactions(userId) {
   const uid = parseInt(userId);
-  return txs
-    .filter(t => t.sender_id === uid || t.receiver_id === uid)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const [rows] = await pool.execute(
+    'SELECT * FROM transactions WHERE sender_id = ? OR receiver_id = ? ORDER BY created_at DESC',
+    [uid, uid]
+  );
+  return rows;
 }
 
-function updateTransactionStatus(id, status) {
-  const data = load();
-  const tx = (data.transactions || []).find(t => t.id === parseInt(id));
-  if (!tx) return null;
-  tx.status = status;
-  if (status === 'completed') tx.completed_at = fmtISO();
-  save(data);
-  return tx;
+async function updateTransactionStatus(id, status) {
+  if (status === 'completed') {
+    await pool.execute('UPDATE transactions SET status = ?, completed_at = ? WHERE id = ?',
+      [status, fmtISO(), parseInt(id)]);
+  } else {
+    await pool.execute('UPDATE transactions SET status = ? WHERE id = ?', [status, parseInt(id)]);
+  }
+  const [rows] = await pool.execute('SELECT * FROM transactions WHERE id = ?', [parseInt(id)]);
+  return rows[0] || null;
 }
 
-// ─── Migration ────────────────────────────────────────────────────────────────
-function migrateData() {
-  const data = load();
-  let changed = false;
+async function createWithdrawal({ userId, amount, network, phone }) {
+  const uid = parseInt(userId);
+  const amt = parseInt(amount);
+  const wallet = await getWallet(uid);
+  if (wallet.available < amt) throw new Error('Solde insuffisant');
 
-  if (!data.transactions || data.transactions.length === 0) {
-    data.transactions = [
-      {id:1,sender_id:2,receiver_id:1,amount:10000,commission:700,net_amount:9300,description:'Cours de maths (2h)',network:'MTN MoMo',status:'completed',created_at:'2026-06-01T10:00:00'},
-      {id:2,sender_id:3,receiver_id:1,amount:5000,commission:350,net_amount:4650,description:"Cours d'algèbre (1h)",network:'Orange Money',status:'completed',created_at:'2026-06-02T14:00:00'},
-      {id:3,sender_id:4,receiver_id:1,amount:15000,commission:1050,net_amount:13950,description:'BAC blanc maths (3h)',network:'MTN MoMo',status:'escrow',created_at:'2026-06-04T09:00:00'},
-      {id:4,sender_id:5,receiver_id:1,amount:5000,commission:350,net_amount:4650,description:'Cours statistiques (1h)',network:'Orange Money',status:'completed',created_at:'2026-06-03T16:00:00'},
-      {id:5,sender_id:6,receiver_id:1,amount:15000,commission:1050,net_amount:13950,description:'Préparation examen (3h)',network:'MTN MoMo',status:'completed',created_at:'2026-05-28T10:00:00'},
-      {id:6,sender_id:1,receiver_id:2,amount:15000,commission:1050,net_amount:13950,description:'Logo entreprise',network:'MTN MoMo',status:'completed',created_at:'2026-05-20T09:00:00'},
-      {id:7,sender_id:1,receiver_id:4,amount:25000,commission:1750,net_amount:23250,description:'Site vitrine (5 pages)',network:'MTN MoMo',status:'escrow',created_at:'2026-06-03T11:00:00'},
-    ];
-    if (!data._nextId) data._nextId = {};
-    data._nextId.transactions = 8;
-    changed = true;
-  }
+  const now = fmtISO();
+  const [result] = await pool.execute(
+    `INSERT INTO transactions (sender_id,receiver_id,amount,commission,net_amount,description,network,phone,type,status,created_at)
+     VALUES (?,0,?,0,?,?,?,?,'withdrawal','pending',?)`,
+    [uid, amt, amt, `Retrait vers ${network||'Mobile Money'}`, network||'MTN MoMo', phone||'', now]
+  );
 
-  if (!data.reviews) { data.reviews = []; if (!data._nextId) data._nextId = {}; data._nextId.reviews = 1; changed = true; }
-  if (!data.notifications) { data.notifications = []; if (!data._nextId) data._nextId = {}; data._nextId.notifications = 1; changed = true; }
-
-  // Add availability to existing users
-  if (data.users && data.users.length > 0) {
-    data.users.forEach(u => {
-      if (u.availability === undefined) { u.availability = 'available'; changed = true; }
-      if (u.photo === undefined) { u.photo = null; changed = true; }
-    });
-  }
-
-  if (!data._nextId) { data._nextId = { users: 11, messages: 100, missions: 20, transactions: 8, reviews: 1, notifications: 1 }; changed = true; }
-
-  if (changed) {
-    save(data);
-    console.log('✅ Migration DB effectuée');
-  }
+  return {
+    id: result.insertId, sender_id: uid, receiver_id: 0,
+    amount: amt, commission: 0, net_amount: amt,
+    description: `Retrait vers ${network||'Mobile Money'}`,
+    network: network||'MTN MoMo', phone: phone||'',
+    type: 'withdrawal', status: 'pending', created_at: now,
+  };
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-seedIfEmpty();
-migrateData();
+async function createDeposit({ userId, amount, network, phone, campay_reference }) {
+  const uid = parseInt(userId);
+  const amt = parseInt(amount);
+  const status = campay_reference ? 'pending' : 'completed';
+  const now = fmtISO();
+
+  const [result] = await pool.execute(
+    `INSERT INTO transactions (sender_id,receiver_id,amount,commission,net_amount,description,network,phone,type,status,campay_reference,created_at)
+     VALUES (0,?,?,0,?,?,?,?,'deposit',?,?,?)`,
+    [uid, amt, amt, `Dépôt depuis ${network||'Mobile Money'}`, network||'MTN MoMo', phone||'',
+     status, campay_reference||null, now]
+  );
+
+  return {
+    id: result.insertId, sender_id: 0, receiver_id: uid,
+    amount: amt, commission: 0, net_amount: amt,
+    description: `Dépôt depuis ${network||'Mobile Money'}`,
+    network: network||'MTN MoMo', phone: phone||'',
+    type: 'deposit', status, campay_reference: campay_reference||null, created_at: now,
+  };
+}
+
+async function findTransactionByCampayRef(reference) {
+  const [rows] = await pool.execute(
+    'SELECT * FROM transactions WHERE campay_reference = ?',
+    [reference]
+  );
+  return rows[0] || null;
+}
 
 module.exports = {
+  init,
   getTalents, getTalentById, createUser, updateUser, findUserByEmail, deleteUser,
   getDashboardData,
   getContacts, getMessages, sendMessage, markAsRead,
   createTransaction, getWallet, getTransactions, updateTransactionStatus,
-  createWithdrawal, createDeposit,
+  createWithdrawal, createDeposit, findTransactionByCampayRef,
   createReview, getReviews,
   createNotification, getNotifications, markNotificationRead, markAllNotificationsRead,
 };
