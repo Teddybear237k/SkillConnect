@@ -1704,6 +1704,117 @@ footer{
   .wa-chat-panel.mobile-open{display:flex}
   .wa-wrap{height:calc(100vh - 64px)}
 }
+
+/* ─── Filtres avancés ───────────────────────────────────────────────── */
+.filters-panel{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:1.5rem;display:none;gap:1rem;flex-wrap:wrap;align-items:flex-end}
+.filters-panel.open{display:flex}
+.filter-group{display:flex;flex-direction:column;gap:.35rem;min-width:140px}
+.filter-group label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.filter-group input,.filter-group select{padding:.45rem .7rem;border:1.5px solid var(--hairline);border-radius:var(--r-sm);font-size:.85rem;background:var(--surface);color:var(--ink);outline:none}
+.filter-group input:focus,.filter-group select:focus{border-color:var(--g400)}
+.filter-btn-row{display:flex;gap:.5rem;align-items:center}
+.btn-filter-toggle{display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border:1.5px solid var(--hairline);border-radius:var(--r-full);background:var(--card);color:var(--muted);font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-filter-toggle:hover,.btn-filter-toggle.active{border-color:var(--g400);color:var(--g600);background:var(--g50)}
+.btn-filter-reset{padding:.5rem .9rem;border:none;background:none;color:var(--muted);font-size:.82rem;cursor:pointer;border-radius:var(--r-full)}
+.btn-filter-reset:hover{color:var(--ink);background:var(--hairline)}
+html.dark .filter-group input,html.dark .filter-group select{background:var(--card);border-color:var(--hairline);color:var(--ink)}
+
+/* ─── Portfolio ─────────────────────────────────────────────────────── */
+.portfolio-section{margin-top:1.5rem;border-top:1px solid var(--hairline);padding-top:1.25rem}
+.portfolio-section h4{font-size:.85rem;font-weight:700;color:var(--ink2);margin-bottom:.75rem}
+.portfolio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem}
+.portfolio-item{border-radius:var(--r-md);overflow:hidden;background:var(--surface);border:1px solid var(--hairline);cursor:pointer;transition:transform .2s}
+.portfolio-item:hover{transform:scale(1.03)}
+.portfolio-item img{width:100%;height:90px;object-fit:cover;display:block}
+.portfolio-item-info{padding:.4rem .5rem;font-size:.72rem;font-weight:600;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.portfolio-placeholder{color:var(--subtle);font-size:.82rem;padding:.5rem 0}
+.dash-portfolio{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-lg);padding:1.25rem;margin-top:1.5rem}
+.dash-portfolio h3{font-size:.9rem;font-weight:700;color:var(--ink2);margin-bottom:1rem}
+.portfolio-add-form{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem}
+.portfolio-add-form input,.portfolio-add-form textarea{padding:.5rem .75rem;border:1.5px solid var(--hairline);border-radius:var(--r-sm);font-size:.85rem;background:var(--surface);color:var(--ink);outline:none;font-family:inherit}
+.portfolio-add-form input:focus,.portfolio-add-form textarea:focus{border-color:var(--g400)}
+.portfolio-add-form textarea{resize:vertical;min-height:60px}
+.portfolio-items-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem}
+.portfolio-manage-item{position:relative;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--hairline)}
+.portfolio-manage-item img{width:100%;height:85px;object-fit:cover;display:block}
+.portfolio-manage-item .del-btn{position:absolute;top:.3rem;right:.3rem;background:rgba(229,62,62,.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.portfolio-manage-item-title{padding:.35rem .5rem;font-size:.72rem;font-weight:600;color:var(--ink3)}
+html.dark .portfolio-add-form input,html.dark .portfolio-add-form textarea{background:var(--card);border-color:var(--hairline)}
+
+/* ─── Admin panel ───────────────────────────────────────────────────── */
+.admin-login-card{max-width:380px;margin:4rem auto;background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:2rem}
+.admin-login-card h2{font-size:1.1rem;font-weight:700;margin-bottom:1.5rem;color:var(--ink)}
+.admin-stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
+.admin-stat{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-lg);padding:1.1rem}
+.admin-stat-val{font-size:1.6rem;font-weight:800;color:var(--g600);font-family:var(--font-display)}
+.admin-stat-label{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+.admin-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:.75rem}
+.admin-table th{text-align:left;padding:.5rem .75rem;background:var(--surface);color:var(--muted);font-weight:600;border-bottom:1px solid var(--hairline)}
+.admin-table td{padding:.5rem .75rem;border-bottom:1px solid var(--hairline);color:var(--ink3)}
+.admin-table tr:hover td{background:var(--surface)}
+.admin-section-title{font-size:.9rem;font-weight:700;color:var(--ink2);margin:2rem 0 .75rem}
+.btn-toggle-valid{padding:.25rem .6rem;border-radius:var(--r-full);font-size:.72rem;font-weight:600;border:none;cursor:pointer}
+.btn-toggle-valid.active{background:var(--g100);color:var(--g800)}
+.btn-toggle-valid.inactive{background:rgba(229,62,62,.1);color:#c53030}
+html.dark .admin-stat{background:var(--card)}
+/* ─── Email verification banner ─────────────────────────────────────── */
+.email-banner{display:flex;align-items:center;gap:.75rem;background:#FEF9E7;border:1px solid #F9A825;border-radius:var(--r-lg);padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.83rem}
+.email-banner svg{flex-shrink:0;width:18px;height:18px;stroke:#F9A825}
+.email-banner-text{flex:1;color:#5D4037}
+.email-banner-btn{background:transparent;border:1px solid #F9A825;color:#5D4037;border-radius:var(--r-full);padding:.25rem .75rem;cursor:pointer;font-size:.78rem;white-space:nowrap;transition:all .15s}
+.email-banner-btn:hover{background:#F9A825;color:#fff}
+html.dark .email-banner{background:rgba(249,168,37,.1);border-color:#F9A825}
+html.dark .email-banner-text{color:#fdd835}
+
+/* ─── Profile completion card ───────────────────────────────────────── */
+.completion-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:1.25rem;margin-bottom:1rem}
+.completion-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.completion-title{font-size:.9rem;font-weight:700;color:var(--ink)}
+.completion-pct{font-size:1.1rem;font-weight:800;color:var(--g600);font-family:var(--font-display)}
+.completion-bar-track{height:7px;background:var(--hairline);border-radius:4px;overflow:hidden;margin-bottom:.9rem}
+.completion-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--g500),var(--g400));transition:width .6s var(--ease-out-expo)}
+.completion-items{display:flex;flex-direction:column;gap:.35rem}
+.completion-item{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--muted)}
+.completion-item.done{color:var(--g600)}
+.completion-item-action{margin-left:auto;font-size:.72rem;color:var(--g600);cursor:pointer;text-decoration:underline;white-space:nowrap}
+
+/* ─── Onboarding overlay ─────────────────────────────────────────────── */
+.onboarding-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;display:none;align-items:center;justify-content:center}
+.onboarding-overlay.open{display:flex}
+.onboarding-card{background:var(--card);border-radius:var(--r-xl);padding:2rem 1.75rem;max-width:440px;width:92%;animation:fade-up .4s var(--ease-out-expo)}
+.onboarding-title{font-size:1.3rem;font-weight:800;color:var(--ink);text-align:center;margin-bottom:.4rem;font-family:var(--font-display)}
+.onboarding-sub{font-size:.85rem;color:var(--muted);text-align:center;margin-bottom:1.5rem}
+.onboarding-steps{display:flex;flex-direction:column;gap:1rem;margin-bottom:1.75rem}
+.onboarding-step{display:flex;gap:1rem;align-items:flex-start;padding:.85rem;background:var(--surface);border-radius:var(--r-lg)}
+.onboarding-step-icon{width:38px;height:38px;border-radius:50%;background:var(--g50);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.onboarding-step-body strong{display:block;font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:.15rem}
+.onboarding-step-body span{font-size:.79rem;color:var(--muted);line-height:1.4}
+.onboarding-cta{width:100%;padding:.85rem;border-radius:var(--r-lg);background:var(--g600);color:#fff;border:none;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s}
+.onboarding-cta:hover{background:var(--g500)}
+
+/* ─── Pagination ─────────────────────────────────────────────────────── */
+.pagination{display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:2rem;flex-wrap:wrap}
+.page-btn{padding:.4rem .75rem;border:1px solid var(--hairline);border-radius:var(--r-md);background:var(--card);color:var(--ink);cursor:pointer;font-size:.82rem;transition:all .15s;min-width:36px;text-align:center}
+.page-btn:hover{border-color:var(--g500);color:var(--g600)}
+.page-btn.active{background:var(--g600);color:#fff;border-color:var(--g600)}
+.page-btn:disabled{opacity:.4;cursor:default}
+.page-info{font-size:.78rem;color:var(--muted);text-align:center;margin-top:.5rem}
+
+/* ─── Litige & Signalement ───────────────────────────────────────────── */
+.dispute-btn{background:transparent;border:1px solid #e69d0a;color:#e69d0a;border-radius:var(--r-full);padding:.2rem .65rem;font-size:.71rem;cursor:pointer;display:inline-flex;align-items:center;gap:.25rem;font-weight:600;transition:all .2s}
+.dispute-btn:hover{background:#e69d0a;color:#fff}
+.dispute-btn.open{background:rgba(229,62,62,.1);border-color:#e53e3e;color:#e53e3e;cursor:default;pointer-events:none}
+.report-btn{background:transparent;border:none;color:var(--muted);font-size:.76rem;cursor:pointer;padding:.3rem .5rem;border-radius:var(--r-sm);transition:color .2s;display:inline-flex;align-items:center;gap:.3rem;margin-top:.35rem}
+.report-btn:hover{color:#e53e3e}
+.litige-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:none;align-items:center;justify-content:center}
+.litige-overlay.open{display:flex}
+.litige-card{background:var(--card);border-radius:var(--r-xl);padding:1.75rem;max-width:420px;width:90%;animation:fade-up .3s var(--ease-out-expo)}
+.litige-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;color:var(--ink)}
+.litige-card textarea,.litige-card select{width:100%;padding:.65rem;border:1px solid var(--hairline);border-radius:var(--r-md);font-size:.88rem;background:var(--surface);color:var(--ink);font-family:inherit;box-sizing:border-box}
+.litige-card textarea{resize:vertical;min-height:80px}
+.litige-btns{display:flex;gap:.75rem;margin-top:1rem;justify-content:flex-end}
+.litige-btn-cancel{background:transparent;border:1px solid var(--hairline);color:var(--ink);padding:.5rem 1rem;border-radius:var(--r-full);cursor:pointer;font-size:.85rem}
+.litige-btn-submit{background:#e53e3e;color:#fff;border:none;padding:.5rem 1.25rem;border-radius:var(--r-full);cursor:pointer;font-size:.85rem;font-weight:600}
 </style>
 </head>
 <body>
@@ -1728,6 +1839,7 @@ footer{
     <div class="nav-link" onclick="showPage('paiement',this)">Paiement</div>
     <div class="nav-link" onclick="showPage('dashboard',this)">Tableau de bord</div>
     <div class="nav-link" onclick="showPage('messages',this)">Messages</div>
+    <div class="nav-link" id="navAdminLink" onclick="showPage('admin',this)" style="display:none;color:var(--a500)">Admin</div>
     <button class="nav-login" id="navLoginBtn" onclick="openLoginModal()">Se connecter</button>
     <button class="nav-cta" id="navCreateBtn" onclick="showPage('inscription',document.querySelectorAll('.nav-link')[2])">Créer un profil</button>
   </div>
@@ -1993,7 +2105,52 @@ footer{
       </button>
     </div>
 
+    <!-- Filtres avancés -->
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+      <button class="btn-filter-toggle" id="filterToggleBtn" onclick="toggleFilters()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        Filtres
+      </button>
+      <button class="btn-filter-reset" id="filterResetBtn" onclick="resetFilters()" style="display:none">Réinitialiser</button>
+    </div>
+    <div class="filters-panel" id="filtersPanel">
+      <div class="filter-group">
+        <label>Ville</label>
+        <select id="filterVille" onchange="renderTalents()">
+          <option value="">Toutes les villes</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Prix min (FCFA)</label>
+        <input type="number" id="filterPrixMin" placeholder="0" min="0" step="500" oninput="renderTalents()"/>
+      </div>
+      <div class="filter-group">
+        <label>Prix max (FCFA)</label>
+        <input type="number" id="filterPrixMax" placeholder="Sans limite" min="0" step="500" oninput="renderTalents()"/>
+      </div>
+      <div class="filter-group">
+        <label>Disponibilité</label>
+        <select id="filterDispo" onchange="renderTalents()">
+          <option value="">Tous</option>
+          <option value="available">Disponible</option>
+          <option value="busy">Occupé</option>
+          <option value="pause">En pause</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Trier par</label>
+        <select id="filterSort" onchange="renderTalents()">
+          <option value="">Mieux notés</option>
+          <option value="price_asc">Prix croissant</option>
+          <option value="price_desc">Prix décroissant</option>
+          <option value="newest">Plus récents</option>
+        </select>
+      </div>
+    </div>
+
     <div class="talents-grid" id="talentsGrid"></div>
+    <div class="pagination" id="talentsPagination" style="display:none"></div>
+    <div class="page-info" id="talentsPageInfo"></div>
   </section>
 </div>
 
@@ -2406,6 +2563,13 @@ footer{
     <div class="section-eyebrow fade-up">Mon espace</div>
     <h2 class="section-title fade-up" style="margin-bottom:2rem">Tableau de bord</h2>
 
+    <!-- Bannière email non vérifié -->
+    <div class="email-banner fade-up" id="emailVerifyBanner" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.72 11.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.81-.81a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.73 16z"/></svg>
+      <span class="email-banner-text">Votre email n'est pas encore vérifié. Vérifiez votre boîte mail ou renvoyez le lien.</span>
+      <button class="email-banner-btn" onclick="resendVerifyEmail(this)">Renvoyer</button>
+    </div>
+
     <div id="dashNoProfile" class="dash-no-profile" style="display:none">
       <div class="dash-no-profile-icon">👤</div>
       <h3>Vous n'avez pas encore de profil</h3>
@@ -2470,6 +2634,18 @@ footer{
       </div>
     </div>
 
+    <!-- Carte complétion du profil -->
+    <div class="completion-card fade-up" id="profileCompletionCard" style="display:none">
+      <div class="completion-header">
+        <span class="completion-title">Complétion du profil</span>
+        <span class="completion-pct" id="completionPct">0%</span>
+      </div>
+      <div class="completion-bar-track">
+        <div class="completion-bar-fill" id="completionBarFill" style="width:0%"></div>
+      </div>
+      <div class="completion-items" id="completionItems"></div>
+    </div>
+
     <div class="dash-grid">
       <div class="dash-panel fade-up">
         <div class="dash-panel-title">Compétences les plus demandées</div>
@@ -2481,6 +2657,23 @@ footer{
       </div>
     </div>
     <div class="dash-account-actions fade-up">
+      <!-- Portfolio -->
+      <div class="dash-portfolio fade-up">
+        <h3>Mon portfolio</h3>
+        <div class="portfolio-add-form">
+          <input type="text" id="portTitle" placeholder="Titre du projet *" maxlength="100"/>
+          <textarea id="portDesc" placeholder="Description (optionnel)" rows="2"></textarea>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--muted)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Ajouter une image
+            <input type="file" accept="image/*" id="portImage" style="display:none" onchange="previewPortImage(this)"/>
+          </label>
+          <div id="portImagePreview" style="display:none"><img id="portPreviewImg" style="max-height:80px;border-radius:var(--r-sm);object-fit:cover"/></div>
+          <button class="form-submit" style="margin:0;padding:.55rem 1rem;font-size:.82rem" onclick="addPortfolioItem()">Ajouter au portfolio</button>
+        </div>
+        <div class="portfolio-items-list" id="dashPortfolioList"></div>
+      </div>
+
       <button class="btn-logout" onclick="logoutUser()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Se déconnecter
@@ -2569,7 +2762,7 @@ footer{
           <button class="wa-emoji-btn" title="Emoji" onclick="insertEmoji()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5" stroke-linecap="round"/></svg>
           </button>
-          <input class="wa-input-main" id="waInput" placeholder="Tapez un message" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWAMsg()}"/>
+          <input class="wa-input-main" id="waInput" placeholder="Tapez un message" oninput="emitTyping()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWAMsg()}"/>
           <button class="wa-attach-btn" title="Joindre un fichier" onclick="toast('Pièces jointes — bientôt disponible')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px;height:24px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
@@ -2628,11 +2821,94 @@ footer{
           Payer directement
         </button>
       </div>
+      <button class="report-btn" onclick="openReportModal(currentModalTalentId)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Signaler ce profil
+      </button>
       <!-- Section avis -->
       <div class="reviews-section" id="modalReviewsSection">
         <h4>Avis clients</h4>
         <div id="modalReviewsList"><div style="color:var(--subtle);font-size:.82rem">Chargement…</div></div>
       </div>
+      <!-- Section portfolio -->
+      <div class="portfolio-section" id="modalPortfolioSection" style="display:none">
+        <h4>Portfolio</h4>
+        <div class="portfolio-grid" id="modalPortfolioGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING MODAL -->
+<div class="onboarding-overlay" id="onboardingOverlay">
+  <div class="onboarding-card">
+    <div class="onboarding-title">🎉 Bienvenue sur SkillConnect !</div>
+    <div class="onboarding-sub">Voici comment tirer le meilleur de la plateforme</div>
+    <div class="onboarding-steps">
+      <div class="onboarding-step">
+        <div class="onboarding-step-icon">✏️</div>
+        <div class="onboarding-step-body">
+          <strong>Complétez votre profil</strong>
+          <span>Ajoutez une photo, une bio et votre tarif — les profils complets reçoivent 3× plus de demandes.</span>
+        </div>
+      </div>
+      <div class="onboarding-step">
+        <div class="onboarding-step-icon">🔍</div>
+        <div class="onboarding-step-body">
+          <strong>Explorez les talents</strong>
+          <span>Trouvez des prestataires pour vos projets via la recherche et les filtres avancés.</span>
+        </div>
+      </div>
+      <div class="onboarding-step">
+        <div class="onboarding-step-icon">💰</div>
+        <div class="onboarding-step-body">
+          <strong>Paiement sécurisé Mobile Money</strong>
+          <span>MTN MoMo &amp; Orange Money — les fonds sont bloqués en séquestre jusqu'à la validation.</span>
+        </div>
+      </div>
+    </div>
+    <button class="onboarding-cta" onclick="closeOnboarding()">Commencer →</button>
+  </div>
+</div>
+
+<!-- DISPUTE MODAL -->
+<div class="litige-overlay" id="disputeOverlay" onclick="if(event.target===this)closeDisputeModal()">
+  <div class="litige-card">
+    <h3>⚠ Ouvrir un litige</h3>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:1rem">Décrivez le problème. L'équipe SkillConnect examinera votre litige sous 48h.</p>
+    <div style="font-size:.8rem;font-weight:600;color:var(--ink);margin-bottom:.25rem">Mission concernée</div>
+    <div id="disputeMissionName" style="font-size:.83rem;color:var(--muted);margin-bottom:.9rem"></div>
+    <div style="font-size:.8rem;font-weight:600;color:var(--ink);margin-bottom:.35rem">Motif du litige *</div>
+    <textarea id="disputeReason" placeholder="Expliquez pourquoi vous ouvrez ce litige…"></textarea>
+    <div id="disputeMsg" style="display:none;margin-top:.6rem;font-size:.82rem;padding:.5rem .75rem;border-radius:var(--r-sm)"></div>
+    <div class="litige-btns">
+      <button class="litige-btn-cancel" onclick="closeDisputeModal()">Annuler</button>
+      <button class="litige-btn-submit" onclick="submitDispute()">Ouvrir le litige</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="litige-overlay" id="reportOverlay" onclick="if(event.target===this)closeReportModal()">
+  <div class="litige-card">
+    <h3>🚩 Signaler un profil</h3>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:1rem">Votre signalement sera examiné par l'équipe SkillConnect.</p>
+    <div style="font-size:.8rem;font-weight:600;color:var(--ink);margin-bottom:.25rem">Profil signalé</div>
+    <div id="reportTargetName" style="font-size:.83rem;color:var(--muted);margin-bottom:.9rem"></div>
+    <div style="font-size:.8rem;font-weight:600;color:var(--ink);margin-bottom:.35rem">Motif *</div>
+    <select id="reportReason" style="margin-bottom:.75rem">
+      <option value="">Choisissez un motif…</option>
+      <option value="spam">Spam ou arnaque</option>
+      <option value="comportement">Comportement inapproprié</option>
+      <option value="faux_profil">Faux profil</option>
+      <option value="harcelement">Harcèlement</option>
+      <option value="autre">Autre</option>
+    </select>
+    <textarea id="reportDescription" placeholder="Détails supplémentaires (optionnel)…" style="min-height:60px"></textarea>
+    <div id="reportMsg" style="display:none;margin-top:.6rem;font-size:.82rem;padding:.5rem .75rem;border-radius:var(--r-sm)"></div>
+    <div class="litige-btns">
+      <button class="litige-btn-cancel" onclick="closeReportModal()">Annuler</button>
+      <button class="litige-btn-submit" onclick="submitReport()">Envoyer</button>
     </div>
   </div>
 </div>
@@ -2663,12 +2939,127 @@ footer{
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Se connecter
       </button>
-      <p style="text-align:center;font-size:.82rem;color:var(--muted);margin-top:1rem">
+      <p style="text-align:center;font-size:.82rem;color:var(--muted);margin-top:.75rem">
+        <a style="color:var(--g500);cursor:pointer;font-weight:500" onclick="openForgotPassword()">Mot de passe oublié ?</a>
+      </p>
+      <p style="text-align:center;font-size:.82rem;color:var(--muted);margin-top:.5rem">
         Pas encore de compte ?
         <a style="color:var(--g500);cursor:pointer;font-weight:500" onclick="closeLoginModal();showPage('inscription',document.querySelectorAll('.nav-link')[2])">Créer un profil</a>
       </p>
     </div>
   </div>
+</div>
+
+<!-- MOT DE PASSE OUBLIE -->
+<div class="modal-overlay" id="forgotOverlay" onclick="if(event.target===this)closeForgotPassword()">
+  <div class="modal login-modal" id="forgotModal">
+    <div class="modal-header" style="border-bottom:1px solid var(--hairline);padding-bottom:1rem;margin-bottom:1.5rem">
+      <div>
+        <div class="modal-name">Mot de passe oublié</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:.2rem">Recevez un lien de réinitialisation</div>
+      </div>
+      <button class="modal-close" onclick="closeForgotPassword()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12" stroke-width="2"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <div class="form-group full" style="margin-bottom:1rem">
+        <label class="form-label">Votre email</label>
+        <input type="email" class="form-input" id="forgotEmail" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')sendResetEmail()"/>
+      </div>
+      <div id="forgotMsg" style="display:none;font-size:.82rem;margin-bottom:1rem;padding:.75rem;border-radius:var(--r-sm)"></div>
+      <button class="form-submit" style="width:100%;margin:0" onclick="sendResetEmail()">Envoyer le lien</button>
+      <p style="text-align:center;font-size:.82rem;color:var(--muted);margin-top:1rem">
+        <a style="color:var(--g500);cursor:pointer" onclick="closeForgotPassword();openLoginModal()">Retour à la connexion</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- REINITIALISATION MOT DE PASSE -->
+<div class="modal-overlay" id="resetOverlay" onclick="if(event.target===this)closeResetModal()">
+  <div class="modal login-modal" id="resetModal">
+    <div class="modal-header" style="border-bottom:1px solid var(--hairline);padding-bottom:1rem;margin-bottom:1.5rem">
+      <div>
+        <div class="modal-name">Nouveau mot de passe</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:.2rem">Choisissez un nouveau mot de passe</div>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <div class="form-group full" style="margin-bottom:1rem">
+        <label class="form-label">Nouveau mot de passe</label>
+        <input type="password" class="form-input" id="resetPassword" placeholder="Minimum 6 caractères" onkeydown="if(event.key==='Enter')submitResetPassword()"/>
+      </div>
+      <div class="form-group full" style="margin-bottom:1.5rem">
+        <label class="form-label">Confirmer</label>
+        <input type="password" class="form-input" id="resetPasswordConfirm" placeholder="Répétez le mot de passe" onkeydown="if(event.key==='Enter')submitResetPassword()"/>
+      </div>
+      <div id="resetMsg" style="display:none;font-size:.82rem;margin-bottom:1rem;padding:.75rem;border-radius:var(--r-sm)"></div>
+      <button class="form-submit" style="width:100%;margin:0" onclick="submitResetPassword()">Changer le mot de passe</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════ ADMIN ════════════════════════ -->
+<div class="page" id="page-admin" style="padding-top:80px">
+  <section style="padding-top:2.5rem">
+    <div class="section-eyebrow">Administration</div>
+    <h2 class="section-title" style="margin-bottom:2rem">Panel Admin</h2>
+
+    <!-- Login admin -->
+    <div id="adminLoginSection">
+      <div class="admin-login-card">
+        <h2>Accès restreint</h2>
+        <div class="form-group full" style="margin-bottom:1rem">
+          <label class="form-label">Mot de passe admin</label>
+          <input type="password" class="form-input" id="adminPassInput" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')adminLogin()"/>
+        </div>
+        <div id="adminLoginError" style="display:none;color:#e53e3e;font-size:.82rem;margin-bottom:1rem"></div>
+        <button class="form-submit" style="width:100%;margin:0" onclick="adminLogin()">Connexion admin</button>
+      </div>
+    </div>
+
+    <!-- Dashboard admin -->
+    <div id="adminDashSection" style="display:none">
+      <div class="admin-stats-grid" id="adminStatsGrid"></div>
+
+      <div class="admin-section-title">Utilisateurs</div>
+      <div style="overflow-x:auto">
+        <table class="admin-table">
+          <thead><tr><th>ID</th><th>Nom</th><th>Email</th><th>Ville</th><th>Compétence</th><th>Note</th><th>Inscrit le</th><th>Statut</th></tr></thead>
+          <tbody id="adminUsersBody"></tbody>
+        </table>
+      </div>
+
+      <div class="admin-section-title">Transactions récentes</div>
+      <div style="overflow-x:auto">
+        <table class="admin-table">
+          <thead><tr><th>ID</th><th>De</th><th>À</th><th>Montant</th><th>Commission</th><th>Type</th><th>Statut</th><th>Date</th></tr></thead>
+          <tbody id="adminTxBody"></tbody>
+        </table>
+      </div>
+
+      <div class="admin-section-title" style="margin-top:2rem">Litiges ouverts</div>
+      <div style="overflow-x:auto">
+        <table class="admin-table">
+          <thead><tr><th>ID</th><th>Transaction</th><th>Talent</th><th>Client</th><th>Motif</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="adminDisputesBody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1rem">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="admin-section-title" style="margin-top:2rem">Signalements</div>
+      <div style="overflow-x:auto">
+        <table class="admin-table">
+          <thead><tr><th>ID</th><th>Signaleur</th><th>Signalé</th><th>Motif</th><th>Description</th><th>Statut</th><th>Date</th></tr></thead>
+          <tbody id="adminReportsBody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1rem">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:2rem">
+        <button class="btn-logout" onclick="adminLogout()">Déconnexion admin</button>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -2733,15 +3124,22 @@ let waContacts = [];
 let currentModalTalentId = null;
 
 // ═══ API ═════════════════════════════════════════════════════════════
-async function api(path, opts = {}) {
+async function api(path, methodOrOpts = {}, bodyArg = null) {
   try {
+    let fetchOpts = {};
+    if (typeof methodOrOpts === 'string') {
+      fetchOpts.method = methodOrOpts;
+      if (bodyArg) fetchOpts.body = bodyArg;
+    } else {
+      fetchOpts = methodOrOpts;
+    }
     const token = localStorage.getItem('sc_token');
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = 'Bearer ' + token;
     const res = await fetch('/api' + path, {
       headers,
-      ...opts,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      ...fetchOpts,
+      body: fetchOpts.body ? JSON.stringify(fetchOpts.body) : undefined,
     });
     if (res.status === 401) {
       // Token expiré ou révoqué — déconnexion silencieuse
@@ -2785,9 +3183,9 @@ function showPage(id,linkEl){
   if(linkEl) linkEl.classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
   document.getElementById('navLinks').classList.remove('open');
-  if(id==='dashboard') initDashboard();
+  if(id==='dashboard') { initDashboard(); loadDashPortfolio(); }
   if(id==='messages') initWA();
-  if(id==='explorer') renderTalents();
+  if(id==='explorer') { renderTalents(); loadVilles(); }
   if(id==='paiement') initPayPage();
   triggerFadeUps();
 }
@@ -2830,6 +3228,10 @@ function filterAndGo(cat){
 }
 
 // ═══ TALENTS ═════════════════════════════════════════════════════════
+const TALENTS_PER_PAGE = 9;
+let currentPage = 1;
+let talentsTotal = 0;
+
 // Debounce pour la recherche
 function debounce(fn, delay){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), delay); }; }
 
@@ -2846,12 +3248,28 @@ async function renderTalents(){
   const params=new URLSearchParams();
   if(currentCat!=='Tous')params.set('cat',currentCat);
   if(q)params.set('q',q);
+  const ville   = document.getElementById('filterVille')?.value;
+  const prixMin = document.getElementById('filterPrixMin')?.value;
+  const prixMax = document.getElementById('filterPrixMax')?.value;
+  const dispo   = document.getElementById('filterDispo')?.value;
+  const sort    = document.getElementById('filterSort')?.value;
+  if(ville)   params.set('ville',   ville);
+  if(prixMin) params.set('tarif_min', prixMin);
+  if(prixMax) params.set('tarif_max', prixMax);
+  if(dispo)   params.set('availability', dispo);
+  if(sort)    params.set('sort', sort);
+  const resetBtn = document.getElementById('filterResetBtn');
+  if(resetBtn) resetBtn.style.display = hasActiveFilters() ? 'inline-block' : 'none';
+
+  params.set('page', currentPage);
+  params.set('limit', TALENTS_PER_PAGE);
 
   let data=await api('/talents?'+params);
   let talents;
 
-  if(data){
-    talents=data.map(u=>({
+  if(data && data.talents){
+    talentsTotal = data.total || 0;
+    talents=data.talents.map(u=>({
       id:u.id,initials:u.initials,bg:u.bg_color,col:u.text_color,
       name:`${u.prenom} ${u.nom}`,skill:u.skill,cat:u.cat,city:u.ville,
       rating:u.rating,reviews:u.reviews,
@@ -2860,15 +3278,17 @@ async function renderTalents(){
       tags:[]
     }));
   } else {
-    talents=TALENTS.filter(t=>{
+    const all=TALENTS.filter(t=>{
       const mainCats=['Cours','Design','Informatique','Couture','Photo'];
       const matchCat=currentCat==='Tous'||(currentCat==='Autres'?!mainCats.includes(t.cat):t.cat===currentCat);
       const matchQ=!q||t.name.toLowerCase().includes(q)||t.skill.toLowerCase().includes(q)||(t.city||'').toLowerCase().includes(q);
       return matchCat&&matchQ;
     }).map(t=>({...t,availability:'available',photo:null}));
+    talentsTotal = all.length;
+    talents = all.slice((currentPage-1)*TALENTS_PER_PAGE, currentPage*TALENTS_PER_PAGE);
   }
 
-  document.getElementById('talent-count').textContent=talents.length;
+  document.getElementById('talent-count').textContent=talentsTotal;
   if(!talents.length){
     grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted)"><p style="font-size:2rem;margin-bottom:.5rem">🔍</p><p>Aucun talent trouvé. Essayez une autre catégorie.</p></div>`;
     return;
@@ -2902,14 +3322,52 @@ async function renderTalents(){
       <div class="card-hover-cta">Voir le profil →</div>
     </div>`).join('');
   requestAnimationFrame(() => loadCityWeather(talents));
+  renderPagination(talentsTotal, talents.length);
 }
+
+function renderPagination(total, count) {
+  const pag  = document.getElementById('talentsPagination');
+  const info = document.getElementById('talentsPageInfo');
+  const totalPages = Math.ceil(total / TALENTS_PER_PAGE);
+  const start = (currentPage - 1) * TALENTS_PER_PAGE + 1;
+  const end   = Math.min(currentPage * TALENTS_PER_PAGE, total);
+
+  if (info) info.textContent = total > 0 ? `Affichant ${start}–${end} sur ${total} talent${total>1?'s':''}` : '';
+
+  if (!pag) return;
+  if (totalPages <= 1) { pag.style.display='none'; return; }
+  pag.style.display = 'flex';
+
+  const pages = [];
+  // Précédent
+  pages.push(`<button class="page-btn" onclick="goToPage(${currentPage-1})" ${currentPage===1?'disabled':''}>←</button>`);
+  // Numéros (max 5 visibles)
+  const range = 2;
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || (p >= currentPage - range && p <= currentPage + range)) {
+      pages.push(`<button class="page-btn${p===currentPage?' active':''}" onclick="goToPage(${p})">${p}</button>`);
+    } else if (p === currentPage - range - 1 || p === currentPage + range + 1) {
+      pages.push(`<span style="padding:.4rem .2rem;color:var(--muted)">…</span>`);
+    }
+  }
+  // Suivant
+  pages.push(`<button class="page-btn" onclick="goToPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>→</button>`);
+  pag.innerHTML = pages.join('');
+}
+
+function goToPage(p) {
+  currentPage = p;
+  renderTalents();
+  document.getElementById('page-explorer')?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
 function setCat(cat,btn){
-  currentCat=cat;
+  currentCat=cat; currentPage=1;
   document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderTalents();
 }
-const debouncedFilter = debounce(()=>{ currentSearch=document.getElementById('explorerSearch').value; renderTalents(); }, 300);
+const debouncedFilter = debounce(()=>{ currentPage=1; currentSearch=document.getElementById('explorerSearch').value; renderTalents(); }, 300);
 function filterTalents(){ debouncedFilter(); }
 
 // ═══ MODAL ═══════════════════════════════════════════════════════════
@@ -2943,6 +3401,7 @@ async function openModal(id){
   }
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow='hidden';
+  loadModalPortfolio(t.id || id);
 
   // Réinitialisation complète de la section avis (évite toute duplication)
   pendingReviewRating = 0;
@@ -3087,6 +3546,7 @@ async function submitForm(){
   document.getElementById('formSuccessMsg').textContent=`Bienvenue ${prenom} ! Ton profil est en cours de validation. Tu recevras un SMS au ${phone} dans les 24h.`;
   toast('Profil créé avec succès !');
   updateNavUser();
+  if (window._checkOnboarding) window._checkOnboarding();
 }
 
 function resetForm(){
@@ -3146,6 +3606,7 @@ async function loginUser(){
     updateNavUser();
     toast('Bienvenue '+u.prenom+' !');
     showPage('dashboard',document.querySelectorAll('.nav-link')[4]);
+    if (window._checkOnboarding) window._checkOnboarding();
   } else {
     errEl.textContent=result?.error||'Email ou mot de passe incorrect.';
     errEl.style.display='block';
@@ -3615,6 +4076,8 @@ function renderTxList(userId){
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Valider mission
         </button>`:''}
+        ${tx.status==='escrow'&&tx.receiver_id===uid?`<button class="dispute-btn" id="dispute-btn-${tx.id}" onclick="event.stopPropagation();openDisputeModal(${tx.id},'${(tx.description||'Mission').replace(/'/g,"\\'")}')">⚠ Litige</button>`:''}
+
         <button class="invoice-btn" onclick="event.stopPropagation();generateInvoicePDF(${JSON.stringify(tx).replace(/"/g,'&quot;')})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Reçu PDF
@@ -3683,6 +4146,14 @@ async function initDashboard(){
       time:fmtTime(a.sent_at)
     })):ACTIVITIES;
     renderDashActivity(acts);
+
+    // Email banner
+    const banner = document.getElementById('emailVerifyBanner');
+    if (banner) banner.style.display = u.email_verified ? 'none' : 'flex';
+
+    // Profile completion
+    const portfolioItems = await api('/portfolio/' + u.id) || [];
+    renderProfileCompletion(u, portfolioItems.length);
   } else {
     // Fallback: use localStorage profile data
     const initials=localStorage.getItem('sc_user_initials')||'?';
@@ -4330,19 +4801,40 @@ function initSocket(){
     if(uid) socket.emit('auth', uid);
 
     socket.on('new_message', (msg) => {
-      // Si le chat actif correspond, ajouter la bulle
-      if(waActiveContact && msg.sender_id === waActiveContact){
+      if(waActiveContactId && msg.sender_id === waActiveContactId){
         appendWAMessage(msg);
-        api('/messages/read/'+uid+'/'+waActiveContact, {method:'PUT'});
+        api('/messages/read/'+uid+'/'+waActiveContactId, {method:'PUT'});
       }
-      // Mettre à jour la liste de contacts
       loadWAContacts();
     });
 
     socket.on('new_notification', (notif) => {
       appendNotif(notif);
     });
+
+    socket.on('typing', ({ from }) => {
+      if(String(from) === String(waActiveContactId)){
+        document.getElementById('waTypingBar').style.display = 'block';
+      }
+    });
+
+    socket.on('stop_typing', ({ from }) => {
+      if(String(from) === String(waActiveContactId)){
+        document.getElementById('waTypingBar').style.display = 'none';
+      }
+    });
+
   } catch(e){ /* Socket.io non disponible */ }
+}
+
+let typingTimer = null;
+function emitTyping() {
+  if(!socket || !waActiveContactId) return;
+  socket.emit('typing', { to: waActiveContactId });
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    socket.emit('stop_typing', { to: waActiveContactId });
+  }, 2000);
 }
 
 // ═══ NOTIFICATIONS ════════════════════════════════════════════════════
@@ -4579,11 +5071,546 @@ function generateInvoicePDF(tx){
   doc.save('recu-skillconnect-'+String(tx.id).padStart(5,'0')+'.pdf');
 }
 
+// ═══ PHOTO DE PROFIL ══════════════════════════════════════════════════════════
+async function uploadPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { toast('Image trop lourde (max 3 Mo)'); return; }
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result;
+    const uid = localStorage.getItem('sc_user_id');
+    if (!uid) return;
+    const res = await api('/profile/' + uid, 'PUT', { photo: base64 });
+    if (res?.success) {
+      const av = document.getElementById('dashAvatar');
+      av.innerHTML = `<img src="${base64}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+      toast('Photo mise à jour !');
+    } else { toast('Erreur lors de la mise à jour de la photo'); }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ═══ FILTRES AVANCES ══════════════════════════════════════════════════════════
+async function loadVilles() {
+  const villes = await api('/villes');
+  if (!villes) return;
+  const sel = document.getElementById('filterVille');
+  if (!sel) return;
+  villes.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+
+function toggleFilters() {
+  const panel = document.getElementById('filtersPanel');
+  const btn   = document.getElementById('filterToggleBtn');
+  panel.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+function resetFilters() {
+  document.getElementById('filterVille').value    = '';
+  document.getElementById('filterPrixMin').value  = '';
+  document.getElementById('filterPrixMax').value  = '';
+  document.getElementById('filterDispo').value    = '';
+  document.getElementById('filterSort').value     = '';
+  document.getElementById('filterResetBtn').style.display = 'none';
+  currentPage = 1;
+  renderTalents();
+}
+
+function hasActiveFilters() {
+  return ['filterVille','filterPrixMin','filterPrixMax','filterDispo','filterSort']
+    .some(id => document.getElementById(id)?.value);
+}
+
+// ═══ MOT DE PASSE OUBLIE ══════════════════════════════════════════════════════
+function openForgotPassword() {
+  closeLoginModal();
+  document.getElementById('forgotOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('forgotEmail').value = '';
+  const msg = document.getElementById('forgotMsg');
+  msg.style.display = 'none';
+}
+
+function closeForgotPassword() {
+  document.getElementById('forgotOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function sendResetEmail() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const msg = document.getElementById('forgotMsg');
+  if (!email) { msg.style.display='block'; msg.style.background='rgba(229,62,62,.08)'; msg.style.color='#e53e3e'; msg.textContent='Entrez votre email.'; return; }
+  const res = await api('/auth/forgot-password', 'POST', { email });
+  msg.style.display = 'block';
+  msg.style.background = 'rgba(29,158,117,.08)';
+  msg.style.color = 'var(--g600)';
+  msg.textContent = 'Si cet email existe, un lien de réinitialisation vous a été envoyé.';
+}
+
+function openResetModal(token) {
+  document.getElementById('resetOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('resetPassword').value = '';
+  document.getElementById('resetPasswordConfirm').value = '';
+  document.getElementById('resetMsg').style.display = 'none';
+  document.getElementById('resetOverlay').dataset.token = token;
+}
+
+function closeResetModal() {
+  document.getElementById('resetOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function submitResetPassword() {
+  const token    = document.getElementById('resetOverlay').dataset.token;
+  const password = document.getElementById('resetPassword').value;
+  const confirm  = document.getElementById('resetPasswordConfirm').value;
+  const msg      = document.getElementById('resetMsg');
+
+  if (password.length < 6) { showResetMsg('Minimum 6 caractères.', 'error'); return; }
+  if (password !== confirm) { showResetMsg('Les mots de passe ne correspondent pas.', 'error'); return; }
+
+  const res = await api('/auth/reset-password', 'POST', { token, password });
+  if (res?.success) {
+    showResetMsg('Mot de passe changé avec succès !', 'success');
+    setTimeout(() => { closeResetModal(); openLoginModal(); }, 1500);
+  } else {
+    showResetMsg(res?.error || 'Lien invalide ou expiré.', 'error');
+  }
+}
+
+function showResetMsg(text, type) {
+  const msg = document.getElementById('resetMsg');
+  msg.style.display = 'block';
+  msg.style.background = type === 'success' ? 'rgba(29,158,117,.08)' : 'rgba(229,62,62,.08)';
+  msg.style.color = type === 'success' ? 'var(--g600)' : '#e53e3e';
+  msg.textContent = text;
+}
+
+// ═══ PORTFOLIO ════════════════════════════════════════════════════════════════
+async function loadModalPortfolio(talentId) {
+  const section = document.getElementById('modalPortfolioSection');
+  const grid    = document.getElementById('modalPortfolioGrid');
+  const items   = await api('/portfolio/' + talentId);
+  if (!items || items.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  grid.innerHTML = items.map(item => `
+    <div class="portfolio-item" onclick="openPortfolioImage('${item.image||''}','${item.title||''}')">
+      ${item.image
+        ? `<img src="${item.image}" alt="${item.title||''}">`
+        : `<div style="height:90px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--subtle);font-size:.75rem">Pas d'image</div>`}
+      <div class="portfolio-item-info">${item.title||'Sans titre'}</div>
+    </div>`).join('');
+}
+
+function openPortfolioImage(src, title) {
+  if (!src) return;
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer';
+  ov.innerHTML = `<div style="max-width:90vw;max-height:90vh;text-align:center">
+    <img src="${src}" style="max-width:100%;max-height:80vh;border-radius:var(--r-lg);object-fit:contain">
+    <p style="color:#fff;margin-top:.75rem;font-weight:600">${title}</p>
+  </div>`;
+  ov.onclick = () => document.body.removeChild(ov);
+  document.body.appendChild(ov);
+}
+
+function previewPortImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('portPreviewImg').src = e.target.result;
+    document.getElementById('portImagePreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function addPortfolioItem() {
+  const title = document.getElementById('portTitle').value.trim();
+  const desc  = document.getElementById('portDesc').value.trim();
+  const imgInput = document.getElementById('portImage');
+  if (!title) { toast('Le titre est requis'); return; }
+
+  let image = null;
+  if (imgInput.files[0]) {
+    image = await new Promise(resolve => {
+      const r = new FileReader();
+      r.onload = e => resolve(e.target.result);
+      r.readAsDataURL(imgInput.files[0]);
+    });
+  }
+
+  const res = await api('/portfolio', 'POST', { title, description: desc, image });
+  if (res?.success) {
+    toast('Ajouté au portfolio !');
+    document.getElementById('portTitle').value = '';
+    document.getElementById('portDesc').value  = '';
+    document.getElementById('portImagePreview').style.display = 'none';
+    imgInput.value = '';
+    loadDashPortfolio();
+  } else { toast(res?.error || 'Erreur'); }
+}
+
+async function loadDashPortfolio() {
+  const uid = parseInt(localStorage.getItem('sc_user_id'));
+  if (!uid) return;
+  const items = await api('/portfolio/' + uid);
+  const list  = document.getElementById('dashPortfolioList');
+  if (!list) return;
+  if (!items || items.length === 0) {
+    list.innerHTML = '<p class="portfolio-placeholder">Aucun élément — ajoutez votre premier projet !</p>';
+    return;
+  }
+  list.innerHTML = items.map(item => `
+    <div class="portfolio-manage-item">
+      ${item.image
+        ? `<img src="${item.image}" alt="${item.title||''}">`
+        : `<div style="height:85px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--subtle);font-size:.75rem">Pas d'image</div>`}
+      <button class="del-btn" onclick="deletePortfolioItem(${item.id})" title="Supprimer">✕</button>
+      <div class="portfolio-manage-item-title">${item.title||'Sans titre'}</div>
+    </div>`).join('');
+}
+
+async function deletePortfolioItem(id) {
+  if (!confirm('Supprimer cet élément ?')) return;
+  const res = await api('/portfolio/' + id, 'DELETE');
+  if (res?.success) { toast('Supprimé'); loadDashPortfolio(); }
+  else { toast(res?.error || 'Erreur'); }
+}
+
+// ═══ ADMIN ════════════════════════════════════════════════════════════════════
+let adminToken = null;
+
+async function adminLogin() {
+  const pass = document.getElementById('adminPassInput').value;
+  const err  = document.getElementById('adminLoginError');
+  const res  = await api('/admin/auth', 'POST', { password: pass });
+  if (res?.token) {
+    adminToken = res.token;
+    document.getElementById('adminLoginSection').style.display = 'none';
+    document.getElementById('adminDashSection').style.display  = 'block';
+    loadAdminData();
+  } else {
+    err.style.display = 'block';
+    err.textContent   = 'Mot de passe incorrect.';
+  }
+}
+
+function adminLogout() {
+  adminToken = null;
+  document.getElementById('adminLoginSection').style.display = 'block';
+  document.getElementById('adminDashSection').style.display  = 'none';
+  document.getElementById('adminPassInput').value = '';
+}
+
+async function adminApi(path, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminToken },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch('/api' + path, opts);
+  return r.json();
+}
+
+async function loadAdminData() {
+  const [stats, users, txs, disputes, reports] = await Promise.all([
+    adminApi('/admin/stats'),
+    adminApi('/admin/users'),
+    adminApi('/admin/transactions'),
+    adminApi('/admin/disputes'),
+    adminApi('/admin/reports'),
+  ]);
+
+  // Stats
+  const grid = document.getElementById('adminStatsGrid');
+  if (grid && stats) {
+    grid.innerHTML = [
+      ['Utilisateurs total', stats.totalUsers],
+      ['Nouveaux (30j)', stats.newUsers],
+      ['Transactions complétées', stats.totalTx],
+      ['Volume total', (stats.totalVolume||0).toLocaleString('fr-FR') + ' FCFA'],
+      ['Commissions perçues', (stats.totalCommission||0).toLocaleString('fr-FR') + ' FCFA'],
+    ].map(([label, val]) => `
+      <div class="admin-stat">
+        <div class="admin-stat-val">${val}</div>
+        <div class="admin-stat-label">${label}</div>
+      </div>`).join('');
+  }
+
+  // Users table
+  const ub = document.getElementById('adminUsersBody');
+  if (ub && users) {
+    ub.innerHTML = users.map(u => `
+      <tr>
+        <td>${u.id}</td>
+        <td><strong>${u.prenom} ${u.nom}</strong></td>
+        <td>${u.email||'—'}</td>
+        <td>${u.ville||'—'}</td>
+        <td>${u.skill||'—'}</td>
+        <td>⭐ ${u.rating}</td>
+        <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+        <td>
+          <button class="btn-toggle-valid ${u.validated?'active':'inactive'}" onclick="toggleUser(${u.id})">
+            ${u.validated ? 'Actif' : 'Suspendu'}
+          </button>
+        </td>
+      </tr>`).join('');
+  }
+
+  // Transactions table
+  const tb = document.getElementById('adminTxBody');
+  if (tb && txs) {
+    tb.innerHTML = txs.map(t => `
+      <tr>
+        <td>${t.id}</td>
+        <td>${t.sender_id||'—'}</td>
+        <td>${t.receiver_id||'—'}</td>
+        <td>${(t.amount||0).toLocaleString('fr-FR')} FCFA</td>
+        <td>${(t.commission||0).toLocaleString('fr-FR')} FCFA</td>
+        <td>${t.type||'—'}</td>
+        <td><span style="color:${t.status==='completed'?'var(--g600)':t.status==='escrow'?'var(--a500)':'var(--muted)'}">${t.status}</span></td>
+        <td>${t.created_at ? new Date(t.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+      </tr>`).join('');
+  }
+
+  // Disputes table
+  const db2 = document.getElementById('adminDisputesBody');
+  if (db2) {
+    if (!disputes || !disputes.length) {
+      db2.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1rem">Aucun litige</td></tr>';
+    } else {
+      db2.innerHTML = disputes.map(d => `
+        <tr>
+          <td>${d.id}</td>
+          <td>#${d.transaction_id}</td>
+          <td>${d.talent_id}</td>
+          <td>${d.client_id}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.reason||''}">${(d.reason||'—').slice(0,60)}</td>
+          <td><span style="color:${d.status==='open'?'#e53e3e':d.status==='resolved'?'var(--g600)':'var(--muted)'}">${d.status}</span></td>
+          <td>${d.created_at ? new Date(d.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+          <td>${d.status==='open'?`<button class="btn-toggle-valid active" style="font-size:.7rem;padding:.2rem .5rem" onclick="adminResolveDispute(${d.id})">Résoudre</button>`:'—'}</td>
+        </tr>`).join('');
+    }
+  }
+
+  // Reports table
+  const rb = document.getElementById('adminReportsBody');
+  if (rb) {
+    if (!reports || !reports.length) {
+      rb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1rem">Aucun signalement</td></tr>';
+    } else {
+      rb.innerHTML = reports.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td>${r.reporter_id}</td>
+          <td>${r.reported_id}</td>
+          <td>${r.reason||'—'}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.description||''}">${(r.description||'—').slice(0,50)}</td>
+          <td><span style="color:${r.status==='pending'?'var(--a500)':'var(--muted)'}">${r.status}</span></td>
+          <td>${r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+        </tr>`).join('');
+    }
+  }
+}
+
+// ═══ PROFILE COMPLETION ═══════════════════════════════════════════════════════
+function renderProfileCompletion(u, portfolioCount) {
+  const card = document.getElementById('profileCompletionCard');
+  if (!card) return;
+
+  const checks = [
+    { label:'Photo de profil',    done: !!u.photo,          action:'showPage(\'dashboard\',document.querySelectorAll(\'.nav-link\')[4])', pts:20 },
+    { label:'Bio renseignée',     done: (u.bio||'').length > 15, action:'', pts:20 },
+    { label:'Tarif défini',       done: (u.tarif||0) > 0,   action:'', pts:20 },
+    { label:'Email vérifié',      done: !!u.email_verified,  action:'resendVerifyEmail()', pts:20 },
+    { label:'Portfolio (≥1 projet)', done: portfolioCount>0, action:'', pts:20 },
+  ];
+
+  const score = checks.reduce((s, c) => s + (c.done ? c.pts : 0), 0);
+  document.getElementById('completionPct').textContent = score + '%';
+  setTimeout(() => {
+    const bar = document.getElementById('completionBarFill');
+    if (bar) bar.style.width = score + '%';
+  }, 300);
+
+  document.getElementById('completionItems').innerHTML = checks.map(c => `
+    <div class="completion-item ${c.done?'done':''}">
+      <span>${c.done ? '✅' : '⬜'}</span>
+      <span>${c.label}</span>
+      ${!c.done && c.action ? `<span class="completion-item-action" onclick="${c.action}">Compléter</span>` : ''}
+    </div>`).join('');
+
+  card.style.display = score < 100 ? 'block' : 'none';
+}
+
+// ═══ EMAIL VERIFICATION ════════════════════════════════════════════════════════
+async function resendVerifyEmail(btn) {
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  const res = await api('/auth/resend-verify', { method:'POST' });
+  if (res?.success) {
+    toast(res.already ? 'Email déjà vérifié ✓' : 'Email de vérification envoyé ! Vérifiez votre boîte.');
+    if (res.already) document.getElementById('emailVerifyBanner').style.display = 'none';
+  } else {
+    toast('Erreur lors de l\'envoi');
+  }
+  if (btn) { btn.textContent = 'Renvoyer'; btn.disabled = false; }
+}
+
+// ═══ ONBOARDING ═══════════════════════════════════════════════════════════════
+function showOnboarding() {
+  document.getElementById('onboardingOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeOnboarding() {
+  document.getElementById('onboardingOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  localStorage.setItem('sc_onboarding_done', '1');
+}
+
+async function toggleUser(userId) {
+  await adminApi('/admin/users/' + userId + '/toggle', 'PUT');
+  loadAdminData();
+}
+
+async function adminResolveDispute(disputeId) {
+  const note = prompt('Note admin (optionnel) :') || '';
+  await adminApi('/admin/disputes/' + disputeId + '/resolve', 'PUT', { adminNote: note, resolution: 'resolved' });
+  toast('Litige marqué comme résolu');
+  loadAdminData();
+}
+
+// ═══ LITIGE ═══════════════════════════════════════════════════════════════════
+let disputeTxId = null;
+
+function openDisputeModal(txId, txDesc) {
+  const uid = parseInt(localStorage.getItem('sc_user_id'));
+  if (!uid) { toast('Connectez-vous pour ouvrir un litige'); return; }
+  disputeTxId = txId;
+  document.getElementById('disputeMissionName').textContent = txDesc || 'Mission #' + txId;
+  document.getElementById('disputeReason').value = '';
+  document.getElementById('disputeMsg').style.display = 'none';
+  document.getElementById('disputeOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDisputeModal() {
+  document.getElementById('disputeOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function submitDispute() {
+  const reason = document.getElementById('disputeReason').value.trim();
+  const msg    = document.getElementById('disputeMsg');
+  if (!reason) {
+    msg.style.cssText = 'display:block;background:rgba(229,62,62,.08);color:#e53e3e';
+    msg.textContent = 'Veuillez indiquer le motif du litige.';
+    return;
+  }
+  const res = await api('/disputes', { method:'POST', body:{ transactionId: disputeTxId, reason } });
+  if (res?.success) {
+    msg.style.cssText = 'display:block;background:rgba(29,158,117,.08);color:var(--g600)';
+    msg.textContent = 'Litige ouvert. L\'équipe SkillConnect vous contactera sous 48h.';
+    const btn = document.getElementById('dispute-btn-' + disputeTxId);
+    if (btn) { btn.textContent = '⚠ Litige ouvert'; btn.classList.add('open'); }
+    setTimeout(closeDisputeModal, 2000);
+  } else {
+    msg.style.cssText = 'display:block;background:rgba(229,62,62,.08);color:#e53e3e';
+    msg.textContent = res?.error || 'Erreur lors de l\'ouverture du litige.';
+  }
+}
+
+// ═══ SIGNALEMENT ══════════════════════════════════════════════════════════════
+let reportTargetId = null;
+
+function openReportModal(userId) {
+  if (!userId) return;
+  const myId = parseInt(localStorage.getItem('sc_user_id'));
+  if (!myId) { toast('Connectez-vous pour signaler un profil'); return; }
+  if (myId === parseInt(userId)) { toast('Vous ne pouvez pas vous signaler vous-même'); return; }
+  reportTargetId = userId;
+  document.getElementById('reportTargetName').textContent = 'Profil #' + userId;
+  document.getElementById('reportReason').value = '';
+  document.getElementById('reportDescription').value = '';
+  document.getElementById('reportMsg').style.display = 'none';
+  document.getElementById('reportOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReportModal() {
+  document.getElementById('reportOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function submitReport() {
+  const reason      = document.getElementById('reportReason').value;
+  const description = document.getElementById('reportDescription').value.trim();
+  const msg         = document.getElementById('reportMsg');
+  if (!reason) {
+    msg.style.cssText = 'display:block;background:rgba(229,62,62,.08);color:#e53e3e';
+    msg.textContent = 'Veuillez choisir un motif.';
+    return;
+  }
+  const res = await api('/reports', { method:'POST', body:{ reportedId: reportTargetId, reason, description } });
+  if (res?.success) {
+    msg.style.cssText = 'display:block;background:rgba(29,158,117,.08);color:var(--g600)';
+    msg.textContent = 'Signalement envoyé. Merci de contribuer à la sécurité de la communauté.';
+    setTimeout(closeReportModal, 2000);
+  } else {
+    msg.style.cssText = 'display:block;background:rgba(229,62,62,.08);color:#e53e3e';
+    msg.textContent = res?.error || 'Erreur lors de l\'envoi.';
+  }
+}
+
 // Init socket après chargement du CDN
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   initSocket();
   // Refresh notifications toutes les 30s si pas de socket
   setInterval(()=>{ if(localStorage.getItem('sc_user_id')) loadNotifications(); }, 30000);
+
+  const params = new URLSearchParams(window.location.search);
+
+  // Token de réinitialisation
+  const resetToken = params.get('reset_token');
+  if (resetToken) {
+    history.replaceState({}, '', '/');
+    openResetModal(resetToken);
+  }
+
+  // Vérification email
+  const verifyToken = params.get('verify_token');
+  if (verifyToken) {
+    history.replaceState({}, '', '/');
+    const res = await api('/auth/verify-email/' + verifyToken);
+    if (res?.success) {
+      toast('✅ Email vérifié ! Merci.');
+      document.getElementById('emailVerifyBanner').style.display = 'none';
+    } else {
+      toast('Lien de vérification invalide ou expiré.');
+    }
+  }
+
+  // Accès admin via URL ?admin=1
+  if (params.get('admin') === '1') {
+    history.replaceState({}, '', '/');
+    document.getElementById('navAdminLink').style.display = 'block';
+    showPage('admin', document.getElementById('navAdminLink'));
+  }
+
+  // Onboarding au 1er login (vérifié après connexion)
+  window._checkOnboarding = () => {
+    if (!localStorage.getItem('sc_onboarding_done') && localStorage.getItem('sc_user_id')) {
+      setTimeout(showOnboarding, 800);
+    }
+  };
 });
 
 // ═══ SERVICE WORKER (PWA) ═════════════════════════════════════════════

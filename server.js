@@ -1,14 +1,16 @@
 require('dotenv').config();
-const express    = require('express');
-const http       = require('http');
-const { Server } = require('socket.io');
-const path       = require('path');
-const cors       = require('cors');
-const bcrypt     = require('bcryptjs');
-const jwt        = require('jsonwebtoken');
-const rateLimit  = require('express-rate-limit');
-const db         = require('./db/database');
-const campay     = require('./campay');
+const express      = require('express');
+const http         = require('http');
+const { Server }   = require('socket.io');
+const path         = require('path');
+const cors         = require('cors');
+const bcrypt       = require('bcryptjs');
+const jwt          = require('jsonwebtoken');
+const rateLimit    = require('express-rate-limit');
+const nodemailer   = require('nodemailer');
+const crypto       = require('crypto');
+const db           = require('./db/database');
+const campay       = require('./campay');
 
 const app    = express();
 const server = http.createServer(app);
@@ -74,6 +76,14 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     if (socket.userId) delete userSockets[socket.userId];
   });
+  socket.on('typing', ({ to }) => {
+    const sid = userSockets[String(to)];
+    if (sid) io.to(sid).emit('typing', { from: socket.userId });
+  });
+  socket.on('stop_typing', ({ to }) => {
+    const sid = userSockets[String(to)];
+    if (sid) io.to(sid).emit('stop_typing', { from: socket.userId });
+  });
 });
 
 function emitToUser(userId, event, data) {
@@ -131,6 +141,20 @@ app.post('/api/register', authLimiter, async (req, res) => {
 
     if (user.phone) {
       sendSMS(user.phone, `Bienvenue sur SkillConnect, ${user.prenom} ! 🎉\nVotre profil "${user.skill}" est en ligne.`);
+    }
+
+    // Email de vérification
+    if (user.email) {
+      const verifyToken = crypto.randomBytes(32).toString('hex');
+      await db.createVerifyToken(user.id, verifyToken);
+      const verifyUrl = `${process.env.APP_URL || 'http://localhost:3000'}/?verify_token=${verifyToken}`;
+      if (mailer) {
+        sendEmail(user.email, 'Vérifiez votre email — SkillConnect',
+          `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${user.prenom},</p><p>Bienvenue ! Cliquez sur le bouton ci-dessous pour vérifier votre adresse email.</p><a href="${verifyUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">Vérifier mon email</a><p style="color:#888;font-size:.85rem">Si vous n'avez pas créé de compte, ignorez cet email.</p></div>`
+        );
+      } else {
+        console.log(`📧 Verify email URL pour ${user.email} : ${verifyUrl}`);
+      }
     }
 
     res.json({ success: true, user, token });
@@ -250,6 +274,15 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
       sender_photo:    sender?.photo || null,
     });
 
+    // Email si le destinataire n'est pas connecté via socket
+    if (!userSockets[String(receiverId)]) {
+      const receiverUser = await db.getTalentById(parseInt(receiverId));
+      if (receiverUser?.email) sendEmail(receiverUser.email,
+        `Nouveau message de ${sender?.prenom||'un utilisateur'} — SkillConnect`,
+        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${receiverUser.prenom},</p><p>Vous avez reçu un message de <strong>${sender?.prenom||''} ${sender?.nom||''}</strong> :</p><blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${String(text).slice(0,200)}</blockquote><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">Répondre</a></div>`
+      );
+    }
+
     const isBooking = text.toLowerCase().includes('réserver') || text.toLowerCase().includes('reserver');
     if (isBooking) {
       const receiver = await db.getTalentById(parseInt(receiverId));
@@ -323,6 +356,10 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
     });
     if (sender?.phone)   sendSMS(sender.phone,   `SkillConnect : Paiement de ${tx.amount.toLocaleString('fr-FR')} FCFA envoyé. Fonds en séquestre.`);
     if (receiver?.phone) sendSMS(receiver.phone,  `SkillConnect : Vous allez recevoir ${net.toLocaleString('fr-FR')} FCFA. Libéré après validation.`);
+    if (receiver?.email) sendEmail(receiver.email,
+      `Nouveau paiement reçu — SkillConnect`,
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${receiver.prenom},</p><p><strong>${sender?.prenom||'Un client'}</strong> vous a envoyé <strong>${net.toLocaleString('fr-FR')} FCFA</strong> pour &quot;${tx.description}&quot;.</p><p>Ces fonds sont en <strong>séquestre sécurisé</strong> et seront libérés une fois la mission validée.</p><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;margin-top:1rem">Voir sur SkillConnect</a></div>`
+    );
 
     res.json({ success: true, transaction: tx, simulated: true });
   } catch (e) { res.status(400).json({ error: e.message }); }
@@ -353,6 +390,10 @@ app.put('/api/transactions/:id/validate', authenticateToken, async (req, res) =>
     if (receiver?.phone) {
       sendSMS(receiver.phone, `SkillConnect : Mission validée ! ${net.toLocaleString('fr-FR')} FCFA crédités sur votre compte.`);
     }
+    if (receiver?.email) sendEmail(receiver.email,
+      `Mission validée — ${net.toLocaleString('fr-FR')} FCFA libérés`,
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${receiver.prenom},</p><p>Votre mission &quot;${tx.description}&quot; a été validée par le client. <strong>${net.toLocaleString('fr-FR')} FCFA</strong> ont été libérés sur votre compte SkillConnect.</p></div>`
+    );
 
     res.json({ success: true, transaction: updated });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -547,6 +588,12 @@ app.post('/api/reviews', authenticateToken, async (req, res) => {
       type: 'review',
       message: `Vous avez reçu un nouvel avis ${req.body.rating} étoile${req.body.rating > 1 ? 's' : ''} ⭐`,
     });
+    const talentUser = await db.getTalentById(parseInt(req.body.talentId));
+    const reviewer   = await db.getTalentById(req.user.userId);
+    if (talentUser?.email) sendEmail(talentUser.email,
+      `Nouvel avis ${req.body.rating}⭐ reçu — SkillConnect`,
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${talentUser.prenom},</p><p><strong>${reviewer?.prenom||'Un utilisateur'}</strong> vous a laissé un avis <strong>${req.body.rating} étoile${req.body.rating>1?'s':''}</strong> ⭐</p>${req.body.comment?`<blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${req.body.comment}</blockquote>`:''}</div>`
+    );
     res.json({ success: true, review });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
@@ -566,6 +613,256 @@ app.put('/api/notifications/read-all/:userId', authenticateToken, async (req, re
   if (req.user.userId !== parseInt(req.params.userId))
     return res.status(403).json({ error: 'Accès refusé.' });
   try { await db.markAllNotificationsRead(parseInt(req.params.userId)); res.json({ success: true }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Villes disponibles ───────────────────────────────────────────────────────
+app.get('/api/villes', async (req, res) => {
+  try { res.json(await db.getVilles()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Portfolio ────────────────────────────────────────────────────────────────
+app.get('/api/portfolio/:talentId', async (req, res) => {
+  try { res.json(await db.getPortfolio(parseInt(req.params.talentId))); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/portfolio', authenticateToken, async (req, res) => {
+  try {
+    const { title, description, image } = req.body;
+    const item = await db.createPortfolioItem({
+      talentId: req.user.userId, title, description, image,
+    });
+    res.json({ success: true, item });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete('/api/portfolio/:id', authenticateToken, async (req, res) => {
+  try {
+    const ok = await db.deletePortfolioItem(req.params.id, req.user.userId);
+    if (!ok) return res.status(404).json({ error: 'Élément non trouvé.' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Mot de passe oublié ──────────────────────────────────────────────────────
+let mailer = null;
+try {
+  if (process.env.SMTP_USER && process.env.SMTP_USER !== 'votre@gmail.com') {
+    mailer = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: false,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+    console.log('✅ Email (nodemailer) activé');
+  } else {
+    console.log('ℹ️  Email désactivé (configurez SMTP_USER/SMTP_PASS dans .env)');
+  }
+} catch (e) { console.log('⚠️  Email non disponible :', e.message); }
+
+async function sendEmail(to, subject, html) {
+  if (!mailer || !to) return;
+  try {
+    await mailer.sendMail({ from: `"SkillConnect" <${process.env.SMTP_USER}>`, to, subject, html });
+    console.log('📧 Email →', to);
+  } catch (e) { console.error('Email erreur :', e.message); }
+}
+
+// ─── Vérification email ───────────────────────────────────────────────────────
+app.get('/api/auth/verify-email/:token', async (req, res) => {
+  try {
+    const record = await db.findVerifyToken(req.params.token);
+    if (!record) return res.status(400).json({ error: 'Lien invalide ou déjà utilisé.' });
+    await db.markEmailVerified(record.user_id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/auth/resend-verify', authenticateToken, async (req, res) => {
+  try {
+    const user = await db.getTalentById(req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+    if (user.email_verified) return res.json({ success: true, already: true });
+    if (!user.email) return res.status(400).json({ error: 'Aucun email associé à ce compte.' });
+
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    await db.createVerifyToken(user.id, verifyToken);
+    const verifyUrl = `${process.env.APP_URL || 'http://localhost:3000'}/?verify_token=${verifyToken}`;
+
+    if (mailer) {
+      await sendEmail(user.email, 'Vérifiez votre email — SkillConnect',
+        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${user.prenom},</p><p>Cliquez ci-dessous pour vérifier votre adresse email.</p><a href="${verifyUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">Vérifier mon email</a></div>`
+      );
+    } else {
+      console.log(`📧 Verify URL pour ${user.email} : ${verifyUrl}`);
+    }
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email requis.' });
+    const user = await db.findUserByEmail(email);
+    // Toujours répondre OK pour ne pas révéler si l'email existe
+    if (!user) return res.json({ success: true });
+
+    const token   = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1h
+    const expiresStr = expires.toISOString().slice(0, 19).replace('T', ' ');
+    await db.createResetToken(user.id, token, expiresStr);
+
+    const resetUrl = `${process.env.APP_URL || 'http://localhost:3000'}/?reset_token=${token}`;
+
+    if (mailer) {
+      await mailer.sendMail({
+        from: `"SkillConnect" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: 'Réinitialisation de votre mot de passe SkillConnect',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+            <h2 style="color:#1D9E75">SkillConnect</h2>
+            <p>Bonjour ${user.prenom},</p>
+            <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous :</p>
+            <a href="${resetUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">
+              Réinitialiser mon mot de passe
+            </a>
+            <p style="color:#888;font-size:.85rem">Ce lien expire dans 1 heure. Si vous n'avez pas demandé cela, ignorez cet email.</p>
+          </div>`,
+      });
+    } else {
+      // Mode dev : afficher le token dans les logs
+      console.log(`🔑 Reset token pour ${email} : ${token}`);
+      console.log(`   URL : ${resetUrl}`);
+    }
+
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ error: 'Token et mot de passe requis.' });
+    if (password.length < 6) return res.status(400).json({ error: 'Mot de passe trop court (min 6 caractères).' });
+
+    const record = await db.findResetToken(token);
+    if (!record) return res.status(400).json({ error: 'Lien invalide ou expiré.' });
+
+    const hash = await bcrypt.hash(password, 10);
+    await db.updatePassword(record.user_id, hash);
+    await db.markResetTokenUsed(token);
+
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+function authenticateAdmin(req, res, next) {
+  const auth  = req.headers['authorization'];
+  const token = auth && auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!token) return res.status(401).json({ error: 'Token admin manquant' });
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (payload.role !== 'admin') return res.status(403).json({ error: 'Accès refusé.' });
+    req.admin = payload;
+    next();
+  } catch { return res.status(401).json({ error: 'Token admin invalide' }); }
+}
+
+app.post('/api/admin/auth', (req, res) => {
+  const { password } = req.body;
+  const adminPass = process.env.ADMIN_PASSWORD || 'admin_skillconnect_2026';
+  if (password !== adminPass) return res.status(401).json({ error: 'Mot de passe admin incorrect.' });
+  const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
+  res.json({ success: true, token });
+});
+
+app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
+  try { res.json(await db.getAdminStats()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/users', authenticateAdmin, async (req, res) => {
+  try { res.json(await db.getAllUsers()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/users/:id/toggle', authenticateAdmin, async (req, res) => {
+  try { res.json(await db.toggleUserValidation(req.params.id)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/transactions', authenticateAdmin, async (req, res) => {
+  try { res.json(await db.getAllTransactions()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Litiges ──────────────────────────────────────────────────────────────────
+app.post('/api/disputes', authenticateToken, async (req, res) => {
+  try {
+    const { transactionId, reason } = req.body;
+    if (!transactionId) return res.status(400).json({ error: 'transactionId requis.' });
+    const txList = await db.getTransactions(req.user.userId);
+    const tx = txList.find(t => String(t.id) === String(transactionId));
+    if (!tx) return res.status(404).json({ error: 'Transaction non trouvée.' });
+    if (tx.receiver_id !== req.user.userId)
+      return res.status(403).json({ error: 'Seul le prestataire peut ouvrir un litige.' });
+    if (tx.status !== 'escrow')
+      return res.status(400).json({ error: 'La transaction doit être en séquestre.' });
+    const existing = await db.getDisputeByTxId(transactionId);
+    if (existing) return res.status(409).json({ error: 'Un litige existe déjà pour cette transaction.' });
+
+    const dispute = await db.createDispute({
+      transactionId, talentId: req.user.userId, clientId: tx.sender_id, reason,
+    });
+    const notif = await db.createNotification({
+      userId: tx.sender_id,
+      type: 'payment',
+      message: `Un litige a été ouvert pour "${tx.description}". Connectez-vous pour en savoir plus.`,
+    });
+    emitToUser(tx.sender_id, 'new_notification', notif);
+    res.json({ success: true, dispute });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/disputes/:txId', authenticateToken, async (req, res) => {
+  try { res.json(await db.getDisputeByTxId(req.params.txId) || null); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/disputes', authenticateAdmin, async (req, res) => {
+  try { res.json(await db.getAllDisputes()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/disputes/:id/resolve', authenticateAdmin, async (req, res) => {
+  try {
+    const { adminNote, resolution } = req.body;
+    await db.resolveDispute(req.params.id, adminNote, resolution);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Signalements ─────────────────────────────────────────────────────────────
+app.post('/api/reports', authenticateToken, async (req, res) => {
+  try {
+    const { reportedId, reason, description } = req.body;
+    if (!reportedId || !reason) return res.status(400).json({ error: 'reportedId et reason requis.' });
+    if (req.user.userId === parseInt(reportedId))
+      return res.status(400).json({ error: 'Vous ne pouvez pas vous signaler vous-même.' });
+    const report = await db.createReport({
+      reporterId: req.user.userId, reportedId: parseInt(reportedId), reason, description,
+    });
+    res.json({ success: true, report });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/reports', authenticateAdmin, async (req, res) => {
+  try { res.json(await db.getAllReports()); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
