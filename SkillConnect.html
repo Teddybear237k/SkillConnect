@@ -146,37 +146,47 @@ html.dark .form-input::placeholder, html.dark .form-textarea::placeholder { colo
 html.dark .skill-custom-group { }
 
 /* ── WhatsApp Messages ──────────────────────────────────────── */
-html.dark .wa-wrap { background: #0F1117; }
-html.dark .wa-sidebar { background: #141921; border-color: #1E2533; }
-html.dark .wa-sidebar-header { background: #1A2030; border-color: #1E2533; }
-html.dark .wa-search-bar { background: #1E2533; border-color: transparent; color: var(--ink); }
-html.dark .wa-search-bar::placeholder { color: var(--subtle); }
-html.dark .wa-contact-item { border-color: transparent; }
-html.dark .wa-contact-item:hover { background: #1E2533; }
-html.dark .wa-contact-item.active { background: #1E2533; border-left-color: var(--g500); }
-html.dark .wa-contact-name { color: var(--ink); }
-html.dark .wa-contact-preview { color: var(--subtle); }
-html.dark .wa-active-chat { background: #0F1117; }
-html.dark .wa-chat-header { background: #1A2030; border-color: #1E2533; }
-html.dark .wa-chat-name { color: var(--ink); }
-html.dark .wa-chat-status { color: var(--g400); }
-html.dark .wa-icon-btn { color: var(--muted); }
-html.dark .wa-icon-btn:hover { background: rgba(255,255,255,.07); }
-html.dark .wa-messages-wrap { background: #0F1117; }
-html.dark .wa-msg-bubble.them { background: #1E2533; color: var(--ink); border-radius: 0 12px 12px 12px; }
-html.dark .wa-msg-bubble.me   { background: #1B3A2C; color: #E6EDF3; }
-html.dark .wa-msg-time { color: rgba(255,255,255,.4); }
-html.dark .wa-msg-ticks { color: var(--g400); }
-html.dark .wa-date-sep span { background: #1E2533; color: var(--subtle); }
-html.dark .wa-typing-bar { background: #141921; }
-html.dark .wa-input-bar { background: #141921; border-color: #1E2533; }
-html.dark .wa-text-input { background: #1E2533; color: var(--ink); border-color: transparent; }
-html.dark .wa-text-input::placeholder { color: var(--subtle); }
-html.dark .wa-send-btn { box-shadow: 0 2px 12px rgba(29,158,117,.4); }
-html.dark .wa-no-chat { background: #141921; }
-html.dark .wa-no-chat h3 { color: var(--ink); }
-html.dark .wa-translation { color: var(--subtle); border-top-color: rgba(255,255,255,.08); }
-html.dark .wa-translate-btn { color: var(--g400); }
+/* ── Chat — dark mode (classes corrigées) ───────────────────────── */
+html.dark .wa-wrap              { background: #0F1117; }
+html.dark .wa-sidebar           { background: #141921; border-color: #1E2533; }
+html.dark .wa-sidebar-header    { background: #141921; border-color: #1E2533; }
+html.dark .wa-search-wrap       { background: #141921; }
+html.dark .wa-search-input      { background: #1E2533; color: var(--ink); border: none; }
+html.dark .wa-search-input::placeholder { color: var(--subtle); }
+html.dark .wa-search-icon       { stroke: var(--subtle); }
+html.dark .wa-contact-list      { background: #0F1117; }
+html.dark .wa-contact-item      { border-color: rgba(255,255,255,.05); }
+html.dark .wa-contact-item:hover{ background: #1E2533; }
+html.dark .wa-contact-item.active{ background: #1E2533; border-left: 3px solid var(--g500); }
+html.dark .wa-contact-name      { color: var(--ink); }
+html.dark .wa-contact-preview   { color: var(--subtle); }
+html.dark .wa-contact-time      { color: var(--subtle); }
+html.dark .wa-icon-btn          { color: var(--muted); }
+html.dark .wa-icon-btn:hover    { background: rgba(255,255,255,.07); }
+html.dark .wa-chat-panel        { background: #111827; }
+html.dark .wa-no-chat           { background: #141921; }
+html.dark .wa-no-chat h3        { color: var(--ink); }
+html.dark .wa-active-chat       { background: #111827; }
+html.dark .wa-chat-header       { background: #1A2030; border-color: #1E2533; }
+html.dark .wa-chat-name         { color: var(--ink); }
+html.dark .wa-chat-status       { color: var(--g400); }
+html.dark .wa-messages-wrap     { background: #111827; }
+html.dark .wa-date-sep span     { background: #1E2533; color: var(--subtle); }
+html.dark .wa-msg-bubble.them   { background: #1E2533; color: var(--ink); border-radius: 0 12px 12px 12px; }
+html.dark .wa-msg-bubble.me     { background: #1B3A2C; color: #E6EDF3; }
+html.dark .wa-msg-time          { color: rgba(255,255,255,.4); }
+html.dark .wa-msg-ticks         { color: var(--g400); }
+html.dark .wa-typing            { background: #1E2533; }
+html.dark .wa-typing span       { background: var(--subtle); }
+html.dark .wa-file-preview-bar  { background: #1E2533; border-color: #2A3548; }
+html.dark .wa-input-bar         { background: #141921; border-color: #1E2533; }
+html.dark .wa-input-main        { background: #1E2533; color: var(--ink); }
+html.dark .wa-input-main::placeholder { color: var(--subtle); }
+html.dark .wa-emoji-btn, html.dark .wa-attach-btn { color: var(--muted); }
+html.dark .wa-emoji-btn:hover, html.dark .wa-attach-btn:hover { background: rgba(255,255,255,.07); }
+html.dark .wa-send-btn          { box-shadow: 0 2px 12px rgba(29,158,117,.4); }
+html.dark .wa-translation       { color: var(--subtle); border-top-color: rgba(255,255,255,.08); }
+html.dark .wa-translate-btn     { color: var(--g400); }
 
 /* ── Paiement ───────────────────────────────────────────────── */
 html.dark .pay-form-card { background: #171B26; border-color: #232836; }
@@ -1815,6 +1825,40 @@ html.dark .email-banner-text{color:#fdd835}
 .litige-btns{display:flex;gap:.75rem;margin-top:1rem;justify-content:flex-end}
 .litige-btn-cancel{background:transparent;border:1px solid var(--hairline);color:var(--ink);padding:.5rem 1rem;border-radius:var(--r-full);cursor:pointer;font-size:.85rem}
 .litige-btn-submit{background:#e53e3e;color:#fff;border:none;padding:.5rem 1.25rem;border-radius:var(--r-full);cursor:pointer;font-size:.85rem;font-weight:600}
+
+/* ─── Language toggle ────────────────────────────────────────────────── */
+.lang-toggle{height:36px;padding:0 .65rem;border-radius:var(--r-full);border:1.5px solid var(--hairline);background:var(--surface);color:var(--muted);cursor:pointer;display:flex;align-items:center;font-size:.73rem;font-weight:800;letter-spacing:.06em;transition:all .25s var(--ease-spring);flex-shrink:0}
+.lang-toggle:hover{background:var(--hairline);color:var(--ink);transform:scale(1.05)}
+
+/* ─── Review reply ───────────────────────────────────────────────────── */
+.review-reply{margin-top:.5rem;padding:.5rem .75rem;background:var(--g50);border-left:2px solid var(--g400);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:.8rem;color:var(--ink3)}
+.review-reply-label{font-size:.68rem;font-weight:700;color:var(--g600);margin-bottom:.2rem}
+.review-reply-form{margin-top:.6rem;display:none}
+.review-reply-form.open{display:block}
+.review-reply-form textarea{width:100%;border:1px solid var(--hairline);border-radius:var(--r-md);padding:.5rem;font-size:.82rem;color:var(--ink);background:var(--surface);resize:vertical;min-height:60px;font-family:inherit;box-sizing:border-box}
+.review-reply-form-btns{display:flex;gap:.5rem;margin-top:.4rem;justify-content:flex-end}
+.btn-reply-submit{background:var(--g600);color:#fff;border:none;border-radius:var(--r-full);padding:.3rem .85rem;font-size:.78rem;font-weight:600;cursor:pointer}
+.btn-reply-submit:hover{background:var(--g500)}
+.btn-reply-open{background:transparent;border:1px solid var(--hairline);border-radius:var(--r-full);padding:.2rem .6rem;font-size:.74rem;color:var(--muted);cursor:pointer;margin-top:.4rem}
+.btn-reply-open:hover{color:var(--g600);border-color:var(--g400)}
+
+/* ─── File sharing in chat ───────────────────────────────────────────── */
+.wa-file-msg{display:flex;align-items:center;gap:.5rem;padding:.5rem .7rem;background:rgba(0,0,0,.07);border-radius:var(--r-md);max-width:240px;cursor:pointer}
+.wa-file-msg:hover{background:rgba(0,0,0,.12)}
+.wa-file-icon{width:34px;height:34px;border-radius:var(--r-sm);background:var(--g500);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wa-file-icon svg{width:16px;height:16px;stroke:#fff}
+.wa-file-info{flex:1;min-width:0}
+.wa-file-name{font-size:.77rem;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wa-file-size{font-size:.69rem;color:var(--muted)}
+.wa-file-img{max-width:220px;max-height:200px;border-radius:var(--r-md);cursor:pointer;display:block;object-fit:cover}
+.wa-file-preview-bar{display:none;align-items:center;gap:.5rem;padding:.4rem .75rem;background:var(--g50);border-top:1px solid var(--g200);font-size:.8rem;color:var(--ink);min-height:38px}
+.wa-file-preview-bar.show{display:flex}
+.wa-file-preview-thumb{width:28px;height:28px;border-radius:var(--r-sm);object-fit:cover;display:none}
+.wa-file-preview-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.79rem;color:var(--ink)}
+.wa-file-preview-clear{background:transparent;border:none;cursor:pointer;color:var(--muted);font-size:1rem;line-height:1;padding:.1rem .3rem}
+.wa-file-preview-clear:hover{color:#e53e3e}
+html.dark .wa-file-msg{background:rgba(255,255,255,.09)}
+html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 </style>
 </head>
 <body>
@@ -1833,15 +1877,15 @@ html.dark .email-banner-text{color:#fdd835}
 <nav class="nav" id="navbar">
   <div class="nav-logo">Skill<span>Connect</span></div>
   <div class="nav-links" id="navLinks">
-    <div class="nav-link active" onclick="showPage('accueil',this)">Accueil</div>
-    <div class="nav-link" onclick="showPage('explorer',this)">Explorer</div>
-    <div class="nav-link" onclick="showPage('inscription',this)">S'inscrire</div>
-    <div class="nav-link" onclick="showPage('paiement',this)">Paiement</div>
-    <div class="nav-link" onclick="showPage('dashboard',this)">Tableau de bord</div>
-    <div class="nav-link" onclick="showPage('messages',this)">Messages</div>
-    <div class="nav-link" id="navAdminLink" onclick="showPage('admin',this)" style="display:none;color:var(--a500)">Admin</div>
-    <button class="nav-login" id="navLoginBtn" onclick="openLoginModal()">Se connecter</button>
-    <button class="nav-cta" id="navCreateBtn" onclick="showPage('inscription',document.querySelectorAll('.nav-link')[2])">Créer un profil</button>
+    <div class="nav-link active" onclick="showPage('accueil',this)" data-i18n="nav_accueil">Accueil</div>
+    <div class="nav-link" onclick="showPage('explorer',this)" data-i18n="nav_explorer">Explorer</div>
+    <div class="nav-link" onclick="showPage('inscription',this)" data-i18n="nav_inscription">S'inscrire</div>
+    <div class="nav-link" onclick="showPage('paiement',this)" data-i18n="nav_paiement">Paiement</div>
+    <div class="nav-link" onclick="showPage('dashboard',this)" data-i18n="nav_dashboard">Tableau de bord</div>
+    <div class="nav-link" onclick="showPage('messages',this)" data-i18n="nav_messages">Messages</div>
+    <div class="nav-link" id="navAdminLink" onclick="showPage('admin',this)" style="display:none;color:var(--a500)" data-i18n="nav_admin">Admin</div>
+    <button class="nav-login" id="navLoginBtn" onclick="openLoginModal()" data-i18n="nav_login">Se connecter</button>
+    <button class="nav-cta" id="navCreateBtn" onclick="showPage('inscription',document.querySelectorAll('.nav-link')[2])" data-i18n="nav_create">Créer un profil</button>
   </div>
   <!-- Cloche notifications -->
   <div class="notif-wrap" id="notifWrap">
@@ -1859,6 +1903,7 @@ html.dark .email-banner-text{color:#fdd835}
       </div>
     </div>
   </div>
+  <button class="lang-toggle" id="langToggle" onclick="toggleLang()" title="Changer la langue / Switch language">FR</button>
   <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Changer le theme">
     <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -2758,12 +2803,19 @@ html.dark .email-banner-text{color:#fdd835}
           </div>
         </div>
 
+        <!-- Barre de prévisualisation fichier -->
+        <div class="wa-file-preview-bar" id="waFilePreviewBar">
+          <img class="wa-file-preview-thumb" id="waFilePreviewThumb" src="" alt="">
+          <span class="wa-file-preview-name" id="waFilePreviewName"></span>
+          <button class="wa-file-preview-clear" onclick="clearWAFile()" title="Retirer">✕</button>
+        </div>
         <div class="wa-input-bar">
           <button class="wa-emoji-btn" title="Emoji" onclick="insertEmoji()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5" stroke-linecap="round"/></svg>
           </button>
-          <input class="wa-input-main" id="waInput" placeholder="Tapez un message" oninput="emitTyping()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWAMsg()}"/>
-          <button class="wa-attach-btn" title="Joindre un fichier" onclick="toast('Pièces jointes — bientôt disponible')">
+          <input class="wa-input-main" id="waInput" placeholder="Tapez un message" data-i18n-placeholder="msg_placeholder" oninput="emitTyping()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWAMsg()}"/>
+          <input type="file" id="waFileInput" style="display:none" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" onchange="onWAFileSelect(this)">
+          <button class="wa-attach-btn" title="Joindre un fichier" data-i18n-title="attach_file" onclick="openFileAttach()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px;height:24px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
           <button class="wa-send-btn" onclick="sendWAMsg()">
@@ -2821,10 +2873,16 @@ html.dark .email-banner-text{color:#fdd835}
           Payer directement
         </button>
       </div>
-      <button class="report-btn" onclick="openReportModal(currentModalTalentId)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Signaler ce profil
-      </button>
+      <div style="display:flex;gap:.5rem;margin-top:.1rem">
+        <button class="report-btn" onclick="openReportModal(currentModalTalentId)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span data-i18n="report_profile">Signaler ce profil</span>
+        </button>
+        <button class="report-btn" onclick="generateModalContract()" style="color:var(--g600)" id="modalContractBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span data-i18n="contract_pdf">Contrat PDF</span>
+        </button>
+      </div>
       <!-- Section avis -->
       <div class="reviews-section" id="modalReviewsSection">
         <h4>Avis clients</h4>
@@ -3122,6 +3180,7 @@ let waCurrentUserId = null;
 let waActiveContactId = null;
 let waContacts = [];
 let currentModalTalentId = null;
+let _modalTalentData = null;
 
 // ═══ API ═════════════════════════════════════════════════════════════
 async function api(path, methodOrOpts = {}, bodyArg = null) {
@@ -3376,6 +3435,7 @@ async function openModal(id){
   let t=await api('/talents/'+id);
   if(!t) t=TALENTS.find(x=>x.id===id);
   if(!t)return;
+  _modalTalentData = t;
   const bg=t.bg_color||t.bg; const col=t.text_color||t.col;
   const name=t.name||(t.prenom+' '+t.nom);
   const city=t.ville||t.city;
@@ -4291,7 +4351,7 @@ async function loadWAMessages(contactId){
     const time=dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     html+=`<div class="wa-msg${isMe?' me':''}">
       <div class="wa-msg-bubble ${isMe?'me':'them'}">
-        ${escHtml(m.text)}
+        ${renderWAFileContent(m)}
         <div class="wa-msg-footer">
           <span class="wa-msg-time">${time}</span>
           ${isMe?'<span class="wa-msg-ticks">✓✓</span>':''}
@@ -4357,19 +4417,32 @@ async function translateBubble(bubble, text){
 async function sendWAMsg(){
   const input=document.getElementById('waInput');
   const text=input.value.trim();
-  if(!text||!waActiveContactId)return;
+  if(!text && !waPendingFile || !waActiveContactId)return;
 
   const now=new Date();
   const time=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   const container=document.getElementById('waMessages');
   const el=document.createElement('div');
   el.className='wa-msg me';
-  el.innerHTML=`<div class="wa-msg-bubble me">${escHtml(text)}<div class="wa-msg-footer"><span class="wa-msg-time">${time}</span><span class="wa-msg-ticks">✓</span></div></div>`;
+
+  // Prévisualisation optimiste
+  let previewHtml = '';
+  if(waPendingFile && waPendingFile.type.startsWith('image/')){
+    previewHtml = `<img src="${waPendingFile.data}" class="wa-file-img">`;
+  } else if(waPendingFile){
+    previewHtml = `<div class="wa-file-msg"><div class="wa-file-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="wa-file-info"><div class="wa-file-name">${escHtml(waPendingFile.name)}</div></div></div>`;
+  }
+  el.innerHTML=`<div class="wa-msg-bubble me">${text?escHtml(text):''}${previewHtml}<div class="wa-msg-footer"><span class="wa-msg-time">${time}</span><span class="wa-msg-ticks">✓</span></div></div>`;
   container.appendChild(el);
+
+  const body={senderId:waCurrentUserId,receiverId:waActiveContactId,text:text||''};
+  if(waPendingFile){body.fileData=waPendingFile.data;body.fileName=waPendingFile.name;body.fileType=waPendingFile.type;}
+
   input.value='';
+  clearWAFile();
   container.scrollTop=container.scrollHeight;
 
-  const result=await api('/messages',{method:'POST',body:{senderId:waCurrentUserId,receiverId:waActiveContactId,text}});
+  const result=await api('/messages',{method:'POST',body});
   if(result)el.querySelector('.wa-msg-ticks').textContent='✓✓';
 
   // Typing indicator + auto-reply
@@ -4933,11 +5006,26 @@ async function loadModalReviews(talentId){
   const reviews = await api('/reviews/'+talentId);
   const container = document.getElementById('modalReviewsList');
   if(!container) return;
+  const uid = parseInt(localStorage.getItem('sc_user_id'));
+  const isTalentOwner = uid && uid === parseInt(talentId);
   if(!reviews || !reviews.length){
-    container.innerHTML='<div style="color:var(--subtle);font-size:.82rem;text-align:center;padding:.5rem">Aucun avis pour l\'instant</div>';
+    container.innerHTML=`<div style="color:var(--subtle);font-size:.82rem;text-align:center;padding:.5rem" data-i18n="no_reviews">${t('no_reviews')}</div>`;
     return;
   }
-  container.innerHTML = reviews.slice(0,5).map(r=>`
+  container.innerHTML = reviews.slice(0,5).map(r=>{
+    const replyHtml = r.reply
+      ? `<div class="review-reply"><div class="review-reply-label">💬 ${t('talent_reply')}</div>${escHtml(r.reply)}</div>`
+      : (isTalentOwner
+          ? `<button class="btn-reply-open" onclick="toggleReplyForm(${r.id})">${t('reply')}</button>
+             <div class="review-reply-form" id="replyForm-${r.id}">
+               <textarea id="replyText-${r.id}" placeholder="${t('your_reply')}"></textarea>
+               <div class="review-reply-form-btns">
+                 <button class="btn-reply-open" onclick="toggleReplyForm(${r.id})">${t('cancel')}</button>
+                 <button class="btn-reply-submit" onclick="submitReviewReply(${r.id},${talentId})">${t('post_reply')}</button>
+               </div>
+             </div>`
+          : '');
+    return `
     <div class="review-item">
       <div class="review-avatar" style="background:${r.reviewer_bg};color:${r.reviewer_col}">${r.reviewer_initials}</div>
       <div class="review-body">
@@ -4946,9 +5034,11 @@ async function loadModalReviews(talentId){
           <span class="review-date">${timeAgo(r.created_at)}</span>
         </div>
         <div class="review-stars">${'⭐'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
-        <div class="review-text">${r.comment||''}</div>
+        <div class="review-text">${escHtml(r.comment||'')}</div>
+        ${replyHtml}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function submitReview(talentId){
@@ -5570,8 +5660,231 @@ async function submitReport() {
   }
 }
 
+// ═══ REVIEW REPLY ═════════════════════════════════════════════════════════════
+function toggleReplyForm(reviewId) {
+  const form = document.getElementById('replyForm-' + reviewId);
+  if (form) form.classList.toggle('open');
+}
+
+async function submitReviewReply(reviewId, talentId) {
+  const ta = document.getElementById('replyText-' + reviewId);
+  if (!ta) return;
+  const reply = ta.value.trim();
+  if (!reply) { toast('Entrez une réponse'); return; }
+  const res = await api('/reviews/' + reviewId + '/reply', 'PUT', { reply });
+  if (res?.success) {
+    toast('Réponse publiée !');
+    loadModalReviews(talentId);
+  } else { toast(res?.error || 'Erreur'); }
+}
+
+// ═══ MISSION CONTRACT PDF ══════════════════════════════════════════════════════
+async function generateModalContract() {
+  const talentId = currentModalTalentId;
+  if (!talentId) return;
+  let talent = _modalTalentData;
+  if (!talent || talent.id !== talentId) {
+    talent = await api('/talents/' + talentId);
+    _modalTalentData = talent;
+  }
+  if (!talent) { toast('Données du talent indisponibles'); return; }
+  const clientName = localStorage.getItem('sc_user_name') || 'Le Client';
+  generateMissionContract(
+    (talent.prenom || '') + ' ' + (talent.nom || ''),
+    talent.skill || '',
+    talent.tarif || 0,
+    talent.mm_network || 'Mobile Money',
+    clientName
+  );
+}
+
+function generateMissionContract(talentName, skill, amount, network, clientName) {
+  if (!window.jspdf) { toast('PDF indisponible (CDN non chargé)'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  doc.setFillColor(29, 158, 117);
+  doc.rect(0, 0, 210, 38, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22); doc.setFont('helvetica', 'bold');
+  doc.text('SkillConnect', 20, 18);
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+  doc.text('Plateforme des talents camerounais', 20, 26);
+  doc.text('CONTRAT DE MISSION', 150, 18, { align: 'right' });
+  doc.text(new Date().toLocaleDateString('fr-FR'), 150, 26, { align: 'right' });
+
+  doc.setTextColor(40, 40, 40);
+  doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+  doc.text('Contrat de prestation de services', 20, 52);
+  doc.setDrawColor(29, 158, 117); doc.setLineWidth(0.5);
+  doc.line(20, 54, 190, 54);
+
+  const lines = [
+    'Entre les soussignés :',
+    '',
+    `• Le Prestataire : ${talentName}   Service : ${skill}`,
+    `• Le Client : ${clientName}`,
+    '',
+    'Il est convenu ce qui suit :',
+    '',
+    `Objet de la mission : ${skill}`,
+    `Montant convenu : ${parseInt(amount || 0).toLocaleString('fr-FR')} FCFA`,
+    `Mode de paiement : ${network} via SkillConnect (séquestre sécurisé)`,
+    '',
+    'Conditions générales :',
+    '  • Les fonds sont bloqués en séquestre jusqu\'à la validation de la mission.',
+    '  • Le client valide la mission dans les 7 jours suivant la livraison.',
+    '  • En cas de litige, SkillConnect intervient comme médiateur neutre.',
+    '  • Commission SkillConnect : 7 % prélevée sur le montant total.',
+    '  • Toute modification des termes doit être acceptée par les deux parties.',
+    '',
+    'Confidentialité :',
+    '  Les parties s\'engagent à ne pas divulguer les informations échangées',
+    '  dans le cadre de cette mission à des tiers sans accord mutuel.',
+    '',
+    'Signatures :',
+  ];
+
+  let y = 62;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  lines.forEach(line => {
+    if (y > 268) { doc.addPage(); y = 20; }
+    doc.text(line, 20, y);
+    y += 6.5;
+  });
+
+  y += 8;
+  doc.setDrawColor(120, 120, 120); doc.setLineWidth(0.3);
+  doc.line(20, y, 90, y);
+  doc.line(120, y, 190, y);
+  doc.setFontSize(8); doc.setTextColor(130, 130, 130);
+  doc.text('Signature Client', 55, y + 5, { align: 'center' });
+  doc.text('Signature Prestataire', 155, y + 5, { align: 'center' });
+
+  doc.setFontSize(7);
+  doc.text('SkillConnect Cameroun — Contrat généré le ' + new Date().toLocaleString('fr-FR'), 105, 285, { align: 'center' });
+  doc.text('Ce document a valeur contractuelle conformément aux lois camerounaises.', 105, 290, { align: 'center' });
+
+  doc.save('contrat-mission-skillconnect-' + Date.now() + '.pdf');
+}
+
+// ═══ FILE SHARING IN CHAT ══════════════════════════════════════════════════════
+let waPendingFile = null;
+
+function openFileAttach() {
+  if (!waActiveContactId) { toast('Sélectionnez un contact d\'abord'); return; }
+  document.getElementById('waFileInput').click();
+}
+
+function onWAFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { toast('Fichier trop volumineux (max 5 Mo)'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    waPendingFile = { data: e.target.result, name: file.name, type: file.type };
+    const bar = document.getElementById('waFilePreviewBar');
+    bar.classList.add('show');
+    document.getElementById('waFilePreviewName').textContent = file.name;
+    const thumb = document.getElementById('waFilePreviewThumb');
+    if (file.type.startsWith('image/')) {
+      thumb.src = e.target.result;
+      thumb.style.display = 'block';
+    } else {
+      thumb.style.display = 'none';
+    }
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function clearWAFile() {
+  waPendingFile = null;
+  document.getElementById('waFilePreviewBar').classList.remove('show');
+  document.getElementById('waFilePreviewThumb').src = '';
+  document.getElementById('waFilePreviewThumb').style.display = 'none';
+}
+
+function downloadWAFile(name, dataUrl) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = name;
+  a.click();
+}
+
+function renderWAFileContent(msg) {
+  if (!msg.file_data) return escHtml(msg.text || '');
+  const isImage = (msg.file_type || '').startsWith('image/');
+  const textPart = msg.text ? `<div style="margin-bottom:.4rem">${escHtml(msg.text)}</div>` : '';
+  if (isImage) {
+    return textPart + `<img src="${msg.file_data}" class="wa-file-img" onclick="openPortfolioImage('${msg.file_data}','${escHtml(msg.file_name||'Image')}')">`;
+  }
+  return textPart + `<div class="wa-file-msg" onclick="downloadWAFile('${escHtml(msg.file_name||'fichier')}','${msg.file_data}')">
+    <div class="wa-file-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+    <div class="wa-file-info"><div class="wa-file-name">${escHtml(msg.file_name||'Fichier')}</div><div class="wa-file-size">Télécharger</div></div>
+  </div>`;
+}
+
+// ═══ I18N ══════════════════════════════════════════════════════════════════════
+const TRANSLATIONS = {
+  fr: {
+    nav_accueil: 'Accueil', nav_explorer: 'Explorer', nav_inscription: 'S\'inscrire',
+    nav_paiement: 'Paiement', nav_dashboard: 'Tableau de bord', nav_messages: 'Messages',
+    nav_admin: 'Admin', nav_login: 'Se connecter', nav_create: 'Créer un profil',
+    contact: 'Contacter', pay: 'Payer directement',
+    report_profile: 'Signaler ce profil', contract_pdf: 'Contrat PDF',
+    reviews_title: 'Avis clients', no_reviews: 'Aucun avis pour l\'instant',
+    reply: 'Répondre', your_reply: 'Votre réponse…', post_reply: 'Publier',
+    cancel: 'Annuler', talent_reply: 'Réponse du talent',
+    msg_placeholder: 'Tapez un message', attach_file: 'Joindre un fichier',
+  },
+  en: {
+    nav_accueil: 'Home', nav_explorer: 'Explore', nav_inscription: 'Sign up',
+    nav_paiement: 'Payment', nav_dashboard: 'Dashboard', nav_messages: 'Messages',
+    nav_admin: 'Admin', nav_login: 'Log in', nav_create: 'Create profile',
+    contact: 'Contact', pay: 'Pay directly',
+    report_profile: 'Report profile', contract_pdf: 'PDF Contract',
+    reviews_title: 'Client reviews', no_reviews: 'No reviews yet',
+    reply: 'Reply', your_reply: 'Your reply…', post_reply: 'Post',
+    cancel: 'Cancel', talent_reply: 'Talent\'s reply',
+    msg_placeholder: 'Type a message', attach_file: 'Attach a file',
+  },
+};
+let currentLang = localStorage.getItem('sc_lang') || 'fr';
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] || TRANSLATIONS.fr)[key] || key;
+}
+
+function toggleLang() {
+  setLang(currentLang === 'fr' ? 'en' : 'fr');
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('sc_lang', lang);
+  applyTranslations();
+}
+
+function applyTranslations() {
+  const btn = document.getElementById('langToggle');
+  if (btn) btn.textContent = currentLang.toUpperCase();
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    const val = t(key);
+    if (val !== key) el.textContent = val;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+}
+
 // Init socket après chargement du CDN
 window.addEventListener('load', async () => {
+  applyTranslations();
   initSocket();
   // Refresh notifications toutes les 30s si pas de socket
   setInterval(()=>{ if(localStorage.getItem('sc_user_id')) loadNotifications(); }, 30000);

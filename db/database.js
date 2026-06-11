@@ -88,7 +88,10 @@ async function init() {
       receiver_id INT DEFAULT 0,
       text        TEXT,
       \`read\`    TINYINT  DEFAULT 0,
-      sent_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+      sent_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+      file_data   LONGTEXT,
+      file_name   VARCHAR(200),
+      file_type   VARCHAR(100)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
@@ -135,6 +138,8 @@ async function init() {
       rating            TINYINT DEFAULT 5,
       comment           TEXT,
       transaction_id    INT,
+      reply             TEXT,
+      reply_at          DATETIME,
       created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
@@ -172,10 +177,13 @@ async function init() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
-  // Ajouter email_verified si la colonne n'existe pas encore (migration)
-  try {
-    await pool.query('ALTER TABLE users ADD COLUMN email_verified TINYINT DEFAULT 1');
-  } catch (_) { /* colonne déjà présente */ }
+  // Migrations — colonnes ajoutées après la création initiale
+  try { await pool.query('ALTER TABLE users ADD COLUMN email_verified TINYINT DEFAULT 1'); } catch (_) {}
+  try { await pool.query('ALTER TABLE reviews ADD COLUMN reply TEXT'); } catch (_) {}
+  try { await pool.query('ALTER TABLE reviews ADD COLUMN reply_at DATETIME'); } catch (_) {}
+  try { await pool.query('ALTER TABLE messages ADD COLUMN file_data LONGTEXT'); } catch (_) {}
+  try { await pool.query('ALTER TABLE messages ADD COLUMN file_name VARCHAR(200)'); } catch (_) {}
+  try { await pool.query('ALTER TABLE messages ADD COLUMN file_type VARCHAR(100)'); } catch (_) {}
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS email_verify_tokens (
@@ -513,13 +521,13 @@ async function getMessages(userId, contactId) {
   return rows;
 }
 
-async function sendMessage(senderId, receiverId, text) {
+async function sendMessage(senderId, receiverId, text, fileData = null, fileName = null, fileType = null) {
   const now = fmtISO();
   const [result] = await pool.execute(
-    'INSERT INTO messages (sender_id,receiver_id,text,`read`,sent_at) VALUES (?,?,?,0,?)',
-    [senderId, receiverId, text, now]
+    'INSERT INTO messages (sender_id,receiver_id,text,`read`,sent_at,file_data,file_name,file_type) VALUES (?,?,?,0,?,?,?,?)',
+    [senderId, receiverId, text || '', now, fileData || null, fileName || null, fileType || null]
   );
-  return { id: result.insertId, sender_id: senderId, receiver_id: receiverId, text, read: 0, sent_at: now };
+  return { id: result.insertId, sender_id: senderId, receiver_id: receiverId, text: text || '', read: 0, sent_at: now, file_data: fileData, file_name: fileName, file_type: fileType };
 }
 
 async function markAsRead(userId, contactId) {
@@ -582,6 +590,17 @@ async function getReviews(talentId) {
     [parseInt(talentId)]
   );
   return rows;
+}
+
+async function replyToReview(reviewId, talentId, reply) {
+  const [rows] = await pool.execute('SELECT * FROM reviews WHERE id = ?', [parseInt(reviewId)]);
+  const review = rows[0];
+  if (!review) throw new Error('Avis non trouvé');
+  if (review.talent_id !== parseInt(talentId)) throw new Error('Non autorisé');
+  await pool.execute(
+    'UPDATE reviews SET reply = ?, reply_at = ? WHERE id = ?',
+    [reply, fmtISO(), parseInt(reviewId)]
+  );
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
@@ -894,4 +913,5 @@ module.exports = {
   createDispute, getDisputeByTxId, getAllDisputes, resolveDispute,
   createReport, getAllReports,
   createVerifyToken, findVerifyToken, markEmailVerified,
+  replyToReview,
 };

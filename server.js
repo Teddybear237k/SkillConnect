@@ -247,13 +247,14 @@ app.get('/api/messages/:userId/:contactId', async (req, res) => {
 
 app.post('/api/messages', authenticateToken, async (req, res) => {
   try {
-    const { senderId, receiverId, text } = req.body;
-    const err = validateFields(req.body, ['senderId', 'receiverId', 'text']);
+    const { senderId, receiverId, text, fileData, fileName, fileType } = req.body;
+    const err = validateFields(req.body, ['senderId', 'receiverId']);
     if (err) return res.status(400).json({ error: err });
+    if (!text && !fileData) return res.status(400).json({ error: 'Message ou fichier requis.' });
     if (req.user.userId !== parseInt(senderId))
       return res.status(403).json({ error: 'Accès refusé.' });
 
-    const msg    = await db.sendMessage(parseInt(senderId), parseInt(receiverId), text);
+    const msg    = await db.sendMessage(parseInt(senderId), parseInt(receiverId), text || '', fileData || null, fileName || null, fileType || null);
     const sender = await db.getTalentById(parseInt(senderId));
 
     if (sender) {
@@ -571,6 +572,15 @@ app.post('/api/campay/webhook', async (req, res) => {
 });
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────
+app.put('/api/reviews/:id/reply', authenticateToken, async (req, res) => {
+  try {
+    const { reply } = req.body;
+    if (!reply?.trim()) return res.status(400).json({ error: 'Réponse requise.' });
+    await db.replyToReview(req.params.id, req.user.userId, reply.trim());
+    res.json({ success: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
 app.get('/api/reviews/:talentId', async (req, res) => {
   try { res.json(await db.getReviews(parseInt(req.params.talentId))); }
   catch (e) { res.status(500).json({ error: e.message }); }
