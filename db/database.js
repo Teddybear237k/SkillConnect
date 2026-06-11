@@ -410,8 +410,8 @@ async function createUser(body) {
   const [result] = await pool.execute(
     `INSERT INTO users (prenom,nom,ville,skill,skill_custom,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,email_verified,created_at)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,1,'available',null,?,0,?)`,
-    [prenom, nom, ville, skillName, skill_custom||null, parseInt(tarif)||0, tarif_unit||'par heure',
-     phone, mm_network||'MTN MoMo', bio||'', email||'', initials, color.bg, color.col,
+    [prenom||null, nom||null, ville||null, skillName, skill_custom||null, parseInt(tarif)||0, tarif_unit||'par heure',
+     phone||null, mm_network||'MTN MoMo', bio||'', email||'', initials, color.bg, color.col,
      cat, password_hash||null, fmtISO()]
   );
 
@@ -896,15 +896,16 @@ async function getAllReports() {
 }
 
 // ─── Offres de missions ───────────────────────────────────────────────────────
-async function createJobPost({ clientId, title, description, budget, budgetType, category, ville }) {
+async function createJobPost({ clientId, title, description, budget, budgetType, budget_type, category, ville }) {
   const now = fmtISO();
+  const bt = budgetType || budget_type || 'fixe';
   const [result] = await pool.execute(
     `INSERT INTO job_posts (client_id,title,description,budget,budget_type,category,ville,status,created_at)
      VALUES (?,?,?,?,?,?,?,'open',?)`,
     [parseInt(clientId), title||'', description||'', parseInt(budget)||0,
-     budgetType||'fixe', category||'Autres', ville||'', now]
+     bt, category||'Autres', ville||null, now]
   );
-  return { id: result.insertId, client_id: parseInt(clientId), title, description, budget: parseInt(budget)||0, budget_type: budgetType||'fixe', category: category||'Autres', ville: ville||'', status: 'open', created_at: now };
+  return { id: result.insertId, client_id: parseInt(clientId), title, description, budget: parseInt(budget)||0, budget_type: bt, category: category||'Autres', ville: ville||null, status: 'open', created_at: now };
 }
 
 async function getJobs({ cat, q, ville, status = 'open', page, limit } = {}) {
@@ -949,7 +950,8 @@ async function applyToJob({ jobId, talentId, message }) {
 
 async function getJobApplications(jobId) {
   const [rows] = await pool.execute(
-    `SELECT a.*, u.prenom, u.nom, u.initials, u.bg_color, u.text_color, u.skill, u.rating, u.reviews
+    `SELECT a.*, u.prenom, u.nom, CONCAT(u.prenom,' ',u.nom) as talent_name,
+            u.initials, u.bg_color, u.text_color, u.skill, u.rating, u.reviews
      FROM job_applications a LEFT JOIN users u ON u.id = a.talent_id
      WHERE a.job_id = ? ORDER BY a.created_at DESC`,
     [parseInt(jobId)]
