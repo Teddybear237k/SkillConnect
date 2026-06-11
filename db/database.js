@@ -220,6 +220,33 @@ async function init() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS job_posts (
+      id           INT AUTO_INCREMENT PRIMARY KEY,
+      client_id    INT NOT NULL,
+      title        VARCHAR(200) NOT NULL,
+      description  TEXT,
+      budget       INT DEFAULT 0,
+      budget_type  VARCHAR(50)  DEFAULT 'fixe',
+      category     VARCHAR(100) DEFAULT 'Autres',
+      ville        VARCHAR(100),
+      status       VARCHAR(30)  DEFAULT 'open',
+      created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS job_applications (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      job_id     INT NOT NULL,
+      talent_id  INT NOT NULL,
+      message    TEXT,
+      status     VARCHAR(30) DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_apply (job_id, talent_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
   const [[{ cnt }]] = await pool.execute('SELECT COUNT(*) as cnt FROM users');
   if (cnt === 0) await seedData();
 
@@ -868,6 +895,105 @@ async function getAllReports() {
   return rows;
 }
 
+// ─── Offres de missions ───────────────────────────────────────────────────────
+async function createJobPost({ clientId, title, description, budget, budgetType, category, ville }) {
+  const now = fmtISO();
+  const [result] = await pool.execute(
+    `INSERT INTO job_posts (client_id,title,description,budget,budget_type,category,ville,status,created_at)
+     VALUES (?,?,?,?,?,?,?,'open',?)`,
+    [parseInt(clientId), title||'', description||'', parseInt(budget)||0,
+     budgetType||'fixe', category||'Autres', ville||'', now]
+  );
+  return { id: result.insertId, client_id: parseInt(clientId), title, description, budget: parseInt(budget)||0, budget_type: budgetType||'fixe', category: category||'Autres', ville: ville||'', status: 'open', created_at: now };
+}
+
+async function getJobs({ cat, q, ville, status = 'open', page, limit } = {}) {
+  let where = "WHERE j.status = ?";
+  const params = [status];
+  if (cat && cat !== 'Tous') { where += ' AND j.category = ?'; params.push(cat); }
+  if (q)     { where += ' AND (j.title LIKE ? OR j.description LIKE ?)'; const lq = `%${q}%`; params.push(lq, lq); }
+  if (ville) { where += ' AND j.ville = ?'; params.push(ville); }
+
+  const [[{ total }]] = await pool.execute(`SELECT COUNT(*) as total FROM job_posts j ${where}`, params);
+  const pageNum  = Math.max(1, parseInt(page)  || 1);
+  const limitNum = Math.min(50, parseInt(limit) || 9);
+  const offset   = (pageNum - 1) * limitNum;
+
+  const [rows] = await pool.execute(
+    `SELECT j.*, u.prenom, u.nom, u.initials, u.bg_color, u.text_color,
+            (SELECT COUNT(*) FROM job_applications a WHERE a.job_id = j.id) as applicants
+     FROM job_posts j LEFT JOIN users u ON u.id = j.client_id
+     ${where} ORDER BY j.created_at DESC LIMIT ${limitNum} OFFSET ${offset}`,
+    params
+  );
+  return { jobs: rows, total, page: pageNum, limit: limitNum };
+}
+
+async function getJobById(id) {
+  const [rows] = await pool.execute(
+    `SELECT j.*, u.prenom, u.nom, u.initials, u.bg_color, u.text_color
+     FROM job_posts j LEFT JOIN users u ON u.id = j.client_id WHERE j.id = ?`,
+    [parseInt(id)]
+  );
+  return rows[0] || null;
+}
+
+async function applyToJob({ jobId, talentId, message }) {
+  const now = fmtISO();
+  const [result] = await pool.execute(
+    'INSERT INTO job_applications (job_id,talent_id,message,status,created_at) VALUES (?,?,?,\'pending\',?)',
+    [parseInt(jobId), parseInt(talentId), message||'', now]
+  );
+  return { id: result.insertId, job_id: parseInt(jobId), talent_id: parseInt(talentId), message: message||'', status: 'pending', created_at: now };
+}
+
+async function getJobApplications(jobId) {
+  const [rows] = await pool.execute(
+    `SELECT a.*, u.prenom, u.nom, u.initials, u.bg_color, u.text_color, u.skill, u.rating, u.reviews
+     FROM job_applications a LEFT JOIN users u ON u.id = a.talent_id
+     WHERE a.job_id = ? ORDER BY a.created_at DESC`,
+    [parseInt(jobId)]
+  );
+  return rows;
+}
+
+async function getMyJobPosts(clientId) {
+  const [rows] = await pool.execute(
+    `SELECT j.*, (SELECT COUNT(*) FROM job_applications a WHERE a.job_id = j.id) as applicants
+     FROM job_posts j WHERE j.client_id = ? ORDER BY j.created_at DESC`,
+    [parseInt(clientId)]
+  );
+  return rows;
+}
+
+async function getMyApplications(talentId) {
+  const [rows] = await pool.execute(
+    `SELECT a.*, j.title, j.budget, j.budget_type, j.category, j.ville, j.status as job_status,
+            u.prenom as client_prenom, u.nom as client_nom
+     FROM job_applications a
+     LEFT JOIN job_posts j ON j.id = a.job_id
+     LEFT JOIN users u ON u.id = j.client_id
+     WHERE a.talent_id = ? ORDER BY a.created_at DESC`,
+    [parseInt(talentId)]
+  );
+  return rows;
+}
+
+async function closeJobPost(id, clientId) {
+  await pool.execute(
+    "UPDATE job_posts SET status = 'closed' WHERE id = ? AND client_id = ?",
+    [parseInt(id), parseInt(clientId)]
+  );
+}
+
+async function getTalentActiveCount(talentId) {
+  const [[{ cnt }]] = await pool.execute(
+    "SELECT COUNT(*) as cnt FROM transactions WHERE receiver_id = ? AND status IN ('escrow','delivered')",
+    [parseInt(talentId)]
+  );
+  return cnt;
+}
+
 // ─── Admin ────────────────────────────────────────────────────────────────────
 async function getAdminStats() {
   const [[{ totalUsers }]]   = await pool.execute('SELECT COUNT(*) as totalUsers FROM users');
@@ -914,4 +1040,6 @@ module.exports = {
   createReport, getAllReports,
   createVerifyToken, findVerifyToken, markEmailVerified,
   replyToReview,
+  createJobPost, getJobs, getJobById, applyToJob, getJobApplications,
+  getMyJobPosts, getMyApplications, closeJobPost, getTalentActiveCount,
 };

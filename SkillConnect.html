@@ -1826,6 +1826,72 @@ html.dark .email-banner-text{color:#fdd835}
 .litige-btn-cancel{background:transparent;border:1px solid var(--hairline);color:var(--ink);padding:.5rem 1rem;border-radius:var(--r-full);cursor:pointer;font-size:.85rem}
 .litige-btn-submit{background:#e53e3e;color:#fff;border:none;padding:.5rem 1.25rem;border-radius:var(--r-full);cursor:pointer;font-size:.85rem;font-weight:600}
 
+/* ─── Statut en ligne ────────────────────────────────────────────────── */
+.online-dot{position:absolute;bottom:4px;right:4px;width:11px;height:11px;border-radius:50%;background:#25D366;border:2px solid var(--card);z-index:1}
+.talent-avatar-wrap{position:relative;display:inline-block}
+.talent-card .talent-avatar{display:block}
+
+/* ─── Mission cards (dashboard) ──────────────────────────────────────── */
+.missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-top:1.25rem}
+.mission-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-lg);padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:.6rem}
+.mission-card-title{font-weight:700;font-size:.95rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mission-card-amount{font-size:1.05rem;font-weight:800;color:var(--g600);font-family:var(--font-display)}
+.mission-card-meta{font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.mission-status{display:inline-flex;align-items:center;gap:.3rem;padding:.18rem .65rem;border-radius:var(--r-full);font-size:.72rem;font-weight:700}
+.mission-status.escrow{background:rgba(186,117,23,.12);color:#a0710a}
+.mission-status.delivered{background:rgba(29,158,117,.12);color:var(--g600)}
+.mission-status.completed{background:rgba(29,158,117,.18);color:var(--g800)}
+.mission-status.cancelled{background:rgba(229,62,62,.1);color:#e53e3e}
+.mission-status.pending{background:rgba(100,100,100,.1);color:var(--muted)}
+.mission-card-actions{display:flex;gap:.5rem;margin-top:.25rem;flex-wrap:wrap}
+.btn-deliver{background:var(--g600);color:#fff;border:none;border-radius:var(--r-full);padding:.38rem 1rem;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .2s}
+.btn-deliver:hover{background:var(--g500)}
+.btn-validate-mission{background:var(--a500);color:#fff;border:none;border-radius:var(--r-full);padding:.38rem 1rem;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .2s}
+.btn-validate-mission:hover{background:var(--a400)}
+.missions-tabs{display:flex;gap:.5rem;margin-bottom:1rem;border-bottom:1px solid var(--hairline);padding-bottom:.5rem}
+.missions-tab{background:none;border:none;padding:.4rem .85rem;border-radius:var(--r-full);font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s}
+.missions-tab.active{background:var(--g50);color:var(--g600)}
+
+/* ─── Job offer cards ────────────────────────────────────────────────── */
+.jobs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem;margin-top:1.5rem}
+.job-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-lg);padding:1.25rem;display:flex;flex-direction:column;gap:.75rem;transition:box-shadow .2s,transform .2s;cursor:pointer}
+.job-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.job-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem}
+.job-card-title{font-weight:700;font-size:.97rem;color:var(--ink);line-height:1.3;flex:1}
+.job-card-budget{font-weight:800;font-size:1rem;color:var(--g600);white-space:nowrap;font-family:var(--font-display)}
+.job-card-desc{font-size:.83rem;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.job-card-meta{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.job-badge{display:inline-flex;align-items:center;padding:.18rem .6rem;background:var(--g50);color:var(--g700,var(--g600));border-radius:var(--r-full);font-size:.72rem;font-weight:600}
+.job-badge.ville{background:var(--p50);color:var(--p600)}
+.job-badge.apps{background:var(--a50);color:var(--a600,var(--a500))}
+.job-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:.25rem}
+.job-card-client{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--muted)}
+.job-client-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;flex-shrink:0}
+.job-apply-btn{background:var(--g600);color:#fff;border:none;border-radius:var(--r-full);padding:.35rem .9rem;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .2s}
+.job-apply-btn:hover{background:var(--g500)}
+.job-apply-btn:disabled{background:var(--muted);cursor:default}
+
+/* ─── Job modal overlay ──────────────────────────────────────────────── */
+.job-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:8500;display:none;align-items:center;justify-content:center}
+.job-overlay.open{display:flex}
+.job-modal{background:var(--card);border-radius:var(--r-xl);padding:1.75rem;max-width:540px;width:92%;max-height:85vh;overflow-y:auto;animation:fade-up .3s var(--ease-out-expo)}
+.job-modal h3{font-size:1.15rem;font-weight:800;color:var(--ink);margin-bottom:.5rem;font-family:var(--font-display)}
+.job-modal-budget{font-size:1.25rem;font-weight:800;color:var(--g600);margin-bottom:.75rem;font-family:var(--font-display)}
+.job-modal-desc{font-size:.88rem;color:var(--muted);line-height:1.6;margin-bottom:1rem}
+.job-applicants-list{display:flex;flex-direction:column;gap:.65rem;margin-top:.75rem}
+.applicant-item{display:flex;align-items:flex-start;gap:.75rem;padding:.75rem;background:var(--surface);border-radius:var(--r-md);border:1px solid var(--hairline)}
+.applicant-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+.applicant-info{flex:1;min-width:0}
+.applicant-name{font-weight:700;font-size:.88rem;color:var(--ink)}
+.applicant-skill{font-size:.78rem;color:var(--muted)}
+.applicant-msg{font-size:.8rem;color:var(--ink3);margin-top:.2rem;font-style:italic}
+
+/* ─── Post job form ──────────────────────────────────────────────────── */
+.post-job-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:1.5rem;max-width:580px;margin:0 auto 2rem}
+.post-job-card h3{font-size:1.05rem;font-weight:800;color:var(--ink);margin-bottom:1rem;font-family:var(--font-display)}
+.conflict-warning{display:none;align-items:center;gap:.5rem;padding:.6rem .9rem;background:rgba(230,157,10,.1);border:1px solid rgba(230,157,10,.3);border-radius:var(--r-md);font-size:.82rem;color:#a0710a;margin-top:.5rem}
+.conflict-warning.show{display:flex}
+
 /* ─── Language toggle ────────────────────────────────────────────────── */
 .lang-toggle{height:36px;padding:0 .65rem;border-radius:var(--r-full);border:1.5px solid var(--hairline);background:var(--surface);color:var(--muted);cursor:pointer;display:flex;align-items:center;font-size:.73rem;font-weight:800;letter-spacing:.06em;transition:all .25s var(--ease-spring);flex-shrink:0}
 .lang-toggle:hover{background:var(--hairline);color:var(--ink);transform:scale(1.05)}
@@ -1879,6 +1945,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
   <div class="nav-links" id="navLinks">
     <div class="nav-link active" onclick="showPage('accueil',this)" data-i18n="nav_accueil">Accueil</div>
     <div class="nav-link" onclick="showPage('explorer',this)" data-i18n="nav_explorer">Explorer</div>
+    <div class="nav-link" onclick="showPage('offres',this)" data-i18n="nav_offres">Offres</div>
     <div class="nav-link" onclick="showPage('inscription',this)" data-i18n="nav_inscription">S'inscrire</div>
     <div class="nav-link" onclick="showPage('paiement',this)" data-i18n="nav_paiement">Paiement</div>
     <div class="nav-link" onclick="showPage('dashboard',this)" data-i18n="nav_dashboard">Tableau de bord</div>
@@ -2701,6 +2768,19 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
         <div id="dashActivity"></div>
       </div>
     </div>
+    <!-- ═══ Mes Missions ════════════════════════════════════════════════ -->
+    <div class="dash-panel fade-up" style="margin-bottom:1.5rem" id="dashMissionsPanel">
+      <div class="dash-panel-title" style="margin-bottom:.75rem">Mes missions</div>
+      <div class="missions-tabs">
+        <button class="missions-tab active" onclick="switchMissionsTab('active',this)">En cours</button>
+        <button class="missions-tab" onclick="switchMissionsTab('client',this)">Comme client</button>
+        <button class="missions-tab" onclick="switchMissionsTab('done',this)">Terminées</button>
+      </div>
+      <div class="missions-grid" id="missionsGrid">
+        <div style="color:var(--muted);font-size:.85rem;grid-column:1/-1;text-align:center;padding:1rem">Chargement…</div>
+      </div>
+    </div>
+
     <div class="dash-account-actions fade-up">
       <!-- Portfolio -->
       <div class="dash-portfolio fade-up">
@@ -2883,6 +2963,11 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
           <span data-i18n="contract_pdf">Contrat PDF</span>
         </button>
       </div>
+      <!-- Avertissement conflits de réservation -->
+      <div class="conflict-warning" id="conflictWarning" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="conflictWarningText">Ce talent a des missions actives en cours.</span>
+      </div>
       <!-- Section avis -->
       <div class="reviews-section" id="modalReviewsSection">
         <h4>Avis clients</h4>
@@ -3054,6 +3139,83 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
       </div>
       <div id="resetMsg" style="display:none;font-size:.82rem;margin-bottom:1rem;padding:.75rem;border-radius:var(--r-sm)"></div>
       <button class="form-submit" style="width:100%;margin:0" onclick="submitResetPassword()">Changer le mot de passe</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════ OFFRES ════════════════════════ -->
+<div class="page" id="page-offres" style="padding-top:80px">
+  <section style="padding-top:2.5rem">
+    <div class="section-eyebrow" data-i18n="offres_eyebrow">Opportunités</div>
+    <h2 class="section-title" data-i18n="offres_title">Offres de missions</h2>
+    <p class="section-sub" data-i18n="offres_sub">Trouvez des missions ou publiez vos besoins</p>
+  </section>
+
+  <!-- Barre de filtres + bouton publier -->
+  <section style="padding-top:1rem">
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem">
+      <input id="jobSearchInput" class="filter-input" placeholder="Rechercher…" oninput="loadJobs(1)" style="flex:1;min-width:180px">
+      <select id="jobCategoryFilter" class="filter-select" onchange="loadJobs(1)">
+        <option value="">Toutes catégories</option>
+        <option>Développement Web</option>
+        <option>Design</option>
+        <option>Marketing</option>
+        <option>Rédaction</option>
+        <option>Traduction</option>
+        <option>Comptabilité</option>
+        <option>Autres</option>
+      </select>
+      <select id="jobBudgetFilter" class="filter-select" onchange="loadJobs(1)">
+        <option value="">Tout budget</option>
+        <option value="low">&lt; 50 000 FCFA</option>
+        <option value="mid">50 000 – 200 000 FCFA</option>
+        <option value="high">&gt; 200 000 FCFA</option>
+      </select>
+      <button class="cta-primary" id="postJobBtn" style="display:none" onclick="showPostJobForm()">+ Publier une offre</button>
+    </div>
+    <div class="jobs-grid" id="jobsGrid">
+      <div style="color:var(--muted);text-align:center;grid-column:1/-1;padding:2rem">Chargement…</div>
+    </div>
+    <div style="display:flex;gap:.5rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap" id="jobsPagination"></div>
+  </section>
+</div>
+
+<!-- ══ Modal détail offre ══════════════════════════════════════════════ -->
+<div class="job-overlay" id="jobOverlay" onclick="if(event.target===this)closeJobModal()">
+  <div class="job-modal" id="jobModal">
+    <button class="modal-close" onclick="closeJobModal()">✕</button>
+    <div id="jobModalContent">Chargement…</div>
+  </div>
+</div>
+
+<!-- ══ Formulaire publier une offre ══════════════════════════════════ -->
+<div class="job-overlay" id="postJobOverlay" onclick="if(event.target===this)closePostJobForm()">
+  <div class="job-modal" style="max-width:520px">
+    <button class="modal-close" onclick="closePostJobForm()">✕</button>
+    <h3 style="margin-bottom:1.25rem;font-size:1.1rem;font-weight:700">Publier une offre de mission</h3>
+    <div style="display:flex;flex-direction:column;gap:.75rem">
+      <input id="pjTitle" class="filter-input" placeholder="Titre de la mission *" style="width:100%">
+      <textarea id="pjDesc" class="filter-input" placeholder="Description *" rows="4" style="width:100%;resize:vertical"></textarea>
+      <select id="pjCategory" class="filter-select" style="width:100%">
+        <option value="">Catégorie</option>
+        <option>Développement Web</option>
+        <option>Design</option>
+        <option>Marketing</option>
+        <option>Rédaction</option>
+        <option>Traduction</option>
+        <option>Comptabilité</option>
+        <option>Autres</option>
+      </select>
+      <div style="display:flex;gap:.5rem">
+        <input id="pjBudget" class="filter-input" type="number" placeholder="Budget (FCFA)" style="flex:1">
+        <select id="pjBudgetType" class="filter-select" style="flex:1">
+          <option value="fixe">Prix fixe</option>
+          <option value="horaire">Taux horaire</option>
+        </select>
+      </div>
+      <input id="pjVille" class="filter-input" placeholder="Ville (optionnel)" style="width:100%">
+      <div id="postJobMsg" style="display:none;font-size:.82rem;padding:.6rem .9rem;border-radius:var(--r-sm)"></div>
+      <button class="cta-primary" onclick="submitPostJob()" style="width:100%">Publier</button>
     </div>
   </div>
 </div>
@@ -3242,9 +3404,10 @@ function showPage(id,linkEl){
   if(linkEl) linkEl.classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
   document.getElementById('navLinks').classList.remove('open');
-  if(id==='dashboard') { initDashboard(); loadDashPortfolio(); }
+  if(id==='dashboard') { initDashboard(); loadDashPortfolio(); initDashMissions(); }
   if(id==='messages') initWA();
-  if(id==='explorer') { renderTalents(); loadVilles(); }
+  if(id==='explorer') { loadOnlineUsers().then(renderTalents); loadVilles(); }
+  if(id==='offres') loadJobs(1);
   if(id==='paiement') initPayPage();
   triggerFadeUps();
 }
@@ -3357,8 +3520,11 @@ async function renderTalents(){
   grid.innerHTML=talents.map((t,i)=>`
     <div class="talent-card" style="animation-delay:${i*0.07}s" onclick="openModal(${t.id})" data-city="${t.city||''}">
       <div class="card-header">
-        <div class="talent-avatar" style="background:${t.bg};color:${t.col}">
-          ${t.photo ? `<img src="${t.photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : t.initials}
+        <div class="talent-avatar-wrap">
+          <div class="talent-avatar" style="background:${t.bg};color:${t.col}">
+            ${t.photo ? `<img src="${t.photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : t.initials}
+          </div>
+          ${window._onlineUsers&&window._onlineUsers.has(t.id)?'<span class="online-dot"></span>':''}
         </div>
         <span class="card-badge ${t.badge==='mm'?'badge-mm':'badge-new'}">${t.badge==='mm'?'Mobile Money ✓':'Nouveau'}</span>
       </div>
@@ -3492,6 +3658,28 @@ async function openModal(id){
       </div>` : ''}`;
   }
   loadModalReviews(talentIdForReview);
+
+  // Avertissement conflits — afficher si talent a des missions actives
+  const conflictEl = document.getElementById('conflictWarning');
+  if (conflictEl) {
+    conflictEl.style.display = 'none';
+    api('/talents/' + (t.id || id) + '/active-missions').then(res => {
+      const count = res?.count || 0;
+      if (count > 0) {
+        document.getElementById('conflictWarningText').textContent =
+          `Ce talent a ${count} mission${count>1?'s':''} active${count>1?'s':''} en cours. La disponibilité peut être réduite.`;
+        conflictEl.style.display = 'flex';
+      }
+    });
+  }
+
+  // Online status
+  const avatarEl = document.getElementById('modalAvatar');
+  if (avatarEl && window._onlineUsers && window._onlineUsers.has(t.id || id)) {
+    avatarEl.style.boxShadow = '0 0 0 3px #22c55e';
+  } else if (avatarEl) {
+    avatarEl.style.boxShadow = '';
+  }
 }
 function closeModal(e){
   if(!e||e.target===document.getElementById('modalOverlay')){
@@ -5828,9 +6016,10 @@ function renderWAFileContent(msg) {
 // ═══ I18N ══════════════════════════════════════════════════════════════════════
 const TRANSLATIONS = {
   fr: {
-    nav_accueil: 'Accueil', nav_explorer: 'Explorer', nav_inscription: 'S\'inscrire',
+    nav_accueil: 'Accueil', nav_explorer: 'Explorer', nav_offres: 'Offres', nav_inscription: 'S\'inscrire',
     nav_paiement: 'Paiement', nav_dashboard: 'Tableau de bord', nav_messages: 'Messages',
     nav_admin: 'Admin', nav_login: 'Se connecter', nav_create: 'Créer un profil',
+    offres_eyebrow: 'Opportunités', offres_title: 'Offres de missions', offres_sub: 'Trouvez des missions ou publiez vos besoins',
     contact: 'Contacter', pay: 'Payer directement',
     report_profile: 'Signaler ce profil', contract_pdf: 'Contrat PDF',
     reviews_title: 'Avis clients', no_reviews: 'Aucun avis pour l\'instant',
@@ -5839,9 +6028,10 @@ const TRANSLATIONS = {
     msg_placeholder: 'Tapez un message', attach_file: 'Joindre un fichier',
   },
   en: {
-    nav_accueil: 'Home', nav_explorer: 'Explore', nav_inscription: 'Sign up',
+    nav_accueil: 'Home', nav_explorer: 'Explore', nav_offres: 'Jobs', nav_inscription: 'Sign up',
     nav_paiement: 'Payment', nav_dashboard: 'Dashboard', nav_messages: 'Messages',
     nav_admin: 'Admin', nav_login: 'Log in', nav_create: 'Create profile',
+    offres_eyebrow: 'Opportunities', offres_title: 'Job offers', offres_sub: 'Find missions or post your needs',
     contact: 'Contact', pay: 'Pay directly',
     report_profile: 'Report profile', contract_pdf: 'PDF Contract',
     reviews_title: 'Client reviews', no_reviews: 'No reviews yet',
@@ -5886,6 +6076,8 @@ function applyTranslations() {
 window.addEventListener('load', async () => {
   applyTranslations();
   initSocket();
+  loadOnlineUsers();
+  setInterval(loadOnlineUsers, 60000);
   // Refresh notifications toutes les 30s si pas de socket
   setInterval(()=>{ if(localStorage.getItem('sc_user_id')) loadNotifications(); }, 30000);
 
@@ -5925,6 +6117,287 @@ window.addEventListener('load', async () => {
     }
   };
 });
+
+// ═══════════════════════════════════════════════════════════════════════
+// ONLINE USERS
+// ═══════════════════════════════════════════════════════════════════════
+window._onlineUsers = new Set();
+
+async function loadOnlineUsers() {
+  const res = await api('/online-users');
+  if (Array.isArray(res)) {
+    window._onlineUsers = new Set(res);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MES MISSIONS
+// ═══════════════════════════════════════════════════════════════════════
+let _missionsTab = 'active';
+
+async function initDashMissions() {
+  await loadMissionsTab(_missionsTab);
+}
+
+function switchMissionsTab(tab, btn) {
+  _missionsTab = tab;
+  document.querySelectorAll('.missions-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  loadMissionsTab(tab);
+}
+
+async function loadMissionsTab(tab) {
+  const grid = document.getElementById('missionsGrid');
+  if (!grid) return;
+  grid.innerHTML = '<div style="color:var(--muted);font-size:.85rem;grid-column:1/-1;text-align:center;padding:1rem">Chargement…</div>';
+  const uid = parseInt(localStorage.getItem('sc_user_id'));
+  if (!uid) { grid.innerHTML = '<div style="color:var(--muted);font-size:.85rem;grid-column:1/-1;text-align:center;padding:1rem">Connectez-vous pour voir vos missions.</div>'; return; }
+
+  const res = await api('/transactions/' + uid);
+  const all = Array.isArray(res) ? res : (res?.transactions || []);
+  let filtered = [];
+  if (tab === 'active') {
+    filtered = all.filter(tx => (tx.sender_id === uid || tx.receiver_id === uid) && ['escrow','delivered'].includes(tx.status));
+  } else if (tab === 'client') {
+    filtered = all.filter(tx => tx.sender_id === uid);
+  } else {
+    filtered = all.filter(tx => (tx.sender_id === uid || tx.receiver_id === uid) && ['completed','cancelled'].includes(tx.status));
+  }
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:.85rem;grid-column:1/-1;text-align:center;padding:1rem">Aucune mission trouvée.</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(tx => renderMissionCard(tx, uid)).join('');
+}
+
+function renderMissionCard(tx, uid) {
+  const statusLabel = { escrow: 'En attente', delivered: 'Livré', completed: 'Terminé', cancelled: 'Annulé', pending: 'En attente paiement' };
+  const statusClass = { escrow: 'mission-status-escrow', delivered: 'mission-status-delivered', completed: 'mission-status-completed', cancelled: 'mission-status-cancelled', pending: 'mission-status-pending' };
+  const st = tx.status || 'pending';
+  const isClient = tx.sender_id === uid;
+  const isTalent = tx.receiver_id === uid;
+  const amount = (tx.amount || 0).toLocaleString('fr-FR');
+  const date = tx.created_at ? new Date(tx.created_at).toLocaleDateString('fr-FR') : '';
+
+  return `<div class="mission-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
+      <div>
+        <div style="font-weight:600;font-size:.92rem;margin-bottom:.2rem">${escHtml(tx.description || 'Mission')}</div>
+        <div style="font-size:.78rem;color:var(--muted)">${isClient ? '👤 Client' : '💼 Talent'} · ${date}</div>
+      </div>
+      <span class="mission-status ${statusClass[st] || ''}">${statusLabel[st] || st}</span>
+    </div>
+    <div style="font-size:.85rem;margin-top:.5rem;color:var(--ink)">${amount} FCFA</div>
+    <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap">
+      ${isTalent && st === 'escrow' ? `<button class="btn-deliver" onclick="deliverMission(${tx.id})">Marquer comme livré</button>` : ''}
+      ${isClient && st === 'delivered' ? `<button class="btn-validate-mission" onclick="validateMission(${tx.id})">Valider la livraison</button>` : ''}
+    </div>
+  </div>`;
+}
+
+async function deliverMission(txId) {
+  const res = await api('/transactions/' + txId + '/deliver', 'PUT', {});
+  if (res?.success) {
+    toast('Mission marquée comme livrée !');
+    loadMissionsTab(_missionsTab);
+  } else {
+    toast(res?.error || 'Erreur', 'error');
+  }
+}
+
+async function validateMission(txId) {
+  const res = await api('/transactions/' + txId + '/status', 'PUT', { status: 'completed' });
+  if (res?.success) {
+    toast('Mission validée !');
+    loadMissionsTab(_missionsTab);
+  } else {
+    toast(res?.error || 'Erreur', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// OFFRES DE MISSIONS
+// ═══════════════════════════════════════════════════════════════════════
+let _jobsPage = 1;
+
+async function loadJobs(page) {
+  if (page) _jobsPage = page;
+  const grid = document.getElementById('jobsGrid');
+  if (!grid) return;
+  grid.innerHTML = '<div style="color:var(--muted);text-align:center;grid-column:1/-1;padding:2rem">Chargement…</div>';
+
+  const uid = localStorage.getItem('sc_user_id');
+  const postBtn = document.getElementById('postJobBtn');
+  if (postBtn) postBtn.style.display = uid ? 'inline-flex' : 'none';
+
+  const params = new URLSearchParams({ page: _jobsPage, limit: 12 });
+  const q = document.getElementById('jobSearchInput')?.value?.trim();
+  const cat = document.getElementById('jobCategoryFilter')?.value;
+  const budget = document.getElementById('jobBudgetFilter')?.value;
+  if (q) params.set('q', q);
+  if (cat) params.set('category', cat);
+  if (budget) params.set('budget', budget);
+
+  const res = await api('/jobs?' + params);
+  const jobs = res?.jobs || [];
+  const total = res?.total || 0;
+
+  if (!jobs.length) {
+    grid.innerHTML = '<div style="color:var(--muted);text-align:center;grid-column:1/-1;padding:2rem">Aucune offre pour le moment.</div>';
+    document.getElementById('jobsPagination').innerHTML = '';
+    return;
+  }
+
+  grid.innerHTML = jobs.map(j => {
+    const budget_fmt = (j.budget || 0).toLocaleString('fr-FR');
+    const date = j.created_at ? new Date(j.created_at).toLocaleDateString('fr-FR') : '';
+    return `<div class="job-card" onclick="openJobModal(${j.id})">
+      <div class="job-badge">${escHtml(j.category || 'Autres')}</div>
+      <div style="font-weight:700;font-size:.95rem;margin:.5rem 0 .3rem">${escHtml(j.title)}</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escHtml(j.description||'')}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto">
+        <span style="font-size:.82rem;font-weight:600;color:var(--accent)">${budget_fmt} FCFA</span>
+        <span style="font-size:.75rem;color:var(--muted)">${j.applicant_count || 0} candidat${j.applicant_count>1?'s':''}</span>
+      </div>
+      <div style="font-size:.72rem;color:var(--subtle);margin-top:.3rem">${j.ville||''} · ${date}</div>
+    </div>`;
+  }).join('');
+
+  // Pagination
+  const totalPages = Math.ceil(total / 12);
+  const pag = document.getElementById('jobsPagination');
+  if (pag) {
+    if (totalPages <= 1) { pag.innerHTML = ''; return; }
+    let html = `<button class="page-btn" onclick="loadJobs(${_jobsPage-1})" ${_jobsPage===1?'disabled':''}>←</button>`;
+    for (let p = 1; p <= totalPages; p++) {
+      html += `<button class="page-btn${p===_jobsPage?' active':''}" onclick="loadJobs(${p})">${p}</button>`;
+    }
+    html += `<button class="page-btn" onclick="loadJobs(${_jobsPage+1})" ${_jobsPage===totalPages?'disabled':''}>→</button>`;
+    pag.innerHTML = html;
+  }
+}
+
+async function openJobModal(jobId) {
+  const overlay = document.getElementById('jobOverlay');
+  const content = document.getElementById('jobModalContent');
+  if (!overlay || !content) return;
+  content.innerHTML = 'Chargement…';
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  const res = await api('/jobs/' + jobId);
+  if (!res) { content.innerHTML = 'Erreur de chargement.'; return; }
+
+  const uid = parseInt(localStorage.getItem('sc_user_id'));
+  const isOwner = res.client_id === uid;
+  const hasApplied = res.applications?.some(a => a.talent_id === uid);
+  const budget_fmt = (res.budget || 0).toLocaleString('fr-FR');
+  const date = res.created_at ? new Date(res.created_at).toLocaleDateString('fr-FR') : '';
+
+  let appsHtml = '';
+  if (isOwner && res.applications?.length) {
+    appsHtml = `<div style="margin-top:1.5rem"><h4 style="font-size:.9rem;font-weight:600;margin-bottom:.75rem">Candidatures (${res.applications.length})</h4>
+      ${res.applications.map(a => `<div class="applicant-item">
+        <div>
+          <div style="font-weight:600;font-size:.85rem">${escHtml(a.talent_name||'Talent')}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${a.message ? escHtml(a.message) : '–'}</div>
+        </div>
+        <div style="font-size:.78rem;color:var(--muted)">${a.applied_at ? new Date(a.applied_at).toLocaleDateString('fr-FR') : ''}</div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  content.innerHTML = `
+    <div class="job-badge" style="margin-bottom:.75rem">${escHtml(res.category||'Autres')}</div>
+    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">${escHtml(res.title)}</h3>
+    <p style="font-size:.85rem;color:var(--ink);margin-bottom:1rem;line-height:1.6">${escHtml(res.description||'')}</p>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-bottom:1rem">
+      <span>💰 ${budget_fmt} FCFA (${res.budget_type||'fixe'})</span>
+      ${res.ville ? `<span>📍 ${escHtml(res.ville)}</span>` : ''}
+      <span>📅 ${date}</span>
+    </div>
+    ${isOwner
+      ? `<button class="cta-secondary" onclick="closeJobAndReload(${jobId})" style="margin-top:.5rem">Clôturer l'offre</button>`
+      : uid
+        ? hasApplied
+          ? `<div style="font-size:.85rem;color:var(--g600);font-weight:600;margin-top:.5rem">✅ Vous avez déjà postulé</div>`
+          : `<div style="display:flex;gap:.5rem;flex-direction:column;margin-top:.75rem">
+              <textarea id="applyMsg" class="filter-input" placeholder="Message de candidature (optionnel)…" rows="3" style="width:100%;resize:vertical"></textarea>
+              <button class="job-apply-btn" onclick="applyToJob(${jobId})">Postuler</button>
+            </div>`
+        : `<div style="font-size:.84rem;color:var(--muted);margin-top:.5rem">Connectez-vous pour postuler.</div>`
+    }
+    ${appsHtml}`;
+}
+
+function closeJobModal() {
+  const overlay = document.getElementById('jobOverlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+async function closeJobAndReload(jobId) {
+  const res = await api('/jobs/' + jobId + '/close', 'PUT', {});
+  if (res?.success) {
+    toast('Offre clôturée.');
+    closeJobModal();
+    loadJobs(_jobsPage);
+  } else {
+    toast(res?.error || 'Erreur', 'error');
+  }
+}
+
+async function applyToJob(jobId) {
+  const msg = document.getElementById('applyMsg')?.value?.trim() || '';
+  const uid = localStorage.getItem('sc_user_id');
+  if (!uid) { toast('Connectez-vous pour postuler.', 'error'); return; }
+  const res = await api('/jobs/' + jobId + '/apply', 'POST', { talentId: parseInt(uid), message: msg });
+  if (res?.success) {
+    toast('Candidature envoyée !');
+    openJobModal(jobId);
+  } else {
+    toast(res?.error || 'Erreur', 'error');
+  }
+}
+
+function showPostJobForm() {
+  const uid = localStorage.getItem('sc_user_id');
+  if (!uid) { toast('Connectez-vous d\'abord.', 'error'); return; }
+  document.getElementById('postJobOverlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closePostJobForm() {
+  document.getElementById('postJobOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+async function submitPostJob() {
+  const uid = parseInt(localStorage.getItem('sc_user_id'));
+  const title = document.getElementById('pjTitle')?.value?.trim();
+  const desc = document.getElementById('pjDesc')?.value?.trim();
+  const category = document.getElementById('pjCategory')?.value;
+  const budget = parseInt(document.getElementById('pjBudget')?.value) || 0;
+  const budget_type = document.getElementById('pjBudgetType')?.value || 'fixe';
+  const ville = document.getElementById('pjVille')?.value?.trim() || '';
+  const msgEl = document.getElementById('postJobMsg');
+
+  if (!title || !desc) {
+    if (msgEl) { msgEl.style.display='block'; msgEl.style.color='var(--red)'; msgEl.textContent = 'Titre et description requis.'; }
+    return;
+  }
+
+  const res = await api('/jobs', 'POST', { clientId: uid, title, description: desc, budget, budget_type, category, ville });
+  if (res?.success) {
+    toast('Offre publiée !');
+    closePostJobForm();
+    loadJobs(1);
+    ['pjTitle','pjDesc','pjBudget','pjVille'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  } else {
+    if (msgEl) { msgEl.style.display='block'; msgEl.style.color='var(--red)'; msgEl.textContent = res?.error || 'Erreur'; }
+  }
+}
 
 // ═══ SERVICE WORKER (PWA) ═════════════════════════════════════════════
 if('serviceWorker' in navigator){

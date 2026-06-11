@@ -876,6 +876,118 @@ app.get('/api/admin/reports', authenticateAdmin, async (req, res) => {
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── Statut en ligne ─────────────────────────────────────────────────────────
+app.get('/api/online-users', (req, res) => {
+  res.json(Object.keys(userSockets).map(id => parseInt(id)));
+});
+
+// ─── Marquer mission livrée ───────────────────────────────────────────────────
+app.put('/api/transactions/:id/deliver', authenticateToken, async (req, res) => {
+  try {
+    const txList = await db.getTransactions(req.user.userId);
+    const tx = txList.find(t => String(t.id) === String(req.params.id));
+    if (!tx) return res.status(404).json({ error: 'Transaction non trouvée.' });
+    if (tx.receiver_id !== req.user.userId)
+      return res.status(403).json({ error: 'Seul le prestataire peut marquer la livraison.' });
+    if (tx.status !== 'escrow')
+      return res.status(400).json({ error: 'La transaction doit être en séquestre.' });
+
+    await db.updateTransactionStatus(req.params.id, 'delivered');
+
+    const sender = await db.getTalentById(tx.sender_id);
+    const receiver = await db.getTalentById(tx.receiver_id);
+    const notif = await db.createNotification({
+      userId: tx.sender_id,
+      type: 'payment',
+      message: `${receiver?.prenom || 'Le talent'} a livré la mission "${tx.description}". Validez pour libérer les fonds.`,
+    });
+    emitToUser(tx.sender_id, 'new_notification', notif);
+    if (sender?.email) sendEmail(sender.email,
+      `Mission livrée — validez pour libérer les fonds`,
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${sender.prenom},</p><p><strong>${receiver?.prenom||'Le talent'}</strong> vient de marquer la mission <strong>"${tx.description}"</strong> comme livrée.</p><p>Connectez-vous pour valider et libérer les fonds.</p><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">Valider la mission</a></div>`
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Conflits de réservation : missions actives d'un talent ──────────────────
+app.get('/api/talents/:id/active-missions', async (req, res) => {
+  try {
+    const count = await db.getTalentActiveCount(parseInt(req.params.id));
+    res.json({ count });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Offres de missions ───────────────────────────────────────────────────────
+app.get('/api/jobs', async (req, res) => {
+  try { res.json(await db.getJobs(req.query)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/jobs', authenticateToken, async (req, res) => {
+  try {
+    const err = validateFields(req.body, ['title', 'budget']);
+    if (err) return res.status(400).json({ error: err });
+    const job = await db.createJobPost({ ...req.body, clientId: req.user.userId });
+    res.json({ success: true, job });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.get('/api/jobs/:id', async (req, res) => {
+  try {
+    const job = await db.getJobById(req.params.id);
+    if (!job) return res.status(404).json({ error: 'Offre non trouvée.' });
+    const applications = await db.getJobApplications(req.params.id);
+    res.json({ ...job, applications });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/jobs/:id/apply', authenticateToken, async (req, res) => {
+  try {
+    const job = await db.getJobById(req.params.id);
+    if (!job) return res.status(404).json({ error: 'Offre non trouvée.' });
+    if (job.client_id === req.user.userId)
+      return res.status(400).json({ error: 'Vous ne pouvez pas postuler à votre propre offre.' });
+    if (job.status !== 'open')
+      return res.status(400).json({ error: 'Cette offre est fermée.' });
+    const application = await db.applyToJob({
+      jobId: req.params.id, talentId: req.user.userId, message: req.body.message,
+    });
+    const talent = await db.getTalentById(req.user.userId);
+    const notif = await db.createNotification({
+      userId: job.client_id,
+      type: 'message',
+      message: `${talent?.prenom||'Un talent'} a postulé à votre offre "${job.title}"`,
+    });
+    emitToUser(job.client_id, 'new_notification', notif);
+    res.json({ success: true, application });
+  } catch (e) {
+    if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Vous avez déjà postulé à cette offre.' });
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.get('/api/my-jobs/:userId', authenticateToken, async (req, res) => {
+  if (req.user.userId !== parseInt(req.params.userId))
+    return res.status(403).json({ error: 'Accès refusé.' });
+  try { res.json(await db.getMyJobPosts(req.params.userId)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/my-applications/:userId', authenticateToken, async (req, res) => {
+  if (req.user.userId !== parseInt(req.params.userId))
+    return res.status(403).json({ error: 'Accès refusé.' });
+  try { res.json(await db.getMyApplications(req.params.userId)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/jobs/:id/close', authenticateToken, async (req, res) => {
+  try {
+    await db.closeJobPost(req.params.id, req.user.userId);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── Démarrage ────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 
