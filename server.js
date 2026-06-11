@@ -24,7 +24,8 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'SkillConnect.html'));
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'skillconnect_jwt_secret_2026_cameroun';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) { console.error('FATAL: JWT_SECRET manquant dans .env'); process.exit(1); }
 
 // ─── Token blacklist (logout) ─────────────────────────────────────────────────
 const revokedTokens = new Set();
@@ -69,9 +70,16 @@ app.use('/api/', apiLimiter);
 const userSockets = {};
 
 io.on('connection', (socket) => {
-  socket.on('auth', (userId) => {
-    userSockets[String(userId)] = socket.id;
-    socket.userId = String(userId);
+  socket.on('auth', (token) => {
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      if (revokedTokens.has(token)) return;
+      const userId = String(payload.userId);
+      userSockets[userId] = socket.id;
+      socket.userId = userId;
+    } catch {
+      // Token invalide — socket non authentifié, aucun événement sensible ne sera émis
+    }
   });
   socket.on('disconnect', () => {
     if (socket.userId) delete userSockets[socket.userId];
@@ -234,12 +242,16 @@ app.put('/api/profile/:userId', authenticateToken, async (req, res) => {
 });
 
 // ─── Messagerie ───────────────────────────────────────────────────────────────
-app.get('/api/contacts/:userId', async (req, res) => {
+app.get('/api/contacts/:userId', authenticateToken, async (req, res) => {
+  if (req.user.userId !== parseInt(req.params.userId))
+    return res.status(403).json({ error: 'Accès refusé.' });
   try { res.json(await db.getContacts(parseInt(req.params.userId))); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/messages/:userId/:contactId', async (req, res) => {
+app.get('/api/messages/:userId/:contactId', authenticateToken, async (req, res) => {
+  if (req.user.userId !== parseInt(req.params.userId))
+    return res.status(403).json({ error: 'Accès refusé.' });
   try {
     res.json(await db.getMessages(parseInt(req.params.userId), parseInt(req.params.contactId)));
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -400,20 +412,31 @@ app.put('/api/transactions/:id/validate', authenticateToken, async (req, res) =>
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/wallet/:userId', async (req, res) => {
+app.get('/api/wallet/:userId', authenticateToken, async (req, res) => {
+  if (req.user.userId !== parseInt(req.params.userId))
+    return res.status(403).json({ error: 'Accès refusé.' });
   try { res.json(await db.getWallet(parseInt(req.params.userId))); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/transactions/:userId', async (req, res) => {
+app.get('/api/transactions/:userId', authenticateToken, async (req, res) => {
+  if (req.user.userId !== parseInt(req.params.userId))
+    return res.status(403).json({ error: 'Accès refusé.' });
   try { res.json(await db.getTransactions(parseInt(req.params.userId))); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.put('/api/transactions/:id/status', authenticateToken, async (req, res) => {
+  const ALLOWED_STATUSES = ['escrow', 'delivered', 'completed', 'cancelled'];
   try {
     const err = validateFields(req.body, ['status']);
     if (err) return res.status(400).json({ error: err });
+    if (!ALLOWED_STATUSES.includes(req.body.status))
+      return res.status(400).json({ error: 'Statut invalide.' });
+    // Vérifier que l'appelant est partie prenante de la transaction
+    const txList = await db.getTransactions(req.user.userId);
+    const own = txList.find(t => String(t.id) === String(req.params.id));
+    if (!own) return res.status(403).json({ error: 'Accès refusé.' });
     const tx = await db.updateTransactionStatus(req.params.id, req.body.status);
     if (!tx) return res.status(404).json({ error: 'Transaction non trouvée' });
     res.json({ success: true, transaction: tx });
@@ -783,9 +806,10 @@ function authenticateAdmin(req, res, next) {
   } catch { return res.status(401).json({ error: 'Token admin invalide' }); }
 }
 
-app.post('/api/admin/auth', (req, res) => {
+app.post('/api/admin/auth', authLimiter, (req, res) => {
   const { password } = req.body;
-  const adminPass = process.env.ADMIN_PASSWORD || 'admin_skillconnect_2026';
+  const adminPass = process.env.ADMIN_PASSWORD;
+  if (!adminPass) return res.status(503).json({ error: 'Accès admin non configuré.' });
   if (password !== adminPass) return res.status(401).json({ error: 'Mot de passe admin incorrect.' });
   const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
   res.json({ success: true, token });
