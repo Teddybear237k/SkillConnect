@@ -950,7 +950,7 @@ async function applyToJob({ jobId, talentId, message }) {
 
 async function getJobApplications(jobId) {
   const [rows] = await pool.execute(
-    `SELECT a.*, u.prenom, u.nom, CONCAT(u.prenom,' ',u.nom) as talent_name,
+    `SELECT a.*, u.prenom, u.nom, COALESCE(CONCAT(u.prenom,' ',u.nom),'Utilisateur supprimé') as talent_name,
             u.initials, u.bg_color, u.text_color, u.skill, u.rating, u.reviews
      FROM job_applications a LEFT JOIN users u ON u.id = a.talent_id
      WHERE a.job_id = ? ORDER BY a.created_at DESC`,

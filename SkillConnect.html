@@ -3154,7 +3154,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
   <!-- Barre de filtres + bouton publier -->
   <section style="padding-top:1rem">
     <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem">
-      <input id="jobSearchInput" class="filter-input" placeholder="Rechercher…" oninput="loadJobs(1)" style="flex:1;min-width:180px">
+      <input id="jobSearchInput" class="filter-input" placeholder="Rechercher…" oninput="debouncedLoadJobs()" style="flex:1;min-width:180px">
       <select id="jobCategoryFilter" class="filter-select" onchange="loadJobs(1)">
         <option value="">Toutes catégories</option>
         <option>Développement Web</option>
@@ -3363,9 +3363,10 @@ async function api(path, methodOrOpts = {}, bodyArg = null) {
       body: fetchOpts.body ? JSON.stringify(fetchOpts.body) : undefined,
     });
     if (res.status === 401) {
-      // Token expiré ou révoqué — déconnexion silencieuse
-      localStorage.removeItem('sc_token');
-      if (!res.ok) return null;
+      const hadToken = !!localStorage.getItem('sc_token');
+      ['sc_token','sc_user_id','sc_user_name','sc_user_initials','sc_user_bg','sc_user_col','sc_user_skill','sc_user_ville'].forEach(k=>localStorage.removeItem(k));
+      if (hadToken) { toast('Session expirée — reconnectez-vous.'); setTimeout(()=>location.reload(),1500); }
+      return null;
     }
     if (!res.ok) return null;
     return await res.json();
@@ -5062,9 +5063,10 @@ function initSocket(){
     if(token) socket.emit('auth', token);
 
     socket.on('new_message', (msg) => {
+      const myUid = parseInt(localStorage.getItem('sc_user_id'));
       if(waActiveContactId && msg.sender_id === waActiveContactId){
         appendWAMessage(msg);
-        api('/messages/read/'+uid+'/'+waActiveContactId, {method:'PUT'});
+        if(myUid) api('/messages/read/'+myUid+'/'+waActiveContactId, {method:'PUT'});
       }
       loadWAContacts();
     });
@@ -6151,7 +6153,8 @@ async function loadMissionsTab(tab) {
   if (!grid) return;
   grid.innerHTML = '<div style="color:var(--muted);font-size:.85rem;grid-column:1/-1;text-align:center;padding:1rem">Chargement…</div>';
   const uid = parseInt(localStorage.getItem('sc_user_id'));
-  if (!uid) { grid.innerHTML = '<div style="color:var(--muted);font-size:.85rem;grid-column:1/-1;text-align:center;padding:1rem">Connectez-vous pour voir vos missions.</div>'; return; }
+  const hasToken = !!localStorage.getItem('sc_token');
+  if (!uid || !hasToken) { grid.innerHTML = '<div style="color:var(--muted);font-size:.85rem;grid-column:1/-1;text-align:center;padding:1rem">Connectez-vous pour voir vos missions.</div>'; return; }
 
   const res = await api('/transactions/' + uid);
   const all = Array.isArray(res) ? res : (res?.transactions || []);
@@ -6173,7 +6176,7 @@ async function loadMissionsTab(tab) {
 
 function renderMissionCard(tx, uid) {
   const statusLabel = { escrow: 'En attente', delivered: 'Livré', completed: 'Terminé', cancelled: 'Annulé', pending: 'En attente paiement' };
-  const statusClass = { escrow: 'mission-status-escrow', delivered: 'mission-status-delivered', completed: 'mission-status-completed', cancelled: 'mission-status-cancelled', pending: 'mission-status-pending' };
+  const statusClass = { escrow: 'escrow', delivered: 'delivered', completed: 'completed', cancelled: 'cancelled', pending: 'pending' };
   const st = tx.status || 'pending';
   const isClient = tx.sender_id === uid;
   const isTalent = tx.receiver_id === uid;
@@ -6220,6 +6223,7 @@ async function validateMission(txId) {
 // OFFRES DE MISSIONS
 // ═══════════════════════════════════════════════════════════════════════
 let _jobsPage = 1;
+const debouncedLoadJobs = debounce(() => loadJobs(1), 300);
 
 async function loadJobs(page) {
   if (page) _jobsPage = page;

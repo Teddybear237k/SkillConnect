@@ -384,7 +384,7 @@ app.put('/api/transactions/:id/validate', authenticateToken, async (req, res) =>
     const txList = await db.getTransactions(req.user.userId);
     const tx = txList.find(t => String(t.id) === String(req.params.id));
     if (!tx) return res.status(404).json({ error: 'Transaction non trouvée.' });
-    if (tx.sender_id !== req.user.userId)
+    if (parseInt(tx.sender_id) !== req.user.userId)
       return res.status(403).json({ error: 'Seul l\'envoyeur peut valider la mission.' });
     if (tx.status !== 'escrow')
       return res.status(400).json({ error: 'Cette transaction n\'est pas en séquestre.' });
@@ -437,6 +437,9 @@ app.put('/api/transactions/:id/status', authenticateToken, async (req, res) => {
     const txList = await db.getTransactions(req.user.userId);
     const own = txList.find(t => String(t.id) === String(req.params.id));
     if (!own) return res.status(403).json({ error: 'Accès refusé.' });
+    // Seul l'envoyeur (client) peut marquer comme 'completed'
+    if (req.body.status === 'completed' && parseInt(own.sender_id) !== req.user.userId)
+      return res.status(403).json({ error: 'Seul le client peut valider la mission.' });
     const tx = await db.updateTransactionStatus(req.params.id, req.body.status);
     if (!tx) return res.status(404).json({ error: 'Transaction non trouvée' });
     res.json({ success: true, transaction: tx });
