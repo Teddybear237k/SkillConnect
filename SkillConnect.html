@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="manifest" href="/manifest.json"/>
 <meta name="theme-color" content="#1D9E75"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -888,6 +889,12 @@ section{padding:5rem 2.5rem;max-width:1200px;margin:0 auto}
   box-shadow:0 4px 16px rgba(29,158,117,.3);margin-top:1.5rem;
 }
 .form-submit:hover{background:var(--g600);transform:translateY(-2px);box-shadow:0 8px 24px rgba(29,158,117,.4)}
+.google-btn{width:100%;padding:.75rem;border-radius:var(--r-full);background:var(--card);color:var(--ink);border:1.5px solid var(--hairline);cursor:pointer;font-size:.9rem;font-weight:600;font-family:var(--font-display);display:flex;align-items:center;justify-content:center;gap:.6rem;transition:background .2s,border-color .2s,box-shadow .2s}
+.google-btn:hover{background:var(--surface);border-color:var(--g400);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.google-btn svg{flex-shrink:0}
+.auth-divider{display:flex;align-items:center;gap:.75rem;margin:.85rem 0}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--hairline)}
+.auth-divider span{font-size:.75rem;color:var(--subtle);white-space:nowrap}
 .form-success{
   display:none;text-align:center;padding:3rem;
 }
@@ -1166,10 +1173,36 @@ footer{
 /* ═══════════════════════════════════════════════════════════════
    MOBILE
 ═══════════════════════════════════════════════════════════════ */
+/* ─── Mobile nav overlay ─────────────────────────────────────────── */
+.nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:98;touch-action:none}
+.nav-overlay.open{display:block}
+
 @media(max-width:768px){
-  .nav-links{display:none;margin-left:0}
-  .nav-links.open{display:flex;flex-direction:column;position:fixed;top:64px;left:0;right:0;background:var(--card);border-bottom:1px solid var(--hairline);padding:1rem;z-index:99}
+  /* Slide-in drawer from the right */
+  .nav-links{
+    display:flex;flex-direction:column;align-items:stretch;
+    position:fixed;top:0;right:-100%;bottom:0;
+    width:min(280px,85vw);
+    background:var(--card);border-left:1px solid var(--hairline);
+    padding:72px 1.25rem 2rem;
+    z-index:99;overflow-y:auto;
+    transition:right .28s cubic-bezier(.25,.1,.25,1);
+    gap:.15rem;margin-left:0;
+  }
+  .nav-links.open{right:0;box-shadow:-8px 0 32px rgba(0,0,0,.18)}
+  .nav-links .nav-link{
+    padding:.72rem 1rem;border-radius:var(--r-md);
+    font-size:.95rem;width:100%;text-align:left;
+  }
+  .nav-links .nav-login,.nav-links .nav-cta{
+    display:block;width:100%;text-align:center;
+    margin-top:.5rem;box-sizing:border-box;
+  }
+  /* Hamburger → X animation */
   .nav-mobile-toggle{display:flex}
+  .nav-mobile-toggle.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+  .nav-mobile-toggle.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+  .nav-mobile-toggle.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
   .theme-toggle{margin-left:auto}
   .hero-stats{gap:1.5rem}
   .hero-stat-num{font-size:1.5rem}
@@ -1182,12 +1215,27 @@ footer{
   .hero{padding:100px 1.25rem 60px}
   .hero-search{flex-direction:column;padding:10px;gap:8px;border-radius:var(--r-xl)}
   .hero-search-btn{width:100%;justify-content:center}
+  /* Offres page responsive */
+  .jobs-grid{grid-template-columns:1fr}
+  .filter-select{flex:1 1 40%;min-width:0}
+  .offres-hero{padding:calc(64px + 1.5rem) 1.25rem 2rem}
+  .offres-filter-wrap{padding:0 1rem;margin-top:-1rem}
+  .offres-filter-card{gap:.5rem}
+  .offres-search-wrap{min-width:100%}
+  .offres-filter-sel{flex:1 1 calc(50% - .25rem)}
+  .offres-tabs-wrap{padding:1rem 1rem 0}
+  .offres-tabs{overflow-x:auto;gap:0}
+  .my-job-item{flex-direction:column;align-items:flex-start}
+  .my-job-actions{width:100%}
+  .my-job-actions button{flex:1}
 }
 @media(max-width:480px){
   .talents-grid{grid-template-columns:1fr}
   .how-grid{grid-template-columns:1fr}
   .footer-grid{grid-template-columns:1fr}
   .hero-stats{flex-direction:column;gap:1rem;align-items:center}
+  /* Stack filter bar fully on small phones */
+  .filter-select{flex:1 1 100%}
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1653,7 +1701,7 @@ footer{
 
 .wa-messages-wrap{
   flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.3rem;
-  background-color:#efeae2;
+  background-color:#efeae2;min-height:0;
 }
 .wa-date-sep{
   text-align:center;margin:.5rem 0;
@@ -1886,6 +1934,111 @@ html.dark .email-banner-text{color:#fdd835}
 .applicant-skill{font-size:.78rem;color:var(--muted)}
 .applicant-msg{font-size:.8rem;color:var(--ink3);margin-top:.2rem;font-style:italic}
 
+/* ─── Offres hero ────────────────────────────────────────────────────── */
+.offres-hero{
+  background:linear-gradient(135deg,var(--g900) 0%,#0a6147 55%,var(--g600) 100%);
+  padding:calc(64px + 2.5rem) 2rem 2.5rem;position:relative;overflow:hidden;
+}
+.offres-hero::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 80% at 80% 10%,rgba(255,255,255,.08) 0%,transparent 70%),
+             radial-gradient(circle 500px at -5% 120%,rgba(255,255,255,.05) 0%,transparent 60%);
+}
+.offres-hero-inner{max-width:1060px;margin:0 auto;position:relative;z-index:1}
+.offres-hero-eyebrow{display:inline-flex;align-items:center;gap:.4rem;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:var(--r-full);padding:.28rem .85rem;color:rgba(255,255,255,.9);margin-bottom:.9rem}
+.offres-hero h1{font-family:var(--font-display);font-size:clamp(1.7rem,4vw,2.6rem);font-weight:900;color:#fff;letter-spacing:-.04em;line-height:1.1;margin-bottom:.5rem}
+.offres-hero>div>p{color:rgba(255,255,255,.72);font-size:.95rem;max-width:480px;line-height:1.55;margin-bottom:1.75rem}
+.offres-hero-stats{display:flex;gap:2.25rem;flex-wrap:wrap}
+.offres-hero-stat-num{font-family:var(--font-display);font-size:1.6rem;font-weight:900;color:#fff;line-height:1;display:block}
+.offres-hero-stat-lbl{font-size:.7rem;color:rgba(255,255,255,.55);margin-top:.2rem;display:block;font-weight:500}
+
+/* ─── Offres filter bar ──────────────────────────────────────────────── */
+.offres-filter-wrap{padding:0 2rem;max-width:1100px;margin:-1.25rem auto 0;position:relative;z-index:10}
+.offres-filter-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:1rem 1.25rem;box-shadow:var(--shadow-lg);display:flex;gap:.65rem;flex-wrap:wrap;align-items:center}
+.offres-search-wrap{position:relative;flex:1;min-width:200px}
+.offres-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--muted);pointer-events:none}
+.offres-search-input{width:100%;padding:.6rem .75rem .6rem 2.35rem;border:1.5px solid var(--hairline);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font-size:.875rem;outline:none;font-family:var(--font-body);transition:border-color .2s,box-shadow .2s;box-sizing:border-box}
+.offres-search-input:focus{border-color:var(--g400);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+.offres-search-input::placeholder{color:var(--subtle)}
+.offres-filter-sel{padding:.58rem .8rem;border:1.5px solid var(--hairline);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font-size:.845rem;outline:none;font-family:var(--font-body);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:2rem;min-width:0;flex-shrink:0}
+
+/* ─── Offres tabs ────────────────────────────────────────────────────── */
+.offres-tabs-wrap{max-width:1100px;margin:0 auto;padding:1.5rem 2rem 0}
+.offres-tabs{display:flex;gap:.1rem;border-bottom:2px solid var(--hairline);margin-bottom:1.5rem}
+.offres-tab{padding:.55rem 1.15rem;font-size:.875rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;position:relative;transition:color .2s;border-radius:var(--r-sm) var(--r-sm) 0 0;white-space:nowrap}
+.offres-tab::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--g500);transform:scaleX(0);transition:transform .22s var(--ease-spring)}
+.offres-tab.active{color:var(--g600)}
+.offres-tab.active::after{transform:scaleX(1)}
+.offres-tab:hover:not(.active){color:var(--ink);background:var(--surface)}
+
+/* ─── My jobs / applications list ───────────────────────────────────── */
+.my-jobs-list{display:flex;flex-direction:column;gap:.7rem;margin-bottom:2rem}
+.my-job-item{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-lg);padding:.9rem 1.1rem;display:flex;align-items:center;gap:1rem;transition:box-shadow .2s}
+.my-job-item:hover{box-shadow:var(--shadow-sm)}
+.my-job-info{flex:1;min-width:0}
+.my-job-title{font-weight:700;font-size:.93rem;color:var(--ink);margin-bottom:.2rem}
+.my-job-meta{font-size:.77rem;color:var(--muted);display:flex;gap:.9rem;flex-wrap:wrap;align-items:center}
+.my-job-status{display:inline-flex;align-items:center;padding:.12rem .55rem;border-radius:var(--r-full);font-size:.7rem;font-weight:700}
+.my-job-status.open{background:var(--g50);color:var(--g600)}
+.my-job-status.closed{background:rgba(229,62,62,.1);color:#e53e3e}
+.my-job-actions{display:flex;gap:.4rem;flex-shrink:0;flex-wrap:wrap}
+.my-app-status{display:inline-flex;align-items:center;padding:.12rem .55rem;border-radius:var(--r-full);font-size:.7rem;font-weight:700}
+.my-app-status.pending{background:rgba(186,117,23,.12);color:#a0710a}
+.my-app-status.accepted{background:var(--g50);color:var(--g600)}
+.my-app-status.rejected{background:rgba(229,62,62,.1);color:#e53e3e}
+
+/* ─── Empty state ────────────────────────────────────────────────────── */
+.offres-empty{text-align:center;padding:3.5rem 1rem;grid-column:1/-1}
+.offres-empty-icon{font-size:2.5rem;margin-bottom:.75rem}
+.offres-empty h4{font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--ink);margin-bottom:.4rem}
+.offres-empty p{font-size:.85rem;color:var(--muted);max-width:340px;margin:0 auto}
+
+/* ─── Chips de catégorie ─────────────────────────────────────────────── */
+.cat-chips-bar{display:flex;gap:.45rem;overflow-x:auto;padding:.15rem .1rem .75rem;scrollbar-width:none;flex-wrap:nowrap}
+.cat-chips-bar::-webkit-scrollbar{display:none}
+.cat-chip{flex-shrink:0;padding:.38rem 1rem;border:1.5px solid var(--hairline);border-radius:var(--r-full);background:var(--card);color:var(--muted);font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .18s var(--ease-spring)}
+.cat-chip:hover{border-color:var(--g400);color:var(--g600);background:var(--g50)}
+.cat-chip.active{background:var(--g600);color:#fff;border-color:var(--g600);box-shadow:0 2px 8px rgba(29,158,117,.3)}
+
+/* ─── Badge "Nouveau" sur les cartes ─────────────────────────────────── */
+.job-new-badge{display:inline-flex;align-items:center;padding:.1rem .55rem;background:var(--g500);color:#fff;border-radius:var(--r-full);font-size:.65rem;font-weight:700;flex-shrink:0;animation:pulse-new 2s ease-in-out infinite}
+@keyframes pulse-new{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* ─── Strip offres suggérées ─────────────────────────────────────────── */
+.suggested-section{margin-bottom:1.5rem}
+.suggested-title{font-family:var(--font-display);font-size:.88rem;font-weight:800;color:var(--ink);margin-bottom:.65rem;letter-spacing:.01em}
+.suggested-strip{display:flex;gap:1rem;overflow-x:auto;padding:.25rem .1rem 1rem;scrollbar-width:none;margin-bottom:.5rem}
+.suggested-strip::-webkit-scrollbar{display:none}
+.suggested-strip .job-card{flex-shrink:0;width:268px;min-width:0}
+.suggested-section{margin-bottom:1.5rem}
+.suggested-title{font-size:.85rem;font-weight:700;color:var(--ink);margin-bottom:.7rem;display:flex;align-items:center;gap:.4rem}
+
+/* ─── Bannière création mission ──────────────────────────────────────── */
+.mission-creation-banner{
+  background:linear-gradient(135deg,var(--g50),rgba(29,158,117,.08));
+  border:1px solid rgba(29,158,117,.25);border-radius:var(--r-lg);
+  padding:1rem 1.25rem;margin-bottom:1.25rem;
+  display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
+}
+html.dark .mission-creation-banner{background:rgba(29,158,117,.1);border-color:rgba(29,158,117,.3)}
+
+/* ─── Dark mode — Offres ─────────────────────────────────────────────── */
+html.dark .offres-filter-card{background:var(--card);border-color:var(--hairline)}
+html.dark .offres-search-input{background:#1E2533;border-color:#2A3244;color:var(--ink)}
+html.dark .offres-search-input::placeholder{color:var(--subtle)}
+html.dark .offres-search-icon{stroke:var(--subtle)}
+html.dark .offres-filter-sel{background:#1E2533;border-color:#2A3244;color:var(--ink)}
+html.dark .offres-tab:hover:not(.active){background:rgba(255,255,255,.04)}
+html.dark .my-job-item{background:var(--card);border-color:var(--hairline)}
+html.dark .job-card{background:var(--card);border-color:var(--hairline)}
+html.dark .job-overlay .job-modal{background:var(--card)}
+html.dark .applicant-item{background:#1E2533;border-color:#2A3244}
+html.dark .job-modal .form-input,html.dark .job-modal .form-select,html.dark .job-modal .form-textarea{background:#1E2533;border-color:#2A3244;color:var(--ink)}
+html.dark .post-job-overlay .form-input,html.dark .post-job-overlay .form-select,html.dark .post-job-overlay .form-textarea{background:#1E2533;border-color:#2A3244;color:var(--ink)}
+html.dark .cat-chip{background:var(--card);border-color:var(--hairline);color:var(--muted)}
+html.dark .cat-chip:hover{background:rgba(29,158,117,.1);color:var(--g400);border-color:var(--g500)}
+html.dark .cat-chip.active{background:var(--g600);color:#fff;border-color:var(--g600)}
+
 /* ─── Post job form ──────────────────────────────────────────────────── */
 .post-job-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:1.5rem;max-width:580px;margin:0 auto 2rem}
 .post-job-card h3{font-size:1.05rem;font-weight:800;color:var(--ink);margin-bottom:1rem;font-family:var(--font-display)}
@@ -1979,6 +2132,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
     <span></span><span></span><span></span>
   </div>
 </nav>
+<div id="navOverlay" class="nav-overlay" onclick="closeMobileMenu()"></div>
 
 <!-- ════════════════════════ ACCUEIL ════════════════════════ -->
 <div class="page active" id="page-accueil">
@@ -2161,7 +2315,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
   <div class="modal" id="legalModal" style="max-width:680px;max-height:82vh;overflow-y:auto">
     <div class="modal-header" style="position:sticky;top:0;background:var(--card);z-index:1;border-bottom:1px solid var(--hairline);padding-bottom:1rem;margin-bottom:1.5rem">
       <div class="modal-name" id="legalTitle">Confidentialité</div>
-      <button class="modal-close" onclick="closeLegal()">
+      <button class="modal-close" onclick="closeLegal()" aria-label="Fermer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12" stroke-width="2"/></svg>
       </button>
     </div>
@@ -2277,6 +2431,11 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
     <div class="form-section">
       <div class="form-card">
         <div id="formContent">
+          <button class="google-btn" id="registerGoogleBtn" onclick="signInWithGoogle()" style="display:none;margin-bottom:1.25rem">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+            S'inscrire avec Google (rapide)
+          </button>
+          <div class="auth-divider" id="registerGoogleDivider" style="display:none"><span>ou remplir le formulaire</span></div>
           <div class="form-title">Informations personnelles</div>
           <div class="form-sub">Tous les champs marqués <sup>*</sup> sont obligatoires</div>
           <div class="form-grid">
@@ -2864,10 +3023,10 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
             <button class="pay-confirm-btn" style="padding:.4rem .9rem;font-size:.78rem;border-radius:var(--r-full)" onclick="openPayFromMessage()">
               💳 Payer
             </button>
-            <button class="wa-icon-btn">
+            <button class="wa-icon-btn" title="Rechercher" aria-label="Rechercher">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             </button>
-            <button class="wa-icon-btn">
+            <button class="wa-icon-btn" title="Plus d'options" aria-label="Plus d'options">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
           </div>
@@ -2925,7 +3084,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
           </div>
         </div>
       </div>
-      <button class="modal-close" onclick="closeModal()">
+      <button class="modal-close" onclick="closeModal()" aria-label="Fermer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12" stroke-width="2"/></svg>
       </button>
     </div>
@@ -3064,7 +3223,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
         <div class="modal-name">Se connecter</div>
         <div style="font-size:.82rem;color:var(--muted);margin-top:.2rem">Accédez à votre compte SkillConnect</div>
       </div>
-      <button class="modal-close" onclick="closeLoginModal()">
+      <button class="modal-close" onclick="closeLoginModal()" aria-label="Fermer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12" stroke-width="2"/></svg>
       </button>
     </div>
@@ -3081,6 +3240,11 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
       <button class="form-submit" style="width:100%;margin:0" onclick="loginUser()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Se connecter
+      </button>
+      <div class="auth-divider"><span>ou</span></div>
+      <button class="google-btn" id="loginGoogleBtn" onclick="signInWithGoogle()" style="display:none">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continuer avec Google
       </button>
       <p style="text-align:center;font-size:.82rem;color:var(--muted);margin-top:.75rem">
         <a style="color:var(--g500);cursor:pointer;font-weight:500" onclick="openForgotPassword()">Mot de passe oublié ?</a>
@@ -3101,7 +3265,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
         <div class="modal-name">Mot de passe oublié</div>
         <div style="font-size:.82rem;color:var(--muted);margin-top:.2rem">Recevez un lien de réinitialisation</div>
       </div>
-      <button class="modal-close" onclick="closeForgotPassword()">
+      <button class="modal-close" onclick="closeForgotPassword()" aria-label="Fermer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12" stroke-width="2"/></svg>
       </button>
     </div>
@@ -3144,78 +3308,156 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 </div>
 
 <!-- ════════════════════════ OFFRES ════════════════════════ -->
-<div class="page" id="page-offres" style="padding-top:80px">
-  <section style="padding-top:2.5rem">
-    <div class="section-eyebrow" data-i18n="offres_eyebrow">Opportunités</div>
-    <h2 class="section-title" data-i18n="offres_title">Offres de missions</h2>
-    <p class="section-sub" data-i18n="offres_sub">Trouvez des missions ou publiez vos besoins</p>
-  </section>
+<div class="page" id="page-offres">
 
-  <!-- Barre de filtres + bouton publier -->
-  <section style="padding-top:1rem">
-    <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem">
-      <input id="jobSearchInput" class="filter-input" placeholder="Rechercher…" oninput="debouncedLoadJobs()" style="flex:1;min-width:180px">
-      <select id="jobCategoryFilter" class="filter-select" onchange="loadJobs(1)">
-        <option value="">Toutes catégories</option>
-        <option>Développement Web</option>
-        <option>Design</option>
-        <option>Marketing</option>
-        <option>Rédaction</option>
-        <option>Traduction</option>
-        <option>Comptabilité</option>
-        <option>Autres</option>
-      </select>
-      <select id="jobBudgetFilter" class="filter-select" onchange="loadJobs(1)">
+  <!-- Hero banner -->
+  <div class="offres-hero">
+    <div class="offres-hero-inner">
+      <div class="offres-hero-eyebrow">🎯 Plateforme de missions</div>
+      <h1>Offres de missions</h1>
+      <p>Trouvez des missions adaptées à vos compétences, ou publiez vos besoins en quelques secondes.</p>
+      <div class="offres-hero-stats">
+        <div><span class="offres-hero-stat-num" id="offresStatTotal">–</span><span class="offres-hero-stat-lbl">Offres actives</span></div>
+        <div><span class="offres-hero-stat-num">7</span><span class="offres-hero-stat-lbl">Catégories</span></div>
+        <div><span class="offres-hero-stat-num">0 %</span><span class="offres-hero-stat-lbl">Commission candidature</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre de filtres flottante -->
+  <div class="offres-filter-wrap">
+    <div class="offres-filter-card">
+      <div class="offres-search-wrap">
+        <svg class="offres-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="jobSearchInput" class="offres-search-input" placeholder="Rechercher une mission…" oninput="debouncedLoadJobs()">
+      </div>
+      <select id="jobBudgetFilter" class="offres-filter-sel" onchange="loadJobs(1)">
         <option value="">Tout budget</option>
         <option value="low">&lt; 50 000 FCFA</option>
         <option value="mid">50 000 – 200 000 FCFA</option>
         <option value="high">&gt; 200 000 FCFA</option>
       </select>
-      <button class="cta-primary" id="postJobBtn" style="display:none" onclick="showPostJobForm()">+ Publier une offre</button>
+      <button class="cta-primary" id="postJobBtn" style="display:none;gap:.35rem;white-space:nowrap" onclick="showPostJobForm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
+        Publier une offre
+      </button>
     </div>
-    <div class="jobs-grid" id="jobsGrid">
-      <div style="color:var(--muted);text-align:center;grid-column:1/-1;padding:2rem">Chargement…</div>
+    <!-- Chips catégorie -->
+    <div class="cat-chips-bar" id="catChipsBar" style="margin-top:.7rem">
+      <button class="cat-chip active" onclick="setJobCategory('',this)">Toutes</button>
+      <button class="cat-chip" onclick="setJobCategory('Développement Web',this)">💻 Dev Web</button>
+      <button class="cat-chip" onclick="setJobCategory('Design',this)">🎨 Design</button>
+      <button class="cat-chip" onclick="setJobCategory('Marketing',this)">📢 Marketing</button>
+      <button class="cat-chip" onclick="setJobCategory('Rédaction',this)">✍️ Rédaction</button>
+      <button class="cat-chip" onclick="setJobCategory('Traduction',this)">🌍 Traduction</button>
+      <button class="cat-chip" onclick="setJobCategory('Comptabilité',this)">📊 Comptabilité</button>
+      <button class="cat-chip" onclick="setJobCategory('Autres',this)">🔧 Autres</button>
     </div>
-    <div style="display:flex;gap:.5rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap" id="jobsPagination"></div>
-  </section>
+  </div>
+
+  <!-- Tabs + contenu -->
+  <div class="offres-tabs-wrap">
+    <div class="offres-tabs" id="offresTabs" style="display:none">
+      <button class="offres-tab active" onclick="switchOffresTab('all',this)">Toutes les offres</button>
+      <button class="offres-tab" onclick="switchOffresTab('mine',this)">Mes offres</button>
+      <button class="offres-tab" onclick="switchOffresTab('apps',this)">Mes candidatures</button>
+    </div>
+
+    <!-- Toutes les offres -->
+    <div id="offresTabAll">
+      <!-- Section offres suggérées -->
+      <div class="suggested-section" id="offresForYou" style="display:none">
+        <div class="suggested-title">✨ Recommandées pour vous</div>
+        <div class="suggested-strip" id="suggestedJobsList"></div>
+      </div>
+      <div class="jobs-grid" id="jobsGrid">
+        <div class="offres-empty"><div class="offres-empty-icon">⏳</div><h4>Chargement…</h4></div>
+      </div>
+      <div style="display:flex;gap:.5rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap" id="jobsPagination"></div>
+    </div>
+
+    <!-- Mes offres publiées -->
+    <div id="offresTabMine" style="display:none">
+      <div class="my-jobs-list" id="myJobsList">
+        <div class="offres-empty"><div class="offres-empty-icon">📋</div><h4>Chargement…</h4></div>
+      </div>
+    </div>
+
+    <!-- Mes candidatures -->
+    <div id="offresTabApps" style="display:none">
+      <div class="my-jobs-list" id="myAppsList">
+        <div class="offres-empty"><div class="offres-empty-icon">📨</div><h4>Chargement…</h4></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ══ Modal détail offre ══════════════════════════════════════════════ -->
 <div class="job-overlay" id="jobOverlay" onclick="if(event.target===this)closeJobModal()">
-  <div class="job-modal" id="jobModal">
-    <button class="modal-close" onclick="closeJobModal()">✕</button>
-    <div id="jobModalContent">Chargement…</div>
+  <div class="job-modal" id="jobModal" style="max-width:560px">
+    <button class="modal-close" onclick="closeJobModal()" aria-label="Fermer">✕</button>
+    <div id="jobModalContent"><div class="offres-empty"><div class="offres-empty-icon">⏳</div><h4>Chargement…</h4></div></div>
   </div>
 </div>
 
 <!-- ══ Formulaire publier une offre ══════════════════════════════════ -->
 <div class="job-overlay" id="postJobOverlay" onclick="if(event.target===this)closePostJobForm()">
   <div class="job-modal" style="max-width:520px">
-    <button class="modal-close" onclick="closePostJobForm()">✕</button>
-    <h3 style="margin-bottom:1.25rem;font-size:1.1rem;font-weight:700">Publier une offre de mission</h3>
-    <div style="display:flex;flex-direction:column;gap:.75rem">
-      <input id="pjTitle" class="filter-input" placeholder="Titre de la mission *" style="width:100%">
-      <textarea id="pjDesc" class="filter-input" placeholder="Description *" rows="4" style="width:100%;resize:vertical"></textarea>
-      <select id="pjCategory" class="filter-select" style="width:100%">
-        <option value="">Catégorie</option>
-        <option>Développement Web</option>
-        <option>Design</option>
-        <option>Marketing</option>
-        <option>Rédaction</option>
-        <option>Traduction</option>
-        <option>Comptabilité</option>
-        <option>Autres</option>
-      </select>
-      <div style="display:flex;gap:.5rem">
-        <input id="pjBudget" class="filter-input" type="number" placeholder="Budget (FCFA)" style="flex:1">
-        <select id="pjBudgetType" class="filter-select" style="flex:1">
-          <option value="fixe">Prix fixe</option>
-          <option value="horaire">Taux horaire</option>
+    <button class="modal-close" onclick="closePostJobForm()" aria-label="Fermer">✕</button>
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem">
+      <div style="width:40px;height:40px;border-radius:var(--r-md);background:var(--g50);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📢</div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:1.05rem;font-weight:800;color:var(--ink)">Publier une offre</div>
+        <div style="font-size:.78rem;color:var(--muted)">Décrivez votre besoin, les talents vous répondent</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.85rem">
+      <div>
+        <label class="form-label">Titre de la mission *</label>
+        <input id="pjTitle" class="form-input" placeholder="Ex : Création d'un logo professionnel">
+      </div>
+      <div>
+        <label class="form-label">Description *</label>
+        <textarea id="pjDesc" class="form-input form-textarea" placeholder="Décrivez la mission, les livrables attendus, le délai…" rows="4" style="min-height:100px"></textarea>
+      </div>
+      <div>
+        <label class="form-label">Catégorie</label>
+        <select id="pjCategory" class="form-input form-select">
+          <option value="">Sélectionner une catégorie</option>
+          <option>Développement Web</option>
+          <option>Design</option>
+          <option>Marketing</option>
+          <option>Rédaction</option>
+          <option>Traduction</option>
+          <option>Comptabilité</option>
+          <option>Autres</option>
         </select>
       </div>
-      <input id="pjVille" class="filter-input" placeholder="Ville (optionnel)" style="width:100%">
-      <div id="postJobMsg" style="display:none;font-size:.82rem;padding:.6rem .9rem;border-radius:var(--r-sm)"></div>
-      <button class="cta-primary" onclick="submitPostJob()" style="width:100%">Publier</button>
+      <div style="display:flex;gap:.65rem">
+        <div style="flex:1">
+          <label class="form-label">Budget (FCFA) *</label>
+          <input id="pjBudget" class="form-input" type="number" placeholder="Ex : 75000" min="0">
+        </div>
+        <div style="flex:1">
+          <label class="form-label">Type</label>
+          <select id="pjBudgetType" class="form-input form-select">
+            <option value="fixe">Prix fixe</option>
+            <option value="horaire">Taux horaire</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:.65rem">
+        <div style="flex:1">
+          <label class="form-label">Ville (optionnel)</label>
+          <input id="pjVille" class="form-input" placeholder="Ex : Douala">
+        </div>
+        <div style="flex:1">
+          <label class="form-label">⚡ Délai (jours, optionnel)</label>
+          <input id="pjDeadline" class="form-input" type="number" placeholder="Ex : 7" min="1" max="365">
+        </div>
+      </div>
+      <div id="postJobMsg" style="display:none;font-size:.82rem;padding:.65rem .9rem;border-radius:var(--r-md)"></div>
+      <button class="form-submit" onclick="submitPostJob()" style="margin:0">Publier l'offre</button>
     </div>
   </div>
 </div>
@@ -3382,7 +3624,25 @@ document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style
 
 // ═══ NAVBAR ══════════════════════════════════════════════════════════
 window.addEventListener('scroll',()=>{document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>20)});
-function toggleMobileMenu(){document.getElementById('navLinks').classList.toggle('open')}
+function toggleMobileMenu(){
+  const links=document.getElementById('navLinks');
+  const toggle=document.getElementById('mobileToggle');
+  const overlay=document.getElementById('navOverlay');
+  const isOpen=links.classList.contains('open');
+  if(isOpen){ closeMobileMenu(); } else {
+    links.classList.add('open');
+    toggle.classList.add('open');
+    if(overlay) overlay.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+}
+function closeMobileMenu(){
+  document.getElementById('navLinks').classList.remove('open');
+  document.getElementById('mobileToggle').classList.remove('open');
+  const overlay=document.getElementById('navOverlay');
+  if(overlay) overlay.classList.remove('open');
+  document.body.style.overflow='';
+}
 
 // ═══ DARK / LIGHT THEME ══════════════════════════════════════
 function toggleTheme(){
@@ -3404,11 +3664,16 @@ function showPage(id,linkEl){
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
   if(linkEl) linkEl.classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
-  document.getElementById('navLinks').classList.remove('open');
+  closeMobileMenu();
   if(id==='dashboard') { initDashboard(); loadDashPortfolio(); initDashMissions(); }
   if(id==='messages') initWA();
   if(id==='explorer') { loadOnlineUsers().then(renderTalents); loadVilles(); }
-  if(id==='offres') loadJobs(1);
+  if(id==='offres') {
+    // Réinitialise le filtre catégorie et les chips
+    _jobCategory = '';
+    document.querySelectorAll('.cat-chip').forEach((c,i) => c.classList.toggle('active', i===0));
+    loadJobs(1);
+  }
   if(id==='paiement') initPayPage();
   triggerFadeUps();
 }
@@ -3779,6 +4044,7 @@ async function submitForm(){
   if(result&&result.success){
     const u=result.user;
     if(result.token) localStorage.setItem('sc_token',result.token);
+    if(result.token && window.socket) window.socket.emit('auth', result.token);
     localStorage.setItem('sc_user_id',u.id);
     localStorage.setItem('sc_user_name',u.prenom+' '+u.nom);
     localStorage.setItem('sc_user_initials',u.initials);
@@ -3844,6 +4110,7 @@ async function loginUser(){
   if(result&&result.success){
     const u=result.user;
     if(result.token) localStorage.setItem('sc_token',result.token);
+    if(result.token && window.socket) window.socket.emit('auth', result.token);
     localStorage.setItem('sc_user_id',u.id);
     localStorage.setItem('sc_user_name',u.prenom+' '+u.nom);
     localStorage.setItem('sc_user_initials',u.initials||((u.prenom[0]||'')+(u.nom[0]||'')).toUpperCase());
@@ -4376,7 +4643,11 @@ async function initDashboard(){
   if(data){
     const u=data.user;
     const av=document.getElementById('dashAvatar');
-    av.textContent=u.initials;av.style.background=u.bg_color;av.style.color=u.text_color;
+    if(u.photo){
+      av.innerHTML=`<img src="${escHtml(u.photo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" alt="${escHtml(u.initials||'')}">`;
+    } else {
+      av.textContent=u.initials;av.style.background=u.bg_color;av.style.color=u.text_color;
+    }
     document.getElementById('dashName').textContent=u.prenom+' '+u.nom;
     document.getElementById('dashRole').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> ${escHtml(u.skill)} · ${escHtml(u.ville)}`;
     setTimeout(()=>{
@@ -4409,8 +4680,13 @@ async function initDashboard(){
     const name=localStorage.getItem('sc_user_name')||'Utilisateur';
     const skill=localStorage.getItem('sc_user_skill')||'Talent';
     const ville=localStorage.getItem('sc_user_ville')||'Cameroun';
+    const photo=localStorage.getItem('sc_user_photo')||'';
     const av=document.getElementById('dashAvatar');
-    av.textContent=initials;av.style.background='var(--g50)';av.style.color='var(--g800)';
+    if(photo){
+      av.innerHTML=`<img src="${escHtml(photo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" alt="${escHtml(initials)}">`;
+    } else {
+      av.textContent=initials;av.style.background='var(--g50)';av.style.color='var(--g800)';
+    }
     document.getElementById('dashName').textContent=name;
     document.getElementById('dashRole').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> ${escHtml(skill)} · ${escHtml(ville)}`;
     setTimeout(()=>{
@@ -4549,8 +4825,21 @@ async function loadWAMessages(contactId){
     </div>`;
   });
   container.innerHTML=html;
-  container.scrollTop=container.scrollHeight;
+  requestAnimationFrame(()=>{ container.scrollTop=container.scrollHeight; });
   addTranslateButtons();
+}
+
+function appendWAMessage(m){
+  const container=document.getElementById('waMessages');if(!container)return;
+  const isMe=m.sender_id===waCurrentUserId;
+  const dt=new Date(m.sent_at||m.created_at||Date.now());
+  const time=dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const el=document.createElement('div');
+  el.className='wa-msg'+(isMe?' me':'');
+  el.innerHTML=`<div class="wa-msg-bubble ${isMe?'me':'them'}">${renderWAFileContent(m)}<div class="wa-msg-footer"><span class="wa-msg-time">${time}</span>${isMe?'<span class="wa-msg-ticks">✓✓</span>':''}</div></div>`;
+  container.appendChild(el);
+  requestAnimationFrame(()=>{ container.scrollTop=container.scrollHeight; });
+  if(!isMe) addTranslateButtons();
 }
 
 // API — MyMemory : bouton "Traduire" sur chaque bulle reçue
@@ -5056,15 +5345,17 @@ if(localStorage.getItem('sc_user_id')) loadNotifications();
 <script>
 // ═══ SOCKET.IO — messagerie temps réel ═══════════════════════════════
 let socket = null;
+window.socket = null;
 function initSocket(){
   try {
     socket = io();
+    window.socket = socket;
     const token = localStorage.getItem('sc_token');
     if(token) socket.emit('auth', token);
 
     socket.on('new_message', (msg) => {
       const myUid = parseInt(localStorage.getItem('sc_user_id'));
-      if(waActiveContactId && msg.sender_id === waActiveContactId){
+      if(waActiveContactId && String(msg.sender_id) === String(waActiveContactId)){
         appendWAMessage(msg);
         if(myUid) api('/messages/read/'+myUid+'/'+waActiveContactId, {method:'PUT'});
       }
@@ -6007,9 +6298,11 @@ function renderWAFileContent(msg) {
   const isImage = (msg.file_type || '').startsWith('image/');
   const textPart = msg.text ? `<div style="margin-bottom:.4rem">${escHtml(msg.text)}</div>` : '';
   if (isImage) {
-    return textPart + `<img src="${msg.file_data}" class="wa-file-img" onclick="openPortfolioImage('${msg.file_data}','${escHtml(msg.file_name||'Image')}')">`;
+    // src est un data: URL (base64), alt utilisé par le handler pour le nom
+    return textPart + `<img src="${escHtml(msg.file_data)}" alt="${escHtml(msg.file_name||'Image')}" class="wa-file-img" onclick="openPortfolioImage(this.src, this.alt)">`;
   }
-  return textPart + `<div class="wa-file-msg" onclick="downloadWAFile('${escHtml(msg.file_name||'fichier')}','${msg.file_data}')">
+  // data-* pour éviter l'injection via un nom de fichier ou contenu base64
+  return textPart + `<div class="wa-file-msg" data-fname="${escHtml(msg.file_name||'fichier')}" data-fdata="${escHtml(msg.file_data)}" onclick="downloadWAFile(this.dataset.fname, this.dataset.fdata)">
     <div class="wa-file-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
     <div class="wa-file-info"><div class="wa-file-name">${escHtml(msg.file_name||'Fichier')}</div><div class="wa-file-size">Télécharger</div></div>
   </div>`;
@@ -6223,116 +6516,406 @@ async function validateMission(txId) {
 // OFFRES DE MISSIONS
 // ═══════════════════════════════════════════════════════════════════════
 let _jobsPage = 1;
+let _offresTab = 'all';
+let _jobCategory = '';
 const debouncedLoadJobs = debounce(() => loadJobs(1), 300);
 
+// ── Tab switching ─────────────────────────────────────────────────────
+function switchOffresTab(tab, btn) {
+  _offresTab = tab;
+  document.querySelectorAll('.offres-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('offresTabAll').style.display  = tab === 'all'  ? '' : 'none';
+  document.getElementById('offresTabMine').style.display = tab === 'mine' ? '' : 'none';
+  document.getElementById('offresTabApps').style.display = tab === 'apps' ? '' : 'none';
+  if (tab === 'all')  loadJobs(1);
+  if (tab === 'mine') loadMyJobs();
+  if (tab === 'apps') loadMyApplications();
+}
+
+// ── Category chips ────────────────────────────────────────────────────
+function setJobCategory(cat, el) {
+  _jobCategory = cat;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  loadJobs(1);
+}
+
+// ── Offres suggérées ──────────────────────────────────────────────────
+async function loadSuggestedJobs() {
+  const skill = localStorage.getItem('sc_user_skill');
+  const uid   = localStorage.getItem('sc_user_id');
+  const sec   = document.getElementById('offresForYou');
+  const strip = document.getElementById('suggestedJobsList');
+  if (!skill || !sec || !strip) return;
+  const params = new URLSearchParams({ q: skill, limit: 6 });
+  const res = await api('/jobs?' + params);
+  const jobs = (res?.jobs || []).filter(j => j.client_id !== parseInt(uid)).slice(0, 4);
+  if (!jobs.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  strip.innerHTML = jobs.map(j => {
+    const bf = (j.budget || 0).toLocaleString('fr-FR');
+    const isNew = j.created_at && (Date.now() - new Date(j.created_at).getTime()) < 86400000;
+    const dl = j.deadline_days ? `<span class="job-badge" style="background:rgba(229,115,22,.1);color:#e56e22">⚡ ${j.deadline_days}j</span>` : '';
+    return `<div class="job-card" onclick="openJobModal(${j.id})" style="cursor:pointer">
+      <div class="job-card-header">
+        <div class="job-card-title">${isNew?'<span class="job-new-badge">Nouveau</span> ':''}${escHtml(j.title)}</div>
+        <div class="job-card-budget">${bf}<span style="font-size:.65rem;margin-left:2px">FCFA</span></div>
+      </div>
+      <div class="job-card-desc">${escHtml(j.description||'')}</div>
+      <div class="job-card-meta">
+        <span class="job-badge">${escHtml(j.category||'Autres')}</span>
+        ${j.ville?`<span class="job-badge ville">📍 ${escHtml(j.ville)}</span>`:''}
+        ${dl}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Toutes les offres ─────────────────────────────────────────────────
 async function loadJobs(page) {
   if (page) _jobsPage = page;
   const grid = document.getElementById('jobsGrid');
   if (!grid) return;
-  grid.innerHTML = '<div style="color:var(--muted);text-align:center;grid-column:1/-1;padding:2rem">Chargement…</div>';
+  grid.innerHTML = '<div class="offres-empty"><div class="offres-empty-icon">⏳</div><h4>Chargement…</h4></div>';
 
   const uid = localStorage.getItem('sc_user_id');
   const postBtn = document.getElementById('postJobBtn');
   if (postBtn) postBtn.style.display = uid ? 'inline-flex' : 'none';
+  const tabs = document.getElementById('offresTabs');
+  if (tabs) tabs.style.display = uid ? 'flex' : 'none';
 
   const params = new URLSearchParams({ page: _jobsPage, limit: 12 });
-  const q = document.getElementById('jobSearchInput')?.value?.trim();
-  const cat = document.getElementById('jobCategoryFilter')?.value;
+  const q      = document.getElementById('jobSearchInput')?.value?.trim();
   const budget = document.getElementById('jobBudgetFilter')?.value;
-  if (q) params.set('q', q);
-  if (cat) params.set('category', cat);
-  if (budget) params.set('budget', budget);
+  if (q)           params.set('q', q);
+  if (_jobCategory) params.set('category', _jobCategory);
+  if (budget)      params.set('budget', budget);
 
-  const res = await api('/jobs?' + params);
+  const res  = await api('/jobs?' + params);
   const jobs = res?.jobs || [];
   const total = res?.total || 0;
 
+  const statEl = document.getElementById('offresStatTotal');
+  if (statEl) statEl.textContent = total;
+
+  // Load suggested strip only on first page with no active filter
+  if (_jobsPage === 1 && !_jobCategory && !q) loadSuggestedJobs();
+  else { const s = document.getElementById('offresForYou'); if (s) s.style.display = 'none'; }
+
   if (!jobs.length) {
-    grid.innerHTML = '<div style="color:var(--muted);text-align:center;grid-column:1/-1;padding:2rem">Aucune offre pour le moment.</div>';
+    grid.innerHTML = `<div class="offres-empty">
+      <div class="offres-empty-icon">🔍</div>
+      <h4>Aucune offre trouvée</h4>
+      <p>Essayez d'autres filtres ou publiez la première offre !</p>
+    </div>`;
     document.getElementById('jobsPagination').innerHTML = '';
     return;
   }
 
+  const now = Date.now();
   grid.innerHTML = jobs.map(j => {
     const budget_fmt = (j.budget || 0).toLocaleString('fr-FR');
-    const date = j.created_at ? new Date(j.created_at).toLocaleDateString('fr-FR') : '';
+    const date = j.created_at ? new Date(j.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) : '';
+    const initials = escHtml(j.initials || ((j.prenom||'?')[0]).toUpperCase());
+    const clientName = escHtml(((j.prenom||'')+' '+(j.nom||'')).trim() || 'Anonyme');
+    const nbApps = parseInt(j.applicants) || 0;
+    const isNew = j.created_at && (now - new Date(j.created_at).getTime()) < 86400000;
+    const dlChip = j.deadline_days ? `<span class="job-badge" style="background:rgba(229,115,22,.1);color:#e56e22">⚡ ${j.deadline_days}j</span>` : '';
     return `<div class="job-card" onclick="openJobModal(${j.id})">
-      <div class="job-badge">${escHtml(j.category || 'Autres')}</div>
-      <div style="font-weight:700;font-size:.95rem;margin:.5rem 0 .3rem">${escHtml(j.title)}</div>
-      <div style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escHtml(j.description||'')}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto">
-        <span style="font-size:.82rem;font-weight:600;color:var(--accent)">${budget_fmt} FCFA</span>
-        <span style="font-size:.75rem;color:var(--muted)">${j.applicants || 0} candidat${j.applicants>1?'s':''}</span>
+      <div class="job-card-header">
+        <div class="job-card-title">${isNew ? '<span class="job-new-badge">Nouveau</span> ' : ''}${escHtml(j.title)}</div>
+        <div class="job-card-budget">${budget_fmt}<span style="font-size:.65rem;font-weight:500;margin-left:2px">FCFA</span></div>
       </div>
-      <div style="font-size:.72rem;color:var(--subtle);margin-top:.3rem">${j.ville||''} · ${date}</div>
+      <div class="job-card-desc">${escHtml(j.description || '')}</div>
+      <div class="job-card-meta">
+        <span class="job-badge">${escHtml(j.category || 'Autres')}</span>
+        ${j.ville ? `<span class="job-badge ville">📍 ${escHtml(j.ville)}</span>` : ''}
+        ${dlChip}
+        <span class="job-badge apps">👥 ${nbApps} candidat${nbApps > 1 ? 's' : ''}</span>
+      </div>
+      <div class="job-card-footer">
+        <div class="job-card-client">
+          <div class="job-client-av" style="background:${j.bg_color||'#C8EFE3'};color:${j.text_color||'#085041'}">${initials}</div>
+          <span>${clientName}</span>
+        </div>
+        <span style="font-size:.72rem;color:var(--subtle)">${date}</span>
+      </div>
     </div>`;
   }).join('');
 
-  // Pagination
   const totalPages = Math.ceil(total / 12);
   const pag = document.getElementById('jobsPagination');
-  if (pag) {
-    if (totalPages <= 1) { pag.innerHTML = ''; return; }
-    let html = `<button class="page-btn" onclick="loadJobs(${_jobsPage-1})" ${_jobsPage===1?'disabled':''}>←</button>`;
-    for (let p = 1; p <= totalPages; p++) {
-      html += `<button class="page-btn${p===_jobsPage?' active':''}" onclick="loadJobs(${p})">${p}</button>`;
-    }
-    html += `<button class="page-btn" onclick="loadJobs(${_jobsPage+1})" ${_jobsPage===totalPages?'disabled':''}>→</button>`;
-    pag.innerHTML = html;
+  if (!pag) return;
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+  let ph = `<button class="page-btn" onclick="loadJobs(${_jobsPage-1})" ${_jobsPage===1?'disabled':''}>←</button>`;
+  for (let p = 1; p <= totalPages; p++) {
+    ph += `<button class="page-btn${p===_jobsPage?' active':''}" onclick="loadJobs(${p})">${p}</button>`;
+  }
+  ph += `<button class="page-btn" onclick="loadJobs(${_jobsPage+1})" ${_jobsPage===totalPages?'disabled':''}>→</button>`;
+  pag.innerHTML = ph;
+}
+
+// ── Mes offres publiées ───────────────────────────────────────────────
+let _myJobsAll = [], _myJobsShown = 0;
+const MY_PAGE = 8;
+
+async function loadMyJobs() {
+  const uid = localStorage.getItem('sc_user_id');
+  const list = document.getElementById('myJobsList');
+  if (!uid || !list) return;
+  list.innerHTML = '<div class="offres-empty"><div class="offres-empty-icon">⏳</div><h4>Chargement…</h4></div>';
+  _myJobsAll = await api('/my-jobs/' + uid) || [];
+  _myJobsShown = 0;
+  _renderMyJobs(list);
+}
+
+function _renderMyJobs(list) {
+  if (!list) list = document.getElementById('myJobsList');
+  if (!list) return;
+  if (!_myJobsAll.length) {
+    list.innerHTML = `<div class="offres-empty">
+      <div class="offres-empty-icon">📋</div>
+      <h4>Aucune offre publiée</h4>
+      <p>Publiez votre première offre pour trouver des talents.</p>
+    </div>`; return;
+  }
+  const slice = _myJobsAll.slice(0, _myJobsShown + MY_PAGE);
+  _myJobsShown = slice.length;
+  list.innerHTML = slice.map(j => {
+    const date = j.created_at ? new Date(j.created_at).toLocaleDateString('fr-FR') : '';
+    const nbApps = parseInt(j.applicants) || 0;
+    const statusCls = j.status === 'open' ? 'open' : 'closed';
+    const statusLbl = j.status === 'open' ? 'Ouverte' : 'Clôturée';
+    return `<div class="my-job-item">
+      <div class="my-job-info">
+        <div class="my-job-title">${escHtml(j.title)}</div>
+        <div class="my-job-meta">
+          <span class="my-job-status ${statusCls}">${statusLbl}</span>
+          <span>${(j.budget||0).toLocaleString('fr-FR')} FCFA</span>
+          <span>👥 ${nbApps} candidat${nbApps>1?'s':''}</span>
+          <span>📅 ${date}</span>
+        </div>
+      </div>
+      <div class="my-job-actions">
+        <button class="job-apply-btn" onclick="openJobModal(${j.id});event.stopPropagation()">Voir détails</button>
+        ${j.status==='open' ? `<button class="btn-deliver" onclick="closeJobAndReload(${j.id});event.stopPropagation()" style="background:rgba(229,62,62,.12);color:#e53e3e">Clôturer</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  if (_myJobsShown < _myJobsAll.length) {
+    const remaining = _myJobsAll.length - _myJobsShown;
+    list.innerHTML += `<div style="text-align:center;padding:.75rem 0 .25rem">
+      <button class="form-submit" style="width:auto;padding:.55rem 1.5rem;font-size:.85rem" onclick="_renderMyJobs()">
+        Voir plus (${remaining} offre${remaining>1?'s':''})
+      </button></div>`;
   }
 }
 
+// ── Mes candidatures ──────────────────────────────────────────────────
+let _myAppsAll = [], _myAppsShown = 0;
+
+async function loadMyApplications() {
+  const uid = localStorage.getItem('sc_user_id');
+  const list = document.getElementById('myAppsList');
+  if (!uid || !list) return;
+  list.innerHTML = '<div class="offres-empty"><div class="offres-empty-icon">⏳</div><h4>Chargement…</h4></div>';
+  _myAppsAll = await api('/my-applications/' + uid) || [];
+  _myAppsShown = 0;
+  _renderMyApps(list);
+}
+
+function _renderMyApps(list) {
+  if (!list) list = document.getElementById('myAppsList');
+  if (!list) return;
+  if (!_myAppsAll.length) {
+    list.innerHTML = `<div class="offres-empty">
+      <div class="offres-empty-icon">📨</div>
+      <h4>Aucune candidature</h4>
+      <p>Parcourez les offres et postulez aux missions qui vous correspondent.</p>
+    </div>`; return;
+  }
+  const slice = _myAppsAll.slice(0, _myAppsShown + MY_PAGE);
+  _myAppsShown = slice.length;
+  list.innerHTML = slice.map(a => {
+    const date = a.created_at ? new Date(a.created_at).toLocaleDateString('fr-FR') : '';
+    const stMap = { pending: ['pending','En attente'], accepted: ['accepted','Acceptée ✅'], rejected: ['rejected','Refusée'] };
+    const [stCls, stLbl] = stMap[a.status] || ['pending','En attente'];
+    return `<div class="my-job-item">
+      <div class="my-job-info">
+        <div class="my-job-title">${escHtml(a.title||'Mission')}</div>
+        <div class="my-job-meta">
+          <span class="my-app-status ${stCls}">${stLbl}</span>
+          <span>${(a.budget||0).toLocaleString('fr-FR')} FCFA</span>
+          ${a.category ? `<span class="job-badge" style="font-size:.68rem">${escHtml(a.category)}</span>` : ''}
+          <span>📅 ${date}</span>
+        </div>
+        ${a.message ? `<div style="font-size:.78rem;color:var(--muted);margin-top:.3rem;font-style:italic">"${escHtml(a.message)}"</div>` : ''}
+      </div>
+      <div class="my-job-actions">
+        <button class="job-apply-btn" onclick="openJobModal(${a.job_id||0});event.stopPropagation()">Voir l'offre</button>
+      </div>
+    </div>`;
+  }).join('');
+  if (_myAppsShown < _myAppsAll.length) {
+    const remaining = _myAppsAll.length - _myAppsShown;
+    list.innerHTML += `<div style="text-align:center;padding:.75rem 0 .25rem">
+      <button class="form-submit" style="width:auto;padding:.55rem 1.5rem;font-size:.85rem" onclick="_renderMyApps()">
+        Voir plus (${remaining} candidature${remaining>1?'s':''})
+      </button></div>`;
+  }
+}
+
+// ── Modal détail d'une offre ──────────────────────────────────────────
 async function openJobModal(jobId) {
   const overlay = document.getElementById('jobOverlay');
   const content = document.getElementById('jobModalContent');
   if (!overlay || !content) return;
-  content.innerHTML = 'Chargement…';
+  content.innerHTML = '<div class="offres-empty"><div class="offres-empty-icon">⏳</div><h4>Chargement…</h4></div>';
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
   const res = await api('/jobs/' + jobId);
-  if (!res) { content.innerHTML = 'Erreur de chargement.'; return; }
+  if (!res) { content.innerHTML = '<div class="offres-empty"><div class="offres-empty-icon">❌</div><h4>Erreur de chargement</h4></div>'; return; }
 
-  const uid = parseInt(localStorage.getItem('sc_user_id'));
+  const uid     = parseInt(localStorage.getItem('sc_user_id'));
   const isOwner = res.client_id === uid;
   const hasApplied = res.applications?.some(a => a.talent_id === uid);
   const budget_fmt = (res.budget || 0).toLocaleString('fr-FR');
-  const date = res.created_at ? new Date(res.created_at).toLocaleDateString('fr-FR') : '';
+  const date = res.created_at ? new Date(res.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : '';
+  const clientInit = escHtml(res.initials || '?');
+  const clientName = escHtml(((res.prenom||'')+' '+(res.nom||'')).trim() || 'Client');
+  const isNew = res.created_at && (Date.now() - new Date(res.created_at).getTime()) < 86400000;
+  const dlChip = res.deadline_days ? `<span class="job-badge" style="background:rgba(229,115,22,.1);color:#e56e22">⚡ Délai : ${res.deadline_days} jour${res.deadline_days>1?'s':''}</span>` : '';
 
   let appsHtml = '';
   if (isOwner && res.applications?.length) {
-    appsHtml = `<div style="margin-top:1.5rem"><h4 style="font-size:.9rem;font-weight:600;margin-bottom:.75rem">Candidatures (${res.applications.length})</h4>
-      ${res.applications.map(a => `<div class="applicant-item">
-        <div>
-          <div style="font-weight:600;font-size:.85rem">${escHtml(a.talent_name||'Talent')}</div>
-          <div style="font-size:.75rem;color:var(--muted)">${a.message ? escHtml(a.message) : '–'}</div>
-        </div>
-        <div style="font-size:.78rem;color:var(--muted)">${a.applied_at ? new Date(a.applied_at).toLocaleDateString('fr-FR') : ''}</div>
-      </div>`).join('')}
+    appsHtml = `<div style="margin-top:1.5rem;border-top:1px solid var(--hairline);padding-top:1.25rem">
+      <div style="font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:.85rem">
+        Candidatures <span style="background:var(--g50);color:var(--g600);border-radius:var(--r-full);padding:.1rem .55rem;font-size:.75rem">${res.applications.length}</span>
+      </div>
+      <div class="job-applicants-list">
+      ${res.applications.map(a => {
+        const stMap = { pending: ['pending','En attente'], accepted: ['accepted','Acceptée'], rejected: ['rejected','Refusée'] };
+        const [stCls, stLbl] = stMap[a.status] || ['pending','En attente'];
+        const tName = escHtml(a.talent_name||'Talent');
+        return `<div class="applicant-item">
+          <div class="applicant-av" style="background:${a.bg_color||'#C8EFE3'};color:${a.text_color||'#085041'}">${escHtml(a.initials||'?')}</div>
+          <div class="applicant-info">
+            <div class="applicant-name">${tName}</div>
+            <div class="applicant-skill">${escHtml(a.skill||'')}</div>
+            ${a.message ? `<div class="applicant-msg">"${escHtml(a.message)}"</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.35rem;flex-shrink:0">
+            <span class="my-app-status ${stCls}">${stLbl}</span>
+            ${a.status === 'pending' ? `
+              <button class="job-apply-btn" style="font-size:.72rem;padding:.25rem .7rem" onclick="respondToApplicant(${jobId},${a.id},'accepted',${a.talent_id},'${tName.replace(/'/g,"\\'")}',${res.budget||0})">Accepter</button>
+              <button class="job-apply-btn" style="font-size:.72rem;padding:.25rem .7rem;background:rgba(229,62,62,.12);color:#e53e3e" onclick="respondToApplicant(${jobId},${a.id},'rejected',0,'',0)">Refuser</button>
+            ` : a.status === 'accepted' ? `
+              <button class="job-apply-btn" style="font-size:.72rem;padding:.25rem .7rem;background:var(--g50);color:var(--g600)" data-tid="${a.talent_id}" data-bgt="${res.budget||0}" data-tname="${tName}" onclick="startMissionFromJob(+this.dataset.tid,+this.dataset.bgt,this.dataset.tname)">Créer mission</button>
+            ` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+      </div>
     </div>`;
   }
 
   content.innerHTML = `
-    <div class="job-badge" style="margin-bottom:.75rem">${escHtml(res.category||'Autres')}</div>
-    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">${escHtml(res.title)}</h3>
-    <p style="font-size:.85rem;color:var(--ink);margin-bottom:1rem;line-height:1.6">${escHtml(res.description||'')}</p>
-    <div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-bottom:1rem">
-      <span>💰 ${budget_fmt} FCFA (${res.budget_type||'fixe'})</span>
-      ${res.ville ? `<span>📍 ${escHtml(res.ville)}</span>` : ''}
-      <span>📅 ${date}</span>
+    <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:1.1rem">
+      <div style="width:38px;height:38px;border-radius:50%;background:${res.bg_color||'#C8EFE3'};color:${res.text_color||'#085041'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0">${clientInit}</div>
+      <div>
+        <div style="font-weight:700;font-size:.88rem;color:var(--ink)">${clientName}</div>
+        <div style="font-size:.74rem;color:var(--subtle)">${date}</div>
+      </div>
+      ${isNew ? '<span class="job-new-badge" style="margin-left:auto">Nouveau</span>' : `<span class="job-badge" style="margin-left:auto">${escHtml(res.category||'Autres')}</span>`}
     </div>
-    ${isOwner
-      ? `<button class="cta-secondary" onclick="closeJobAndReload(${jobId})" style="margin-top:.5rem">Clôturer l'offre</button>`
-      : uid
-        ? hasApplied
-          ? `<div style="font-size:.85rem;color:var(--g600);font-weight:600;margin-top:.5rem">✅ Vous avez déjà postulé</div>`
-          : `<div style="display:flex;gap:.5rem;flex-direction:column;margin-top:.75rem">
-              <textarea id="applyMsg" class="filter-input" placeholder="Message de candidature (optionnel)…" rows="3" style="width:100%;resize:vertical"></textarea>
-              <button class="job-apply-btn" onclick="applyToJob(${jobId})">Postuler</button>
+    <h3 style="font-family:var(--font-display);font-size:1.15rem;font-weight:800;color:var(--ink);margin-bottom:.5rem;line-height:1.25">${escHtml(res.title)}</h3>
+    <div style="font-family:var(--font-display);font-size:1.35rem;font-weight:900;color:var(--g600);margin-bottom:.85rem">${budget_fmt} <span style="font-size:.75rem;font-weight:500;color:var(--muted)">FCFA · ${res.budget_type||'fixe'}</span></div>
+    <p style="font-size:.875rem;color:var(--ink);line-height:1.65;margin-bottom:1rem;white-space:pre-line">${escHtml(res.description||'')}</p>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem">
+      ${!isNew ? `<span class="job-badge">${escHtml(res.category||'Autres')}</span>` : ''}
+      ${res.ville ? `<span class="job-badge ville">📍 ${escHtml(res.ville)}</span>` : ''}
+      ${dlChip}
+      <span class="job-badge apps">👥 ${res.applications?.length||0} candidature${(res.applications?.length||0)>1?'s':''}</span>
+      <span class="job-badge" style="background:${res.status==='open'?'var(--g50)':'rgba(229,62,62,.1)'};color:${res.status==='open'?'var(--g600)':'#e53e3e'}">${res.status==='open'?'Ouverte':'Clôturée'}</span>
+    </div>
+    ${isOwner && res.status==='open'
+      ? `<button class="btn-deliver" onclick="closeJobAndReload(${jobId})" style="background:rgba(229,62,62,.12);color:#e53e3e;border:none;border-radius:var(--r-full);padding:.42rem 1rem;font-size:.8rem;font-weight:700;cursor:pointer">Clôturer l'offre</button>`
+      : !uid
+        ? `<div style="padding:.75rem 1rem;background:var(--surface);border-radius:var(--r-md);font-size:.84rem;color:var(--muted);text-align:center"><a style="color:var(--g500);cursor:pointer;font-weight:600" onclick="closeJobModal();openLoginModal()">Connectez-vous</a> pour postuler à cette mission.</div>`
+        : hasApplied
+          ? `<div style="display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;background:var(--g50);border-radius:var(--r-md);font-size:.875rem;color:var(--g600);font-weight:600">✅ Vous avez déjà postulé à cette offre
+              <button onclick="msgOwnerFromJob(${res.client_id},'${clientName.replace(/'/g,"\\'")}');closeJobModal()" style="margin-left:auto;font-size:.75rem;padding:.25rem .75rem;border-radius:var(--r-full);border:1.5px solid var(--g600);background:none;color:var(--g600);cursor:pointer;font-weight:700">✉️ Contacter</button>
             </div>`
-        : `<div style="font-size:.84rem;color:var(--muted);margin-top:.5rem">Connectez-vous pour postuler.</div>`
+          : res.status !== 'open'
+            ? `<div style="font-size:.84rem;color:var(--muted);padding:.75rem;background:var(--surface);border-radius:var(--r-md);text-align:center">Cette offre est clôturée.</div>`
+            : `<div style="display:flex;flex-direction:column;gap:.65rem;margin-top:.25rem">
+                <button onclick="msgOwnerFromJob(${res.client_id},'${clientName.replace(/'/g,"\\'")}');closeJobModal()" style="align-self:flex-end;font-size:.8rem;padding:.3rem .9rem;border-radius:var(--r-full);border:1.5px solid var(--g600);background:none;color:var(--g600);cursor:pointer;font-weight:700">✉️ Envoyer un message</button>
+                <label class="form-label">Message de candidature (optionnel)</label>
+                <textarea id="applyMsg" class="form-input form-textarea" placeholder="Présentez-vous et expliquez pourquoi vous êtes le bon talent pour cette mission…" rows="3" style="min-height:80px;margin-bottom:.25rem"></textarea>
+                <button class="form-submit" style="margin:0" onclick="applyToJob(${jobId})">Postuler à cette mission</button>
+              </div>`
     }
     ${appsHtml}`;
+}
+
+async function respondToApplicant(jobId, appId, status, talentId, talentName, budget) {
+  const res = await api('/jobs/' + jobId + '/applications/' + appId, 'PUT', { status });
+  if (res?.success) {
+    toast(status === 'accepted' ? 'Candidature acceptée !' : 'Candidature refusée.');
+    if (status === 'accepted' && talentId) {
+      showMissionCreationBanner(talentId, talentName, budget);
+    }
+    openJobModal(jobId);
+    if (_offresTab === 'mine') loadMyJobs();
+  } else {
+    toast(res?.error || 'Erreur', 'error');
+  }
+}
+
+// ── Feature 1: Contacter le client depuis une offre ───────────────────
+function msgOwnerFromJob(clientId, clientName) {
+  if (!localStorage.getItem('sc_user_id')) { toast('Connectez-vous pour envoyer un message.'); return; }
+  showPage('messages');
+  setTimeout(() => {
+    if (typeof selectWAContact === 'function') selectWAContact(clientId);
+  }, 350);
+}
+
+// ── Feature 2: Créer une mission après acceptation ────────────────────
+function showMissionCreationBanner(talentId, talentName, budget) {
+  const existing = document.getElementById('missionBannerOverlay');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'missionBannerOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+  overlay.innerHTML = `<div class="mission-creation-banner" style="max-width:440px;width:100%;padding:1.75rem;border-radius:var(--r-xl);position:relative">
+    <button onclick="document.getElementById('missionBannerOverlay').remove()" style="position:absolute;top:.75rem;right:.75rem;border:none;background:none;font-size:1.1rem;cursor:pointer;color:var(--muted)" aria-label="Fermer">✕</button>
+    <div style="font-size:1.7rem;margin-bottom:.5rem">🎉</div>
+    <div style="font-family:var(--font-display);font-size:1.05rem;font-weight:800;color:var(--ink);margin-bottom:.4rem">Candidature acceptée !</div>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:1.25rem">Vous avez accepté <strong>${escHtml(talentName)}</strong>. Souhaitez-vous créer une mission sécurisée (paiement en escrow) pour démarrer la collaboration ?</p>
+    <div style="display:flex;gap:.65rem;flex-wrap:wrap">
+      <button class="form-submit" style="margin:0;flex:1" data-tid="${talentId}" data-bgt="${budget}" data-tname="${escHtml(talentName||'')}" onclick="startMissionFromJob(+this.dataset.tid,+this.dataset.bgt,this.dataset.tname)">🔒 Créer la mission</button>
+      <button onclick="document.getElementById('missionBannerOverlay').remove()" style="flex:1;padding:.7rem;border-radius:var(--r-full);border:1.5px solid var(--hairline);background:none;color:var(--muted);cursor:pointer;font-size:.875rem">Plus tard</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function startMissionFromJob(talentId, budget, talentName) {
+  const existing = document.getElementById('missionBannerOverlay');
+  if (existing) existing.remove();
+  closeJobModal();
+  window.payCurrentTalentId = talentId;
+  showPage('paiement');
+  setTimeout(() => {
+    const amtEl = document.getElementById('payAmount');
+    const talEl = document.getElementById('payTalentSearch') || document.getElementById('payTalentId');
+    if (amtEl && budget) amtEl.value = budget;
+    if (talEl) talEl.value = talentName || '';
+    toast('Remplissez les détails de la mission pour sécuriser le paiement.');
+  }, 350);
 }
 
 function closeJobModal() {
@@ -6346,7 +6929,7 @@ async function closeJobAndReload(jobId) {
   if (res?.success) {
     toast('Offre clôturée.');
     closeJobModal();
-    loadJobs(_jobsPage);
+    if (_offresTab === 'mine') loadMyJobs(); else loadJobs(_jobsPage);
   } else {
     toast(res?.error || 'Erreur', 'error');
   }
@@ -6355,19 +6938,22 @@ async function closeJobAndReload(jobId) {
 async function applyToJob(jobId) {
   const msg = document.getElementById('applyMsg')?.value?.trim() || '';
   const uid = localStorage.getItem('sc_user_id');
-  if (!uid) { toast('Connectez-vous pour postuler.', 'error'); return; }
+  if (!uid) { toast('Connectez-vous pour postuler.'); return; }
+  const btn = document.querySelector('#jobModalContent .form-submit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
   const res = await api('/jobs/' + jobId + '/apply', 'POST', { talentId: parseInt(uid), message: msg });
   if (res?.success) {
-    toast('Candidature envoyée !');
+    toast('Candidature envoyée ! 🎉');
     openJobModal(jobId);
   } else {
-    toast(res?.error || 'Erreur', 'error');
+    toast(res?.error || 'Erreur');
+    if (btn) { btn.disabled = false; btn.textContent = 'Postuler à cette mission'; }
   }
 }
 
 function showPostJobForm() {
   const uid = localStorage.getItem('sc_user_id');
-  if (!uid) { toast('Connectez-vous d\'abord.', 'error'); return; }
+  if (!uid) { toast('Connectez-vous d\'abord.'); return; }
   document.getElementById('postJobOverlay').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
@@ -6378,30 +6964,108 @@ function closePostJobForm() {
 }
 
 async function submitPostJob() {
-  const uid = parseInt(localStorage.getItem('sc_user_id'));
+  const uid   = parseInt(localStorage.getItem('sc_user_id'));
   const title = document.getElementById('pjTitle')?.value?.trim();
-  const desc = document.getElementById('pjDesc')?.value?.trim();
-  const category = document.getElementById('pjCategory')?.value;
-  const budget = parseInt(document.getElementById('pjBudget')?.value) || 0;
+  const desc  = document.getElementById('pjDesc')?.value?.trim();
+  const category    = document.getElementById('pjCategory')?.value;
+  const budget      = parseInt(document.getElementById('pjBudget')?.value) || 0;
   const budget_type = document.getElementById('pjBudgetType')?.value || 'fixe';
-  const ville = document.getElementById('pjVille')?.value?.trim() || '';
-  const msgEl = document.getElementById('postJobMsg');
+  const ville        = document.getElementById('pjVille')?.value?.trim() || '';
+  const deadline_days = parseInt(document.getElementById('pjDeadline')?.value) || null;
+  const msgEl  = document.getElementById('postJobMsg');
 
   if (!title || !desc) {
-    if (msgEl) { msgEl.style.display='block'; msgEl.style.color='var(--red)'; msgEl.textContent = 'Titre et description requis.'; }
+    if (msgEl) { msgEl.style.display='block'; msgEl.style.background='rgba(229,62,62,.08)'; msgEl.style.color='#e53e3e'; msgEl.textContent='Titre et description sont requis.'; }
     return;
   }
+  if (budget < 1) {
+    if (msgEl) { msgEl.style.display='block'; msgEl.style.background='rgba(229,62,62,.08)'; msgEl.style.color='#e53e3e'; msgEl.textContent='Veuillez indiquer un budget.'; }
+    return;
+  }
+  if (msgEl) msgEl.style.display = 'none';
 
-  const res = await api('/jobs', 'POST', { clientId: uid, title, description: desc, budget, budget_type, category, ville });
+  const btn = document.querySelector('#postJobOverlay .form-submit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Publication…'; }
+
+  const res = await api('/jobs', 'POST', { clientId: uid, title, description: desc, budget, budget_type, category, ville, deadline_days });
   if (res?.success) {
-    toast('Offre publiée !');
+    toast('Offre publiée ! 🎉');
     closePostJobForm();
-    loadJobs(1);
-    ['pjTitle','pjDesc','pjBudget','pjVille'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['pjTitle','pjDesc','pjBudget','pjVille','pjDeadline'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('pjCategory').value = '';
+    switchOffresTab('mine', document.querySelectorAll('.offres-tab')[1]);
   } else {
-    if (msgEl) { msgEl.style.display='block'; msgEl.style.color='var(--red)'; msgEl.textContent = res?.error || 'Erreur'; }
+    if (msgEl) { msgEl.style.display='block'; msgEl.style.background='rgba(229,62,62,.08)'; msgEl.style.color='#e53e3e'; msgEl.textContent=res?.error||'Erreur lors de la publication.'; }
+    if (btn) { btn.disabled = false; btn.textContent = "Publier l'offre"; }
   }
 }
+
+// ═══ GOOGLE OAUTH ════════════════════════════════════════════════════
+let _googleReady = false;
+
+async function initGoogleSignIn() {
+  const cfg = await fetch('/api/config').then(r => r.json()).catch(() => ({}));
+  if (!cfg.googleClientId || !window.google?.accounts?.id) return;
+  google.accounts.id.initialize({
+    client_id: cfg.googleClientId,
+    callback: r => handleGoogleCredential(r.credential),
+    auto_select: false,
+    cancel_on_tap_outside: true,
+  });
+  _googleReady = true;
+  // Show Google buttons
+  document.querySelectorAll('#loginGoogleBtn,#registerGoogleBtn,#registerGoogleDivider').forEach(el => {
+    el.style.display = '';
+  });
+}
+
+function signInWithGoogle() {
+  if (!_googleReady || !window.google?.accounts?.id) {
+    toast('Google Sign-In non disponible. Vérifiez la configuration.', 'error');
+    return;
+  }
+  google.accounts.id.prompt(notification => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      // Fallback: render a one-tap in a popup
+      google.accounts.id.prompt();
+    }
+  });
+}
+
+async function handleGoogleCredential(credential) {
+  if (!credential) return;
+  const res = await api('/auth/google', 'POST', { credential });
+  if (!res?.success) { toast(res?.error || 'Erreur Google', 'error'); return; }
+
+  const u = res.user;
+  if (res.token) localStorage.setItem('sc_token', res.token);
+  if (res.token && window.socket) window.socket.emit('auth', res.token);
+  localStorage.setItem('sc_user_id',       u.id);
+  localStorage.setItem('sc_user_name',     ((u.prenom||'') + ' ' + (u.nom||'')).trim());
+  localStorage.setItem('sc_user_initials', u.initials || ((u.prenom||'?')[0]+(u.nom||'?')[0]).toUpperCase());
+  localStorage.setItem('sc_user_bg',       u.bg_color  || '#C8EFE3');
+  localStorage.setItem('sc_user_col',      u.text_color || '#085041');
+  localStorage.setItem('sc_user_skill',    u.skill || '');
+  localStorage.setItem('sc_user_ville',    u.ville || '');
+  localStorage.setItem('sc_user_photo',    u.photo || '');
+
+  document.getElementById('loginOverlay')?.classList.remove('open');
+  updateNavUser();
+
+  if (res.isNew) {
+    toast('Bienvenue ! Complétez votre profil pour commencer.');
+    showPage('dashboard', document.querySelectorAll('.nav-link')[4]);
+    if (window._checkOnboarding) window._checkOnboarding();
+  } else {
+    toast('Bonjour ' + (u.prenom || '') + ' ! Connexion Google réussie.');
+    showPage('dashboard', document.querySelectorAll('.nav-link')[4]);
+  }
+}
+
+// Called after Google script loads
+window.addEventListener('load', () => {
+  setTimeout(initGoogleSignIn, 500);
+});
 
 // ═══ SERVICE WORKER (PWA) ═════════════════════════════════════════════
 if('serviceWorker' in navigator){

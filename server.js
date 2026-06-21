@@ -9,6 +9,7 @@ const jwt          = require('jsonwebtoken');
 const rateLimit    = require('express-rate-limit');
 const nodemailer   = require('nodemailer');
 const crypto       = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const db           = require('./db/database');
 const campay       = require('./campay');
 
@@ -18,9 +19,20 @@ const io     = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(__dirname));
+// Fichiers statiques avec cache long, sauf le HTML principal
+app.use(express.static(__dirname, {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      // HTML : jamais en cache → le navigateur vérifie toujours la version serveur
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(__dirname, 'SkillConnect.html'));
 });
 
@@ -296,7 +308,7 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
       );
     }
 
-    const isBooking = text.toLowerCase().includes('réserver') || text.toLowerCase().includes('reserver');
+    const isBooking = (text||'').toLowerCase().includes('réserver') || (text||'').toLowerCase().includes('reserver');
     if (isBooking) {
       const receiver = await db.getTalentById(parseInt(receiverId));
       if (receiver?.phone) {
@@ -619,7 +631,7 @@ app.post('/api/reviews', authenticateToken, async (req, res) => {
     if (req.body.rating < 1 || req.body.rating > 5)
       return res.status(400).json({ error: 'La note doit être entre 1 et 5.' });
 
-    const review = await db.createReview({ ...req.body, authorId: req.user.userId });
+    const review = await db.createReview({ ...req.body, reviewerId: req.user.userId });
     emitToUser(req.body.talentId, 'new_notification', {
       type: 'review',
       message: `Vous avez reçu un nouvel avis ${req.body.rating} étoile${req.body.rating > 1 ? 's' : ''} ⭐`,
@@ -680,6 +692,52 @@ app.delete('/api/portfolio/:id', authenticateToken, async (req, res) => {
     if (!ok) return res.status(404).json({ error: 'Élément non trouvé.' });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Google OAuth ─────────────────────────────────────────────────────────────
+const googleClient = process.env.GOOGLE_CLIENT_ID
+  ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+  : null;
+if (googleClient) console.log('✅ Google OAuth activé');
+else              console.log('ℹ️  Google OAuth désactivé (configurez GOOGLE_CLIENT_ID dans .env)');
+
+app.get('/api/config', (req, res) => {
+  res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || null });
+});
+
+app.post('/api/auth/google', authLimiter, async (req, res) => {
+  if (!googleClient) return res.status(503).json({ error: 'Google OAuth non configuré sur ce serveur.' });
+  const { credential } = req.body;
+  if (!credential) return res.status(400).json({ error: 'Token Google manquant.' });
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, given_name, family_name, picture, email_verified } = payload;
+    if (!email_verified) return res.status(400).json({ error: 'Email Google non vérifié.' });
+
+    const user = await db.findOrCreateGoogleUser({
+      email,
+      prenom: given_name || '',
+      nom:    family_name || '',
+      photo:  picture || null,
+    });
+
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({
+      success: true, token, isNew: user.isNew,
+      user: {
+        id: user.id, prenom: user.prenom, nom: user.nom, email: user.email,
+        skill: user.skill || '', initials: user.initials,
+        bg_color: user.bg_color, text_color: user.text_color, photo: user.photo,
+      },
+    });
+  } catch (e) {
+    console.error('Google auth error:', e.message);
+    res.status(400).json({ error: 'Token Google invalide ou expiré.' });
+  }
 });
 
 // ─── Mot de passe oublié ──────────────────────────────────────────────────────
@@ -754,6 +812,7 @@ app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
     const resetUrl = `${process.env.APP_URL || 'http://localhost:3000'}/?reset_token=${token}`;
 
     if (mailer) {
+      console.log(`📧 Envoi reset password → ${email}`);
       await mailer.sendMail({
         from: `"SkillConnect" <${process.env.SMTP_USER}>`,
         to: email,
@@ -769,14 +828,17 @@ app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
             <p style="color:#888;font-size:.85rem">Ce lien expire dans 1 heure. Si vous n'avez pas demandé cela, ignorez cet email.</p>
           </div>`,
       });
+      console.log(`✅ Email reset envoyé → ${email}`);
     } else {
-      // Mode dev : afficher le token dans les logs
       console.log(`🔑 Reset token pour ${email} : ${token}`);
       console.log(`   URL : ${resetUrl}`);
     }
 
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error('❌ Erreur forgot-password:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/auth/reset-password', async (req, res) => {
@@ -1011,6 +1073,34 @@ app.get('/api/my-applications/:userId', authenticateToken, async (req, res) => {
 app.put('/api/jobs/:id/close', authenticateToken, async (req, res) => {
   try {
     await db.closeJobPost(req.params.id, req.user.userId);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/jobs/:id/applications/:appId', authenticateToken, async (req, res) => {
+  try {
+    const { status } = req.body; // 'accepted' | 'rejected'
+    if (!['accepted', 'rejected'].includes(status))
+      return res.status(400).json({ error: 'Statut invalide.' });
+    const job = await db.getJobById(req.params.id);
+    if (!job) return res.status(404).json({ error: 'Offre non trouvée.' });
+    if (parseInt(job.client_id) !== req.user.userId)
+      return res.status(403).json({ error: 'Accès refusé.' });
+    // Vérifie que la candidature appartient bien à ce job
+    const apps = await db.getJobApplications(req.params.id);
+    const app_ = apps.find(a => a.id === parseInt(req.params.appId));
+    if (!app_) return res.status(404).json({ error: 'Candidature non trouvée pour cette offre.' });
+    await db.updateApplicationStatus(req.params.appId, status);
+    {
+      const notif = await db.createNotification({
+        userId: app_.talent_id,
+        type: 'message',
+        message: status === 'accepted'
+          ? `Votre candidature pour "${job.title}" a été acceptée ! 🎉`
+          : `Votre candidature pour "${job.title}" n'a pas été retenue.`,
+      });
+      emitToUser(app_.talent_id, 'new_notification', notif);
+    }
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

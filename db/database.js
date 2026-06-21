@@ -247,6 +247,9 @@ async function init() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  // Migrations non-destructives
+  try { await pool.execute('ALTER TABLE job_posts ADD COLUMN deadline_days INT DEFAULT NULL'); } catch(e) {}
+
   const [[{ cnt }]] = await pool.execute('SELECT COUNT(*) as cnt FROM users');
   if (cnt === 0) await seedData();
 
@@ -449,6 +452,40 @@ async function findUserByEmail(email) {
 async function deleteUser(userId) {
   const [result] = await pool.execute('DELETE FROM users WHERE id = ?', [parseInt(userId)]);
   return result.affectedRows > 0;
+}
+
+async function findOrCreateGoogleUser({ email, prenom, nom, photo }) {
+  const existing = await findUserByEmail(email);
+  if (existing) {
+    const updates = [];
+    const params = [];
+    if (!existing.email_verified) { updates.push('email_verified = 1'); }
+    if (!existing.photo && photo) { updates.push('photo = ?'); params.push(photo); }
+    if (updates.length) {
+      params.push(existing.id);
+      await pool.execute(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+    }
+    return { ...existing, email_verified: 1, photo: existing.photo || photo || null, isNew: false };
+  }
+
+  const [[{ cnt }]] = await pool.execute('SELECT COUNT(*) as cnt FROM users');
+  const color    = COLORS[cnt % COLORS.length];
+  const initials = ((prenom || '?')[0] + (nom || '?')[0]).toUpperCase();
+
+  const [result] = await pool.execute(
+    `INSERT INTO users (prenom,nom,ville,skill,skill_custom,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,email_verified,created_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,1,'available',?,?,1,?)`,
+    [prenom||null, nom||null, null, null, null, 0, 'par heure',
+     null, 'MTN MoMo', '', email||'', initials, color.bg, color.col,
+     'Autres', photo||null, null, fmtISO()]
+  );
+
+  return {
+    id: result.insertId,
+    prenom: prenom||null, nom: nom||null, email,
+    skill: null, initials, bg_color: color.bg, text_color: color.col,
+    photo: photo||null, email_verified: 1, isNew: true,
+  };
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -896,24 +933,29 @@ async function getAllReports() {
 }
 
 // ─── Offres de missions ───────────────────────────────────────────────────────
-async function createJobPost({ clientId, title, description, budget, budgetType, budget_type, category, ville }) {
+async function createJobPost({ clientId, title, description, budget, budgetType, budget_type, category, ville, deadline_days }) {
   const now = fmtISO();
   const bt = budgetType || budget_type || 'fixe';
+  const dl = parseInt(deadline_days) || null;
   const [result] = await pool.execute(
-    `INSERT INTO job_posts (client_id,title,description,budget,budget_type,category,ville,status,created_at)
-     VALUES (?,?,?,?,?,?,?,'open',?)`,
+    `INSERT INTO job_posts (client_id,title,description,budget,budget_type,category,ville,deadline_days,status,created_at)
+     VALUES (?,?,?,?,?,?,?,?,'open',?)`,
     [parseInt(clientId), title||'', description||'', parseInt(budget)||0,
-     bt, category||'Autres', ville||null, now]
+     bt, category||'Autres', ville||null, dl, now]
   );
-  return { id: result.insertId, client_id: parseInt(clientId), title, description, budget: parseInt(budget)||0, budget_type: bt, category: category||'Autres', ville: ville||null, status: 'open', created_at: now };
+  return { id: result.insertId, client_id: parseInt(clientId), title, description, budget: parseInt(budget)||0, budget_type: bt, category: category||'Autres', ville: ville||null, deadline_days: dl, status: 'open', created_at: now };
 }
 
-async function getJobs({ cat, q, ville, status = 'open', page, limit } = {}) {
+async function getJobs({ cat, category, q, ville, status = 'open', budget, page, limit } = {}) {
   let where = "WHERE j.status = ?";
   const params = [status];
-  if (cat && cat !== 'Tous') { where += ' AND j.category = ?'; params.push(cat); }
+  const c = cat || category;
+  if (c && c !== 'Tous') { where += ' AND j.category = ?'; params.push(c); }
   if (q)     { where += ' AND (j.title LIKE ? OR j.description LIKE ?)'; const lq = `%${q}%`; params.push(lq, lq); }
   if (ville) { where += ' AND j.ville = ?'; params.push(ville); }
+  if (budget === 'low')  { where += ' AND j.budget < 50000'; }
+  if (budget === 'mid')  { where += ' AND j.budget >= 50000 AND j.budget <= 200000'; }
+  if (budget === 'high') { where += ' AND j.budget > 200000'; }
 
   const [[{ total }]] = await pool.execute(`SELECT COUNT(*) as total FROM job_posts j ${where}`, params);
   const pageNum  = Math.max(1, parseInt(page)  || 1);
@@ -988,6 +1030,13 @@ async function closeJobPost(id, clientId) {
   );
 }
 
+async function updateApplicationStatus(appId, status) {
+  await pool.execute(
+    'UPDATE job_applications SET status = ? WHERE id = ?',
+    [status, parseInt(appId)]
+  );
+}
+
 async function getTalentActiveCount(talentId) {
   const [[{ cnt }]] = await pool.execute(
     "SELECT COUNT(*) as cnt FROM transactions WHERE receiver_id = ? AND status IN ('escrow','delivered')",
@@ -1043,5 +1092,6 @@ module.exports = {
   createVerifyToken, findVerifyToken, markEmailVerified,
   replyToReview,
   createJobPost, getJobs, getJobById, applyToJob, getJobApplications,
-  getMyJobPosts, getMyApplications, closeJobPost, getTalentActiveCount,
+  getMyJobPosts, getMyApplications, closeJobPost, updateApplicationStatus, getTalentActiveCount,
+  findOrCreateGoogleUser,
 };
