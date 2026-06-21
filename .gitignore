@@ -24,3 +24,6 @@ Thumbs.db
 # Fichiers temporaires serveur
 server.err
 *.err
+
+# Backups DB (dumps SQL locaux — jamais commiter)
+backups/

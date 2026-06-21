@@ -86,6 +86,12 @@ const apiLimiter = rateLimit({
   standardHeaders: true, legacyHeaders: false,
 });
 
+const messageLimiter = rateLimit({
+  windowMs: 60 * 1000, max: 30,
+  message: { error: 'Trop de messages envoyés. Patientez une minute.' },
+  standardHeaders: true, legacyHeaders: false,
+});
+
 app.use('/api/', apiLimiter);
 
 // ─── Socket.io ────────────────────────────────────────────────────────────────
@@ -305,7 +311,7 @@ app.get('/api/messages/:userId/:contactId', authenticateToken, async (req, res) 
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/messages', authenticateToken, async (req, res) => {
+app.post('/api/messages', authenticateToken, messageLimiter, async (req, res) => {
   try {
     const { senderId, receiverId, text, fileData, fileName, fileType } = req.body;
     const err = validateFields(req.body, ['senderId', 'receiverId']);
@@ -313,6 +319,8 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
     if (!text && !fileData) return res.status(400).json({ error: 'Message ou fichier requis.' });
     if (req.user.userId !== parseInt(senderId))
       return res.status(403).json({ error: 'Accès refusé.' });
+    if (fileData && fileData.length > 7_000_000)
+      return res.status(413).json({ error: 'Fichier trop lourd (max 5 Mo).' });
 
     // Vérifier si le destinataire a bloqué l'expéditeur
     if (await db.isBlocked(parseInt(receiverId), parseInt(senderId)))
@@ -723,6 +731,8 @@ app.get('/api/portfolio/:talentId', async (req, res) => {
 app.post('/api/portfolio', authenticateToken, async (req, res) => {
   try {
     const { title, description, image } = req.body;
+    if (image && image.length > 7_000_000)
+      return res.status(413).json({ error: 'Image trop lourde (max 5 Mo).' });
     const item = await db.createPortfolioItem({
       talentId: req.user.userId, title, description, image,
     });
