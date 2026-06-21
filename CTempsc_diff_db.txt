@@ -1,0 +1,536 @@
+diff --git a/db/database.js b/db/database.js
+index 68ba36f..f0380f9 100644
+--- a/db/database.js
++++ b/db/database.js
+@@ -63,19 +63,20 @@ async function init() {
+       phone         VARCHAR(30),
+       mm_network    VARCHAR(50)  DEFAULT 'MTN MoMo',
+       bio           TEXT,
+-      email         VARCHAR(200),
+-      initials      VARCHAR(10),
+-      bg_color      VARCHAR(20),
+-      text_color    VARCHAR(20),
+-      rating        DECIMAL(3,1) DEFAULT 5.0,
+-      reviews       INT          DEFAULT 0,
+-      badge         VARCHAR(20)  DEFAULT 'new',
+-      cat           VARCHAR(100) DEFAULT 'Autres',
+-      validated     TINYINT      DEFAULT 1,
+-      availability  VARCHAR(20)  DEFAULT 'available',
+-      photo         LONGTEXT,
+-      password_hash VARCHAR(200),
+-      created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
++      email          VARCHAR(200),
++      initials       VARCHAR(10),
++      bg_color       VARCHAR(20),
++      text_color     VARCHAR(20),
++      rating         DECIMAL(3,1) DEFAULT 5.0,
++      reviews        INT          DEFAULT 0,
++      badge          VARCHAR(20)  DEFAULT 'new',
++      cat            VARCHAR(100) DEFAULT 'Autres',
++      validated      TINYINT      DEFAULT 1,
++      availability   VARCHAR(20)  DEFAULT 'available',
++      photo          LONGTEXT,
++      password_hash  VARCHAR(200),
++      email_verified TINYINT      DEFAULT 1,
++      created_at     DATETIME     DEFAULT CURRENT_TIMESTAMP,
+       UNIQUE KEY uq_email (email)
+     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+   `);
+@@ -87,7 +88,10 @@ async function init() {
+       receiver_id INT DEFAULT 0,
+       text        TEXT,
+       \`read\`    TINYINT  DEFAULT 0,
+-      sent_at     DATETIME DEFAULT CURRENT_TIMESTAMP
++      sent_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
++      file_data   LONGTEXT,
++      file_name   VARCHAR(200),
++      file_type   VARCHAR(100)
+     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+   `);
+ 
+@@ -134,6 +138,8 @@ async function init() {
+       rating            TINYINT DEFAULT 5,
+       comment           TEXT,
+       transaction_id    INT,
++      reply             TEXT,
++      reply_at          DATETIME,
+       created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
+     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+   `);
+@@ -149,6 +155,98 @@ async function init() {
+     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+   `);
+ 
++  await pool.query(`
++    CREATE TABLE IF NOT EXISTS portfolio (
++      id         INT AUTO_INCREMENT PRIMARY KEY,
++      talent_id  INT NOT NULL,
++      title      VARCHAR(200),
++      description TEXT,
++      image      LONGTEXT,
++      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
++    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
++  `);
++
++  await pool.query(`
++    CREATE TABLE IF NOT EXISTS reset_tokens (
++      id         INT AUTO_INCREMENT PRIMARY KEY,
++      user_id    INT NOT NULL,
++      token      VARCHAR(100) UNIQUE,
++      expires_at DATETIME,
++      used       TINYINT DEFAULT 0,
++      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
++    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
++  `);
++
++  // Migrations — colonnes ajoutées après la création initiale
++  try { await pool.query('ALTER TABLE users ADD COLUMN email_verified TINYINT DEFAULT 1'); } catch (_) {}
++  try { await pool.query('ALTER TABLE reviews ADD COLUMN reply TEXT'); } catch (_) {}
++  try { await pool.query('ALTER TABLE reviews ADD COLUMN reply_at DATETIME'); } catch (_) {}
++  try { await pool.query('ALTER TABLE messages ADD COLUMN file_data LONGTEXT'); } catch (_) {}
++  try { await pool.query('ALTER TABLE messages ADD COLUMN file_name VARCHAR(200)'); } catch (_) {}
++  try { await pool.query('ALTER TABLE messages ADD COLUMN file_type VARCHAR(100)'); } catch (_) {}
++
++  await pool.query(`
++    CREATE TABLE IF NOT EXISTS email_verify_tokens (
++      id         INT AUTO_INCREMENT PRIMARY KEY,
++      user_id    INT NOT NULL,
++      token      VARCHAR(100) UNIQUE,
++      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
++    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
++  `);
++
++  await pool.query(`
++    CREATE TABLE IF NOT EXISTS disputes (
++      id             INT AUTO_INCREMENT PRIMARY KEY,
++      transaction_id INT NOT NULL,
++      talent_id      INT NOT NULL,
++      client_id      INT NOT NULL,
++      reason         TEXT,
++      status         VARCHAR(30) DEFAULT 'open',
++      admin_note     TEXT,
++      created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
++      resolved_at    DATETIME
++    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
++  `);
++
++  await pool.query(`
++    CREATE TABLE IF NOT EXISTS reports (
++      id          INT AUTO_INCREMENT PRIMARY KEY,
++      reporter_id INT NOT NULL,
++      reported_id INT NOT NULL,
++      reason      VARCHAR(200),
++      description TEXT,
++      status      VARCHAR(30) DEFAULT 'pending',
++      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
++    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
++  `);
++
++  await pool.query(`
++    CREATE TABLE IF NOT EXISTS job_posts (
++      id           INT AUTO_INCREMENT PRIMARY KEY,
++      client_id    INT NOT NULL,
++      title        VARCHAR(200) NOT NULL,
++      description  TEXT,
++      budget       INT DEFAULT 0,
++      budget_type  VARCHAR(50)  DEFAULT 'fixe',
++      category     VARCHAR(100) DEFAULT 'Autres',
++      ville        VARCHAR(100),
++      status       VARCHAR(30)  DEFAULT 'open',
++      created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
++    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
++  `);
++
++  await pool.query(`
++    CREATE TABLE IF NOT EXISTS job_applications (
++      id         INT AUTO_INCREMENT PRIMARY KEY,
++      job_id     INT NOT NULL,
++      talent_id  INT NOT NULL,
++      message    TEXT,
++      status     VARCHAR(30) DEFAULT 'pending',
++      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
++      UNIQUE KEY uq_apply (job_id, talent_id)
++    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
++  `);
++
+   const [[{ cnt }]] = await pool.execute('SELECT COUNT(*) as cnt FROM users');
+   if (cnt === 0) await seedData();
+ 
+@@ -250,29 +348,50 @@ async function seedData() {
+ }
+ 
+ // ─── Talents ──────────────────────────────────────────────────────────────────
+-async function getTalents({ cat, q } = {}) {
+-  let sql = 'SELECT * FROM users WHERE validated = 1';
++async function getTalents({ cat, q, ville, tarif_min, tarif_max, availability, sort, page, limit } = {}) {
++  let where = 'WHERE validated = 1';
+   const params = [];
+ 
+   if (cat && cat !== 'Tous') {
+     if (cat === 'Autres') {
+-      sql += ` AND cat NOT IN (${MAIN_CATS.map(() => '?').join(',')})`;
++      where += ` AND cat NOT IN (${MAIN_CATS.map(() => '?').join(',')})`;
+       params.push(...MAIN_CATS);
+     } else {
+-      sql += ' AND cat = ?';
++      where += ' AND cat = ?';
+       params.push(cat);
+     }
+   }
+-
+   if (q) {
+-    sql += ' AND (prenom LIKE ? OR nom LIKE ? OR skill LIKE ? OR ville LIKE ?)';
++    where += ' AND (prenom LIKE ? OR nom LIKE ? OR skill LIKE ? OR ville LIKE ?)';
+     const lq = `%${q}%`;
+     params.push(lq, lq, lq, lq);
+   }
++  if (ville)        { where += ' AND ville = ?';        params.push(ville); }
++  if (tarif_min)    { where += ' AND tarif >= ?';       params.push(parseInt(tarif_min)); }
++  if (tarif_max)    { where += ' AND tarif <= ?';       params.push(parseInt(tarif_max)); }
++  if (availability) { where += ' AND availability = ?'; params.push(availability); }
+ 
+-  sql += ' ORDER BY rating DESC, reviews DESC';
+-  const [rows] = await pool.execute(sql, params);
+-  return rows;
++  let order = ' ORDER BY rating DESC, reviews DESC';
++  if (sort === 'price_asc')  order = ' ORDER BY tarif ASC';
++  else if (sort === 'price_desc') order = ' ORDER BY tarif DESC';
++  else if (sort === 'newest')     order = ' ORDER BY created_at DESC';
++
++  const [[{ total }]] = await pool.execute(`SELECT COUNT(*) as total FROM users ${where}`, params);
++
++  const pageNum  = Math.max(1, parseInt(page)  || 1);
++  const limitNum = Math.min(50, parseInt(limit) || 9);
++  const offset   = (pageNum - 1) * limitNum;
++
++  const [rows] = await pool.execute(
++    `SELECT * FROM users ${where}${order} LIMIT ${limitNum} OFFSET ${offset}`,
++    params
++  );
++  return { talents: rows, total, page: pageNum, limit: limitNum };
++}
++
++async function getVilles() {
++  const [rows] = await pool.execute('SELECT DISTINCT ville FROM users WHERE validated = 1 ORDER BY ville');
++  return rows.map(r => r.ville);
+ }
+ 
+ async function getTalentById(id) {
+@@ -289,10 +408,10 @@ async function createUser(body) {
+   const color = COLORS[cnt % COLORS.length];
+ 
+   const [result] = await pool.execute(
+-    `INSERT INTO users (prenom,nom,ville,skill,skill_custom,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,created_at)
+-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,1,'available',null,?,?)`,
+-    [prenom, nom, ville, skillName, skill_custom||null, parseInt(tarif)||0, tarif_unit||'par heure',
+-     phone, mm_network||'MTN MoMo', bio||'', email||'', initials, color.bg, color.col,
++    `INSERT INTO users (prenom,nom,ville,skill,skill_custom,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,email_verified,created_at)
++     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,1,'available',null,?,0,?)`,
++    [prenom||null, nom||null, ville||null, skillName, skill_custom||null, parseInt(tarif)||0, tarif_unit||'par heure',
++     phone||null, mm_network||'MTN MoMo', bio||'', email||'', initials, color.bg, color.col,
+      cat, password_hash||null, fmtISO()]
+   );
+ 
+@@ -429,13 +548,13 @@ async function getMessages(userId, contactId) {
+   return rows;
+ }
+ 
+-async function sendMessage(senderId, receiverId, text) {
++async function sendMessage(senderId, receiverId, text, fileData = null, fileName = null, fileType = null) {
+   const now = fmtISO();
+   const [result] = await pool.execute(
+-    'INSERT INTO messages (sender_id,receiver_id,text,`read`,sent_at) VALUES (?,?,?,0,?)',
+-    [senderId, receiverId, text, now]
++    'INSERT INTO messages (sender_id,receiver_id,text,`read`,sent_at,file_data,file_name,file_type) VALUES (?,?,?,0,?,?,?,?)',
++    [senderId, receiverId, text || '', now, fileData || null, fileName || null, fileType || null]
+   );
+-  return { id: result.insertId, sender_id: senderId, receiver_id: receiverId, text, read: 0, sent_at: now };
++  return { id: result.insertId, sender_id: senderId, receiver_id: receiverId, text: text || '', read: 0, sent_at: now, file_data: fileData, file_name: fileName, file_type: fileType };
+ }
+ 
+ async function markAsRead(userId, contactId) {
+@@ -500,6 +619,17 @@ async function getReviews(talentId) {
+   return rows;
+ }
+ 
++async function replyToReview(reviewId, talentId, reply) {
++  const [rows] = await pool.execute('SELECT * FROM reviews WHERE id = ?', [parseInt(reviewId)]);
++  const review = rows[0];
++  if (!review) throw new Error('Avis non trouvé');
++  if (review.talent_id !== parseInt(talentId)) throw new Error('Non autorisé');
++  await pool.execute(
++    'UPDATE reviews SET reply = ?, reply_at = ? WHERE id = ?',
++    [reply, fmtISO(), parseInt(reviewId)]
++  );
++}
++
+ // ─── Notifications ────────────────────────────────────────────────────────────
+ async function createNotification({ userId, type, message }) {
+   const now = fmtISO();
+@@ -653,13 +783,265 @@ async function findTransactionByCampayRef(reference) {
+   return rows[0] || null;
+ }
+ 
++// ─── Portfolio ────────────────────────────────────────────────────────────────
++async function getPortfolio(talentId) {
++  const [rows] = await pool.execute(
++    'SELECT * FROM portfolio WHERE talent_id = ? ORDER BY created_at DESC',
++    [parseInt(talentId)]
++  );
++  return rows;
++}
++
++async function createPortfolioItem({ talentId, title, description, image }) {
++  const [result] = await pool.execute(
++    'INSERT INTO portfolio (talent_id, title, description, image, created_at) VALUES (?, ?, ?, ?, ?)',
++    [parseInt(talentId), title || '', description || '', image || null, fmtISO()]
++  );
++  return { id: result.insertId, talent_id: parseInt(talentId), title, description, image, created_at: fmtISO() };
++}
++
++async function deletePortfolioItem(id, talentId) {
++  const [result] = await pool.execute(
++    'DELETE FROM portfolio WHERE id = ? AND talent_id = ?',
++    [parseInt(id), parseInt(talentId)]
++  );
++  return result.affectedRows > 0;
++}
++
++// ─── Mot de passe oublié ──────────────────────────────────────────────────────
++async function createResetToken(userId, token, expiresAt) {
++  await pool.execute(
++    'INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
++    [parseInt(userId), token, expiresAt]
++  );
++}
++
++async function findResetToken(token) {
++  const [rows] = await pool.execute(
++    'SELECT * FROM reset_tokens WHERE token = ? AND used = 0 AND expires_at > NOW()',
++    [token]
++  );
++  return rows[0] || null;
++}
++
++async function markResetTokenUsed(token) {
++  await pool.execute('UPDATE reset_tokens SET used = 1 WHERE token = ?', [token]);
++}
++
++async function updatePassword(userId, passwordHash) {
++  await pool.execute('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, parseInt(userId)]);
++}
++
++// ─── Vérification email ───────────────────────────────────────────────────────
++async function createVerifyToken(userId, token) {
++  await pool.execute(
++    'REPLACE INTO email_verify_tokens (user_id, token, created_at) VALUES (?, ?, ?)',
++    [parseInt(userId), token, fmtISO()]
++  );
++}
++
++async function findVerifyToken(token) {
++  const [rows] = await pool.execute(
++    'SELECT * FROM email_verify_tokens WHERE token = ?',
++    [token]
++  );
++  return rows[0] || null;
++}
++
++async function markEmailVerified(userId) {
++  await pool.execute('UPDATE users SET email_verified = 1 WHERE id = ?', [parseInt(userId)]);
++  await pool.execute('DELETE FROM email_verify_tokens WHERE user_id = ?', [parseInt(userId)]);
++}
++
++// ─── Litiges ─────────────────────────────────────────────────────────────────
++async function createDispute({ transactionId, talentId, clientId, reason }) {
++  const now = fmtISO();
++  const [result] = await pool.execute(
++    'INSERT INTO disputes (transaction_id,talent_id,client_id,reason,status,created_at) VALUES (?,?,?,?,"open",?)',
++    [parseInt(transactionId), parseInt(talentId), parseInt(clientId), reason||'', now]
++  );
++  return { id: result.insertId, transaction_id: parseInt(transactionId), talent_id: parseInt(talentId), client_id: parseInt(clientId), reason: reason||'', status: 'open', created_at: now };
++}
++
++async function getDisputeByTxId(transactionId) {
++  const [rows] = await pool.execute('SELECT * FROM disputes WHERE transaction_id = ?', [parseInt(transactionId)]);
++  return rows[0] || null;
++}
++
++async function getAllDisputes() {
++  const [rows] = await pool.execute('SELECT * FROM disputes ORDER BY created_at DESC');
++  return rows;
++}
++
++async function resolveDispute(id, adminNote, resolution) {
++  await pool.execute(
++    'UPDATE disputes SET status = ?, admin_note = ?, resolved_at = ? WHERE id = ?',
++    [resolution || 'resolved', adminNote || '', fmtISO(), parseInt(id)]
++  );
++}
++
++// ─── Signalements ─────────────────────────────────────────────────────────────
++async function createReport({ reporterId, reportedId, reason, description }) {
++  const now = fmtISO();
++  const [result] = await pool.execute(
++    'INSERT INTO reports (reporter_id,reported_id,reason,description,status,created_at) VALUES (?,?,?,?,"pending",?)',
++    [parseInt(reporterId), parseInt(reportedId), reason||'', description||'', now]
++  );
++  return { id: result.insertId, reporter_id: parseInt(reporterId), reported_id: parseInt(reportedId), reason: reason||'', description: description||'', status: 'pending', created_at: now };
++}
++
++async function getAllReports() {
++  const [rows] = await pool.execute('SELECT * FROM reports ORDER BY created_at DESC');
++  return rows;
++}
++
++// ─── Offres de missions ───────────────────────────────────────────────────────
++async function createJobPost({ clientId, title, description, budget, budgetType, budget_type, category, ville }) {
++  const now = fmtISO();
++  const bt = budgetType || budget_type || 'fixe';
++  const [result] = await pool.execute(
++    `INSERT INTO job_posts (client_id,title,description,budget,budget_type,category,ville,status,created_at)
++     VALUES (?,?,?,?,?,?,?,'open',?)`,
++    [parseInt(clientId), title||'', description||'', parseInt(budget)||0,
++     bt, category||'Autres', ville||null, now]
++  );
++  return { id: result.insertId, client_id: parseInt(clientId), title, description, budget: parseInt(budget)||0, budget_type: bt, category: category||'Autres', ville: ville||null, status: 'open', created_at: now };
++}
++
++async function getJobs({ cat, q, ville, status = 'open', page, limit } = {}) {
++  let where = "WHERE j.status = ?";
++  const params = [status];
++  if (cat && cat !== 'Tous') { where += ' AND j.category = ?'; params.push(cat); }
++  if (q)     { where += ' AND (j.title LIKE ? OR j.description LIKE ?)'; const lq = `%${q}%`; params.push(lq, lq); }
++  if (ville) { where += ' AND j.ville = ?'; params.push(ville); }
++
++  const [[{ total }]] = await pool.execute(`SELECT COUNT(*) as total FROM job_posts j ${where}`, params);
++  const pageNum  = Math.max(1, parseInt(page)  || 1);
++  const limitNum = Math.min(50, parseInt(limit) || 9);
++  const offset   = (pageNum - 1) * limitNum;
++
++  const [rows] = await pool.execute(
++    `SELECT j.*, u.prenom, u.nom, u.initials, u.bg_color, u.text_color,
++            (SELECT COUNT(*) FROM job_applications a WHERE a.job_id = j.id) as applicants
++     FROM job_posts j LEFT JOIN users u ON u.id = j.client_id
++     ${where} ORDER BY j.created_at DESC LIMIT ${limitNum} OFFSET ${offset}`,
++    params
++  );
++  return { jobs: rows, total, page: pageNum, limit: limitNum };
++}
++
++async function getJobById(id) {
++  const [rows] = await pool.execute(
++    `SELECT j.*, u.prenom, u.nom, u.initials, u.bg_color, u.text_color
++     FROM job_posts j LEFT JOIN users u ON u.id = j.client_id WHERE j.id = ?`,
++    [parseInt(id)]
++  );
++  return rows[0] || null;
++}
++
++async function applyToJob({ jobId, talentId, message }) {
++  const now = fmtISO();
++  const [result] = await pool.execute(
++    'INSERT INTO job_applications (job_id,talent_id,message,status,created_at) VALUES (?,?,?,\'pending\',?)',
++    [parseInt(jobId), parseInt(talentId), message||'', now]
++  );
++  return { id: result.insertId, job_id: parseInt(jobId), talent_id: parseInt(talentId), message: message||'', status: 'pending', created_at: now };
++}
++
++async function getJobApplications(jobId) {
++  const [rows] = await pool.execute(
++    `SELECT a.*, u.prenom, u.nom, CONCAT(u.prenom,' ',u.nom) as talent_name,
++            u.initials, u.bg_color, u.text_color, u.skill, u.rating, u.reviews
++     FROM job_applications a LEFT JOIN users u ON u.id = a.talent_id
++     WHERE a.job_id = ? ORDER BY a.created_at DESC`,
++    [parseInt(jobId)]
++  );
++  return rows;
++}
++
++async function getMyJobPosts(clientId) {
++  const [rows] = await pool.execute(
++    `SELECT j.*, (SELECT COUNT(*) FROM job_applications a WHERE a.job_id = j.id) as applicants
++     FROM job_posts j WHERE j.client_id = ? ORDER BY j.created_at DESC`,
++    [parseInt(clientId)]
++  );
++  return rows;
++}
++
++async function getMyApplications(talentId) {
++  const [rows] = await pool.execute(
++    `SELECT a.*, j.title, j.budget, j.budget_type, j.category, j.ville, j.status as job_status,
++            u.prenom as client_prenom, u.nom as client_nom
++     FROM job_applications a
++     LEFT JOIN job_posts j ON j.id = a.job_id
++     LEFT JOIN users u ON u.id = j.client_id
++     WHERE a.talent_id = ? ORDER BY a.created_at DESC`,
++    [parseInt(talentId)]
++  );
++  return rows;
++}
++
++async function closeJobPost(id, clientId) {
++  await pool.execute(
++    "UPDATE job_posts SET status = 'closed' WHERE id = ? AND client_id = ?",
++    [parseInt(id), parseInt(clientId)]
++  );
++}
++
++async function getTalentActiveCount(talentId) {
++  const [[{ cnt }]] = await pool.execute(
++    "SELECT COUNT(*) as cnt FROM transactions WHERE receiver_id = ? AND status IN ('escrow','delivered')",
++    [parseInt(talentId)]
++  );
++  return cnt;
++}
++
++// ─── Admin ────────────────────────────────────────────────────────────────────
++async function getAdminStats() {
++  const [[{ totalUsers }]]   = await pool.execute('SELECT COUNT(*) as totalUsers FROM users');
++  const [[{ totalTx }]]      = await pool.execute('SELECT COUNT(*) as totalTx FROM transactions WHERE status = "completed"');
++  const [[{ totalVolume }]]  = await pool.execute('SELECT COALESCE(SUM(amount),0) as totalVolume FROM transactions WHERE status = "completed"');
++  const [[{ totalCommission }]] = await pool.execute('SELECT COALESCE(SUM(commission),0) as totalCommission FROM transactions WHERE status = "completed"');
++  const [[{ newUsers }]]     = await pool.execute('SELECT COUNT(*) as newUsers FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)');
++  return { totalUsers, totalTx, totalVolume, totalCommission, newUsers };
++}
++
++async function getAllUsers() {
++  const [rows] = await pool.execute(
++    'SELECT id,prenom,nom,email,ville,skill,cat,rating,reviews,badge,validated,availability,created_at FROM users ORDER BY created_at DESC'
++  );
++  return rows;
++}
++
++async function toggleUserValidation(userId) {
++  await pool.execute('UPDATE users SET validated = 1 - validated WHERE id = ?', [parseInt(userId)]);
++  const user = await getTalentById(parseInt(userId));
++  return user;
++}
++
++async function getAllTransactions() {
++  const [rows] = await pool.execute(
++    'SELECT * FROM transactions ORDER BY created_at DESC LIMIT 200'
++  );
++  return rows;
++}
++
+ module.exports = {
+   init,
+   getTalents, getTalentById, createUser, updateUser, findUserByEmail, deleteUser,
+-  getDashboardData,
++  getDashboardData, getVilles,
+   getContacts, getMessages, sendMessage, markAsRead,
+   createTransaction, getWallet, getTransactions, updateTransactionStatus,
+   createWithdrawal, createDeposit, findTransactionByCampayRef,
+   createReview, getReviews,
+   createNotification, getNotifications, markNotificationRead, markAllNotificationsRead,
++  getPortfolio, createPortfolioItem, deletePortfolioItem,
++  createResetToken, findResetToken, markResetTokenUsed, updatePassword,
++  getAdminStats, getAllUsers, toggleUserValidation, getAllTransactions,
++  createDispute, getDisputeByTxId, getAllDisputes, resolveDispute,
++  createReport, getAllReports,
++  createVerifyToken, findVerifyToken, markEmailVerified,
++  replyToReview,
++  createJobPost, getJobs, getJobById, applyToJob, getJobApplications,
++  getMyJobPosts, getMyApplications, closeJobPost, getTalentActiveCount,
+ };

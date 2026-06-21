@@ -891,8 +891,29 @@ app.get('/api/admin/users', authenticateAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/users/:id/toggle', authenticateAdmin, async (req, res) => {
-  try { res.json(await db.toggleUserValidation(req.params.id)); }
-  catch (e) { res.status(500).json({ error: e.message }); }
+  try {
+    const user = await db.toggleUserValidation(req.params.id);
+    if (user?.validated) {
+      const notif = await db.createNotification({
+        userId: parseInt(req.params.id),
+        type: 'review',
+        message: 'Votre profil a été validé par l\'administrateur ! 🎉 Vous apparaissez maintenant dans les résultats.',
+      });
+      emitToUser(parseInt(req.params.id), 'new_notification', notif);
+      if (user.email) sendEmail(
+        user.email,
+        'Profil validé — SkillConnect',
+        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+          <h2 style="color:#1D9E75">SkillConnect</h2>
+          <p>Bonjour ${user.prenom},</p>
+          <p>Bonne nouvelle ! Votre profil SkillConnect vient d'être <strong>validé par notre équipe</strong>.</p>
+          <p>Vous apparaissez maintenant dans les résultats de recherche et pouvez recevoir des missions.</p>
+          <a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Voir mon profil</a>
+        </div>`
+      );
+    }
+    res.json(user);
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/admin/transactions', authenticateAdmin, async (req, res) => {
@@ -968,6 +989,12 @@ app.get('/api/admin/reports', authenticateAdmin, async (req, res) => {
 // ─── Statut en ligne ─────────────────────────────────────────────────────────
 app.get('/api/online-users', (req, res) => {
   res.json(Object.keys(userSockets).map(id => parseInt(id)));
+});
+
+// ─── Stats publiques homepage ─────────────────────────────────────────────────
+app.get('/api/stats', async (req, res) => {
+  try { res.json(await db.getSiteStats()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ─── Marquer mission livrée ───────────────────────────────────────────────────
@@ -1049,6 +1076,20 @@ app.post('/api/jobs/:id/apply', authenticateToken, async (req, res) => {
       message: `${talent?.prenom||'Un talent'} a postulé à votre offre "${job.title}"`,
     });
     emitToUser(job.client_id, 'new_notification', notif);
+    // Email au client
+    const client = await db.getTalentById(job.client_id);
+    if (client?.email) sendEmail(
+      client.email,
+      `Nouvelle candidature — "${job.title}"`,
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+        <h2 style="color:#1D9E75">SkillConnect</h2>
+        <p>Bonjour ${client.prenom},</p>
+        <p><strong>${talent?.prenom||'Un talent'} ${talent?.nom||''}</strong> a postulé à votre offre <strong>"${job.title}"</strong>.</p>
+        ${req.body.message ? `<blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${req.body.message}</blockquote>` : ''}
+        <p>Connectez-vous pour consulter sa candidature et y répondre.</p>
+        <a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Voir la candidature</a>
+      </div>`
+    );
     res.json({ success: true, application });
   } catch (e) {
     if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Vous avez déjà postulé à cette offre.' });

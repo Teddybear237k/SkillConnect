@@ -1045,6 +1045,14 @@ async function getTalentActiveCount(talentId) {
   return cnt;
 }
 
+// ─── Stats publiques ─────────────────────────────────────────────────────────
+async function getSiteStats() {
+  const [[{ users }]]    = await pool.execute('SELECT COUNT(*) as users FROM users WHERE validated = 1');
+  const [[{ missions }]] = await pool.execute("SELECT COUNT(*) as missions FROM transactions WHERE status = 'completed'");
+  const [[{ villes }]]   = await pool.execute("SELECT COUNT(DISTINCT ville) as villes FROM users WHERE ville IS NOT NULL AND ville != ''");
+  return { users, missions, villes };
+}
+
 // ─── Admin ────────────────────────────────────────────────────────────────────
 async function getAdminStats() {
   const [[{ totalUsers }]]   = await pool.execute('SELECT COUNT(*) as totalUsers FROM users');
@@ -1086,6 +1094,7 @@ module.exports = {
   createNotification, getNotifications, markNotificationRead, markAllNotificationsRead,
   getPortfolio, createPortfolioItem, deletePortfolioItem,
   createResetToken, findResetToken, markResetTokenUsed, updatePassword,
+  getSiteStats,
   getAdminStats, getAllUsers, toggleUserValidation, getAllTransactions,
   createDispute, getDisputeByTxId, getAllDisputes, resolveDispute,
   createReport, getAllReports,

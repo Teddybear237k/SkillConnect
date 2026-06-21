@@ -2078,6 +2078,38 @@ html.dark .cat-chip.active{background:var(--g600);color:#fff;border-color:var(--
 .wa-file-preview-clear:hover{color:#e53e3e}
 html.dark .wa-file-msg{background:rgba(255,255,255,.09)}
 html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
+/* ─── Page Profil Individuelle ─── */
+.profil-back-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border:1.5px solid var(--hairline);border-radius:var(--r-full);background:var(--card);color:var(--ink);font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:1.5rem;transition:all .15s}
+.profil-back-btn:hover{border-color:var(--g500);color:var(--g600)}
+.profil-header{display:flex;gap:1.5rem;align-items:flex-start;background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:1.75rem;margin-bottom:1.5rem;box-shadow:var(--shadow-sm);flex-wrap:wrap}
+.profil-avatar-wrap{position:relative;flex-shrink:0}
+.profil-avatar{width:90px;height:90px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;font-family:var(--font-display);overflow:hidden}
+.profil-online{position:absolute;bottom:4px;right:4px;width:14px;height:14px;border-radius:50%;background:#22c55e;border:2px solid var(--card)}
+.profil-info{flex:1;min-width:0}
+.profil-name{font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--ink);margin:0 0 .25rem}
+.profil-skill{font-size:.9rem;color:var(--g600);font-weight:600;margin-bottom:.4rem}
+.profil-meta{font-size:.82rem;color:var(--muted);margin-bottom:.4rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.profil-rating{font-size:.9rem;color:var(--ink);font-weight:600}
+.profil-header-actions{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-start}
+.profil-share-btn{padding:.45rem .9rem;border:1.5px solid var(--hairline);border-radius:var(--r-full);background:none;color:var(--muted);font-size:.82rem;cursor:pointer;transition:all .15s}
+.profil-share-btn:hover{border-color:var(--g500);color:var(--g600)}
+.profil-layout{display:grid;grid-template-columns:1fr 280px;gap:1.5rem;align-items:start}
+.profil-section{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:1.5rem;margin-bottom:1.25rem;box-shadow:var(--shadow-sm)}
+.profil-section h3{font-family:var(--font-display);font-size:1rem;font-weight:800;color:var(--ink);margin:0 0 .85rem}
+.profil-bio{font-size:.9rem;color:var(--ink);line-height:1.7;margin:0}
+.profil-tags{display:flex;flex-wrap:wrap;gap:.4rem}
+.profil-sidebar{position:sticky;top:90px}
+.profil-price-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:1.5rem;box-shadow:var(--shadow-sm);margin-bottom:1rem}
+.profil-price{font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--g600);margin-bottom:.25rem}
+.profil-cta-btn{width:100%;margin-top:.5rem}
+@media(max-width:768px){.profil-layout{grid-template-columns:1fr}.profil-sidebar{position:static}.profil-header{gap:1rem}.profil-avatar{width:70px;height:70px;font-size:1.5rem}}
+/* ─── Filtre ville Offres ─── */
+.job-ville-select{padding:.5rem .75rem;border:1.5px solid var(--hairline);border-radius:var(--r-full);background:var(--card);color:var(--ink);font-size:.82rem;cursor:pointer;outline:none;transition:border .15s}
+.job-ville-select:focus{border-color:var(--g500)}
+/* ─── Admin pending ─── */
+.admin-pending-badge{display:inline-block;background:#e53e3e;color:#fff;font-size:.7rem;font-weight:700;padding:.15rem .4rem;border-radius:99px;margin-left:.4rem}
+.btn-validate{padding:.3rem .7rem;border-radius:var(--r-md);border:none;background:rgba(29,158,117,.15);color:var(--g600);font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-validate:hover{background:var(--g600);color:#fff}
 </style>
 </head>
 <body>
@@ -3337,6 +3369,9 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
         <option value="mid">50 000 – 200 000 FCFA</option>
         <option value="high">&gt; 200 000 FCFA</option>
       </select>
+      <select id="jobVilleFilter" class="job-ville-select" onchange="setJobVille(this.value)">
+        <option value="">Toutes les villes</option>
+      </select>
       <button class="cta-primary" id="postJobBtn" style="display:none;gap:.35rem;white-space:nowrap" onclick="showPostJobForm()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
         Publier une offre
@@ -3485,7 +3520,21 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
     <div id="adminDashSection" style="display:none">
       <div class="admin-stats-grid" id="adminStatsGrid"></div>
 
-      <div class="admin-section-title">Utilisateurs</div>
+      <!-- En attente de validation -->
+      <div id="adminPendingWrap" style="display:none;margin-bottom:2rem">
+        <div class="admin-section-title" style="color:#e53e3e">
+          Profils en attente de validation
+          <span class="admin-pending-badge" id="adminPendingCount">0</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>ID</th><th>Nom</th><th>Email</th><th>Ville</th><th>Compétence</th><th>Inscrit le</th><th>Action</th></tr></thead>
+            <tbody id="adminPendingBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="admin-section-title">Utilisateurs actifs</div>
       <div style="overflow-x:auto">
         <table class="admin-table">
           <thead><tr><th>ID</th><th>Nom</th><th>Email</th><th>Ville</th><th>Compétence</th><th>Note</th><th>Inscrit le</th><th>Statut</th></tr></thead>
@@ -3520,6 +3569,19 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
       <div style="margin-top:2rem">
         <button class="btn-logout" onclick="adminLogout()">Déconnexion admin</button>
       </div>
+    </div>
+  </section>
+</div>
+
+<!-- ════════════════ PAGE PROFIL INDIVIDUELLE ════════════════ -->
+<div class="page" id="page-profil" style="padding-top:80px">
+  <section style="max-width:960px;margin:0 auto;padding:2rem 1.25rem">
+    <button type="button" class="profil-back-btn" onclick="showPage('explorer',document.querySelectorAll('.nav-link')[1])">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Retour
+    </button>
+    <div id="profilContent">
+      <div class="offres-empty"><div class="offres-empty-icon">⏳</div><h4>Chargement…</h4></div>
     </div>
   </section>
 </div>
@@ -6518,6 +6580,7 @@ async function validateMission(txId) {
 let _jobsPage = 1;
 let _offresTab = 'all';
 let _jobCategory = '';
+let _jobVille = '';
 const debouncedLoadJobs = debounce(() => loadJobs(1), 300);
 
 // ── Tab switching ─────────────────────────────────────────────────────
@@ -6539,6 +6602,20 @@ function setJobCategory(cat, el) {
   document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
   loadJobs(1);
+}
+
+// ── Filtre ville ──────────────────────────────────────────────────────
+function setJobVille(ville) {
+  _jobVille = ville;
+  loadJobs(1);
+}
+
+async function loadJobVilles() {
+  const sel = document.getElementById('jobVilleFilter');
+  if (!sel) return;
+  const villes = await api('/villes') || [];
+  sel.innerHTML = '<option value="">Toutes les villes</option>' +
+    villes.map(v => `<option value="${escHtml(v)}">${escHtml(v)}</option>`).join('');
 }
 
 // ── Offres suggérées ──────────────────────────────────────────────────
