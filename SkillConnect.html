@@ -4,6 +4,20 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SkillConnect Cameroun — Trouve un talent. Gagne de l'argent.</title>
+<meta name="description" content="SkillConnect est la plateforme camerounaise pour trouver des talents locaux (cours, design, informatique, couture…) et être payé via MTN MoMo ou Orange Money."/>
+<meta name="keywords" content="freelance cameroun, talent cameroun, cours particuliers, momo, prestataire, skillconnect"/>
+<meta name="robots" content="index, follow"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://skillconnect.cm/"/>
+<meta property="og:title" content="SkillConnect Cameroun — Trouve un talent. Gagne de l'argent."/>
+<meta property="og:description" content="Trouve des talents vérifiés près de chez toi au Cameroun. Paiement sécurisé via MoMo & Orange Money."/>
+<meta property="og:image" content="https://skillconnect.cm/icon-512.svg"/>
+<meta property="og:locale" content="fr_CM"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="SkillConnect Cameroun"/>
+<meta name="twitter:description" content="Trouve des talents vérifiés au Cameroun. Paiement Mobile Money."/>
+<meta name="twitter:image" content="https://skillconnect.cm/icon-512.svg"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"SkillConnect Cameroun","url":"https://skillconnect.cm","description":"Plateforme de mise en relation avec des talents locaux au Cameroun","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://skillconnect.cm/?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -2124,6 +2138,18 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
   <span id="toast-msg">Action effectuée</span>
 </div>
 
+<!-- Modal de confirmation générique -->
+<div id="confirmModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--surface-2,#fff);border-radius:var(--r-xl);padding:1.75rem;max-width:380px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <h3 id="confirmModalTitle" style="margin:0 0 .5rem;font-size:1.05rem;font-weight:700;color:var(--text)"></h3>
+    <p id="confirmModalBody" style="margin:0 0 1.5rem;font-size:.88rem;color:var(--muted);line-height:1.5"></p>
+    <div style="display:flex;gap:.75rem;justify-content:flex-end">
+      <button id="confirmModalCancel" style="padding:.5rem 1.25rem;border-radius:var(--r-full);border:1.5px solid var(--border);background:none;cursor:pointer;font-size:.88rem;color:var(--muted);font-weight:600">Annuler</button>
+      <button id="confirmModalOk" style="padding:.5rem 1.25rem;border-radius:var(--r-full);border:none;background:#e53e3e;color:#fff;cursor:pointer;font-size:.88rem;font-weight:700">Confirmer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════════════ NAVBAR ════════════════════════ -->
 <nav class="nav" id="navbar">
   <div class="nav-logo">Skill<span>Connect</span></div>
@@ -2541,7 +2567,13 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
             </div>
             <div class="form-group full">
               <label class="form-label">Mot de passe <sup>*</sup></label>
-              <input type="password" class="form-input" placeholder="Minimum 6 caractères" id="fPassword"/>
+              <input type="password" class="form-input" placeholder="Minimum 6 caractères" id="fPassword" oninput="updatePasswordStrength(this.value)"/>
+              <div id="pwStrengthWrap" style="margin-top:.4rem;display:none">
+                <div style="height:5px;border-radius:3px;background:var(--border);overflow:hidden">
+                  <div id="pwStrengthBar" style="height:100%;width:0;border-radius:3px;transition:all .3s ease"></div>
+                </div>
+                <span id="pwStrengthLabel" style="font-size:.73rem;margin-top:.2rem;display:block;color:var(--muted)"></span>
+              </div>
             </div>
           </div>
           <button class="form-submit" onclick="submitForm()">
@@ -2949,6 +2981,11 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
       <div class="completion-items" id="completionItems"></div>
     </div>
 
+    <!-- Bouton notifications push -->
+    <div style="margin-bottom:1rem" id="pushNotifCard">
+      <button id="pushToggleBtn" onclick="togglePushNotifications()" style="width:100%;padding:.7rem 1rem;border-radius:var(--r-md);border:none;background:var(--border);color:var(--muted);font-size:.88rem;font-weight:600;cursor:pointer;transition:.2s">🔕 Activer les notifications push</button>
+    </div>
+
     <div class="dash-grid">
       <div class="dash-panel fade-up">
         <div class="dash-panel-title">Compétences les plus demandées</div>
@@ -3058,9 +3095,15 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
             <button class="wa-icon-btn" title="Rechercher" aria-label="Rechercher">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             </button>
-            <button class="wa-icon-btn" title="Plus d'options" aria-label="Plus d'options">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-            </button>
+            <div style="position:relative">
+              <button class="wa-icon-btn" title="Plus d'options" aria-label="Plus d'options" onclick="toggleChatMenu(event)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+              <div id="chatOptionsMenu" style="display:none;position:absolute;right:0;top:110%;background:var(--surface-2,#fff);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:200px;z-index:300;overflow:hidden">
+                <button onclick="blockChatContact()" style="width:100%;text-align:left;padding:.65rem 1rem;background:none;border:none;cursor:pointer;font-size:.88rem;color:var(--text);border-bottom:1px solid var(--border)" id="blockContactBtn">Bloquer ce contact</button>
+                <button onclick="deleteChatConversation()" style="width:100%;text-align:left;padding:.65rem 1rem;background:none;border:none;cursor:pointer;font-size:.88rem;color:#e53e3e">Supprimer la conversation</button>
+              </div>
+            </div>
           </div>
           <div class="wa-online-dot"></div>
         </div>
@@ -3727,14 +3770,17 @@ function showPage(id,linkEl){
   if(linkEl) linkEl.classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
   closeMobileMenu();
-  if(id==='dashboard') { initDashboard(); loadDashPortfolio(); initDashMissions(); }
-  if(id==='messages') initWA();
+  if(id==='dashboard') { initDashboard(); loadDashPortfolio(); initDashMissions(); initPushNotifications(); }
+  if(id==='messages') { initWA(); loadBlockedIds(); }
   if(id==='explorer') { loadOnlineUsers().then(renderTalents); loadVilles(); }
   if(id==='offres') {
-    // Réinitialise le filtre catégorie et les chips
     _jobCategory = '';
+    _jobVille = '';
     document.querySelectorAll('.cat-chip').forEach((c,i) => c.classList.toggle('active', i===0));
+    const vs = document.getElementById('jobVilleFilter');
+    if (vs) vs.value = '';
     loadJobs(1);
+    loadJobVilles();
   }
   if(id==='paiement') initPayPage();
   triggerFadeUps();
@@ -3846,7 +3892,7 @@ async function renderTalents(){
   const avlIcon={available:'🟢',busy:'🟠',pause:'⚪'};
   const avlLbl={available:'Disponible',busy:'Occupé',pause:'En pause'};
   grid.innerHTML=talents.map((t,i)=>`
-    <div class="talent-card" style="animation-delay:${i*0.07}s" onclick="openModal(${t.id})" data-city="${t.city||''}">
+    <div class="talent-card" style="animation-delay:${i*0.07}s" onclick="showTalentProfile(${t.id})" data-city="${t.city||''}">
       <div class="card-header">
         <div class="talent-avatar-wrap">
           <div class="talent-avatar" style="background:${t.bg};color:${t.col}">
@@ -5496,6 +5542,8 @@ function appendNotif(notif){
     </div>
     <div class="notif-unread-dot"></div>`;
   list.prepend(el);
+  // Toast discret en haut de page
+  toast(notif.message.length > 60 ? notif.message.slice(0, 57) + '…' : notif.message);
   // Incrémenter le badge
   const badge = document.getElementById('notifBadge');
   const cur = parseInt(badge?.textContent||'0') + 1;
@@ -5918,6 +5966,210 @@ async function deletePortfolioItem(id) {
   else { toast(res?.error || 'Erreur'); }
 }
 
+// ═══ PAGE PROFIL INDIVIDUELLE ════════════════════════════════════════════════
+function showTalentProfile(id) {
+  const url = new URL(window.location);
+  url.searchParams.set('profil', id);
+  history.pushState({}, '', url);
+  showPage('profil', null);
+  loadTalentProfile(id);
+}
+
+async function loadTalentProfile(id) {
+  const content = document.getElementById('profilContent');
+  if (!content) return;
+  content.innerHTML = '<div class="offres-empty"><div class="offres-empty-icon">⏳</div><h4>Chargement…</h4></div>';
+
+  let t = await api('/talents/' + id);
+  if (!t) { t = TALENTS.find(x => x.id === parseInt(id)); }
+  if (!t) {
+    content.innerHTML = '<div class="offres-empty"><h4>Profil introuvable</h4></div>';
+    return;
+  }
+
+  // Mise à jour des meta OG pour le partage
+  const metaDesc = document.querySelector('meta[name="description"]');
+  const metaOgTitle = document.querySelector('meta[property="og:title"]');
+  const metaOgDesc  = document.querySelector('meta[property="og:description"]');
+  const metaTwTitle = document.querySelector('meta[name="twitter:title"]');
+  const metaTwDesc  = document.querySelector('meta[name="twitter:description"]');
+  const fullName = ((t.prenom||'') + ' ' + (t.nom||'')).trim();
+  const profilDesc = `${fullName} — ${t.skill||t.skill_custom||'Talent'} à ${t.ville||'Cameroun'} sur SkillConnect`;
+  if (metaDesc)    metaDesc.content    = profilDesc;
+  if (metaOgTitle) metaOgTitle.content = fullName + ' — SkillConnect';
+  if (metaOgDesc)  metaOgDesc.content  = profilDesc;
+  if (metaTwTitle) metaTwTitle.content = fullName + ' — SkillConnect';
+  if (metaTwDesc)  metaTwDesc.content  = profilDesc;
+
+  const bg   = t.bg_color || t.bg || '#C8EFE3';
+  const col  = t.text_color || t.col || '#085041';
+  const name = t.name || ((t.prenom||'') + ' ' + (t.nom||'')).trim();
+  const city = t.ville || t.city || 'Cameroun';
+  const price = t.price || (t.tarif || 0).toLocaleString('fr-FR');
+  const unit  = t.unit || t.tarif_unit || 'FCFA';
+  const avail = t.availability || 'available';
+  const avlLbl = {available:'Disponible', busy:'Occupé', pause:'En pause'};
+  const tags  = Array.isArray(t.tags) ? t.tags : (t.skill_custom ? [t.skill_custom] : []);
+  const uid   = parseInt(localStorage.getItem('sc_user_id'));
+  const tid   = t.id || parseInt(id);
+  const isOnline = window._onlineUsers && window._onlineUsers.has(tid);
+  const avatarHtml = t.photo
+    ? `<img src="${escHtml(t.photo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
+    : escHtml(t.initials || '?');
+
+  content.innerHTML = `
+    <div class="profil-header">
+      <div class="profil-avatar-wrap">
+        <div class="profil-avatar" style="background:${escHtml(bg)};color:${escHtml(col)}">${avatarHtml}</div>
+        ${isOnline ? '<span class="profil-online"></span>' : ''}
+      </div>
+      <div class="profil-info">
+        <h1 class="profil-name">${escHtml(name)}</h1>
+        <div class="profil-skill">${escHtml(t.skill || '')}</div>
+        <div class="profil-meta">
+          📍 ${escHtml(city)}
+          <span class="avail-dot avail-${avail}"></span>${avlLbl[avail]||'Disponible'}
+        </div>
+        <div class="profil-rating">⭐ ${t.rating} <span style="color:var(--muted)">(${t.reviews} avis)</span></div>
+      </div>
+      <div class="profil-header-actions">
+        <button type="button" class="profil-share-btn" onclick="shareProfile(${tid})">🔗 Partager</button>
+      </div>
+    </div>
+
+    <div class="profil-layout">
+      <div class="profil-main">
+        ${t.bio ? `<div class="profil-section"><h3>À propos</h3><p class="profil-bio">${escHtml(t.bio)}</p></div>` : ''}
+        ${tags.length ? `<div class="profil-section"><h3>Spécialités</h3><div class="profil-tags">${tags.map(tag=>`<span class="modal-tag">${escHtml(tag)}</span>`).join('')}</div></div>` : ''}
+        <div class="profil-section">
+          <h3>Portfolio</h3>
+          <div id="profilPortfolioGrid" class="portfolio-grid" style="margin:0"></div>
+        </div>
+        <div class="profil-section" id="profilReviewsSection">
+          <h3>Avis clients</h3>
+          <div id="profilReviewsList"><div style="color:var(--subtle);font-size:.82rem">Chargement…</div></div>
+          ${uid && uid !== tid ? `
+          <div class="write-review" style="margin-top:1rem" id="profilWriteReview">
+            <h4>Laisser un avis</h4>
+            <div class="star-row star-interactive" id="profilReviewStars" style="margin-bottom:.6rem">
+              <span class="star" onclick="setReviewStar(1,this.closest('.star-row'))">★</span>
+              <span class="star" onclick="setReviewStar(2,this.closest('.star-row'))">★</span>
+              <span class="star" onclick="setReviewStar(3,this.closest('.star-row'))">★</span>
+              <span class="star" onclick="setReviewStar(4,this.closest('.star-row'))">★</span>
+              <span class="star" onclick="setReviewStar(5,this.closest('.star-row'))">★</span>
+            </div>
+            <textarea id="profilReviewComment" placeholder="Votre commentaire (optionnel)…" class="form-textarea" style="min-height:80px"></textarea>
+            <div class="write-review-actions">
+              <button type="button" class="modal-book-btn" style="padding:.5rem 1rem;font-size:.82rem;min-width:0" onclick="submitProfilReview(${tid})">Publier</button>
+            </div>
+          </div>` : ''}
+        </div>
+      </div>
+
+      <div class="profil-sidebar">
+        <div class="profil-price-card">
+          <div class="profil-price">${escHtml(price)} <span style="font-size:.9rem;font-weight:400">${escHtml(unit)}</span></div>
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">Tarif indicatif</div>
+          ${uid && uid !== tid ? `
+            <button type="button" class="form-submit profil-cta-btn" onclick="profilContact(${tid},${JSON.stringify(name)})">💬 Contacter</button>
+            <button type="button" class="modal-book-btn profil-cta-btn" onclick="profilBook(${tid})">📅 Réserver</button>
+          ` : !uid ? `
+            <button type="button" class="form-submit profil-cta-btn" onclick="openLoginModal()">💬 Contacter</button>
+          ` : ''}
+        </div>
+      </div>
+    </div>`;
+
+  loadProfilPortfolio(tid);
+  loadProfilReviews(tid);
+}
+
+async function loadProfilPortfolio(talentId) {
+  const grid = document.getElementById('profilPortfolioGrid');
+  if (!grid) return;
+  const items = await api('/portfolio/' + talentId) || [];
+  if (!items.length) { grid.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Aucun projet portfolio.</div>'; return; }
+  grid.innerHTML = items.map(item => `
+    <div class="portfolio-item" onclick="openPortfolioImage('${escHtml(item.image||'')}','${escHtml(item.title||'')}')">
+      ${item.image ? `<img class="portfolio-img" src="${escHtml(item.image)}" alt="${escHtml(item.title||'')}">` : '<div class="portfolio-img" style="background:var(--g50)"></div>'}
+      <div class="portfolio-title">${escHtml(item.title||'')}</div>
+    </div>`).join('');
+}
+
+async function loadProfilReviews(talentId) {
+  const list = document.getElementById('profilReviewsList');
+  if (!list) return;
+  const reviews = await api('/reviews/' + talentId) || [];
+  if (!reviews.length) { list.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Aucun avis pour l\'instant.</div>'; return; }
+  const lang = localStorage.getItem('sc_lang') || 'fr';
+  list.innerHTML = reviews.map(r => {
+    const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+    return `<div class="review-item">
+      <div class="review-header">
+        <div class="review-avatar" style="background:${r.reviewer_bg||'var(--g50)'};color:${r.reviewer_col||'var(--g800)'}">${escHtml(r.reviewer_initials||'?')}</div>
+        <div><div class="review-author">${escHtml(r.reviewer_name||'Utilisateur')}</div>
+        <div class="review-stars" style="color:#f59e0b;font-size:.85rem">${stars}</div></div>
+        <div class="review-date" style="margin-left:auto">${timeAgo(r.created_at)}</div>
+      </div>
+      <div class="review-comment">${escHtml(r.comment||'')}</div>
+      ${r.reply ? `<div class="review-reply"><span style="font-weight:600">Réponse :</span> ${escHtml(r.reply)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+let _profilReviewRating = 0;
+async function submitProfilReview(talentId) {
+  const starsEl = document.getElementById('profilReviewStars');
+  const rating = starsEl ? [...starsEl.querySelectorAll('.star')].filter(s => s.classList.contains('active')).length : 0;
+  if (!rating) { toast('Sélectionnez une note'); return; }
+  const comment = document.getElementById('profilReviewComment')?.value?.trim() || '';
+  const res = await api('/reviews', 'POST', { talentId, rating, comment });
+  if (res?.success) {
+    toast('Avis publié !');
+    document.getElementById('profilWriteReview')?.remove();
+    loadProfilReviews(talentId);
+  } else { toast(res?.error || 'Erreur', 'error'); }
+}
+
+function profilContact(talentId, talentName) {
+  if (!localStorage.getItem('sc_token')) { openLoginModal(); return; }
+  showPage('messages', document.querySelectorAll('.nav-link')[5]);
+  setTimeout(() => selectWAContact(talentId), 400);
+}
+
+function profilBook(talentId) {
+  if (!localStorage.getItem('sc_token')) { openLoginModal(); return; }
+  currentModalTalentId = talentId;
+  bookSession();
+}
+
+function shareProfile(talentId) {
+  const url = window.location.origin + '/?profil=' + talentId;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => toast('Lien copié !'));
+  } else {
+    const el = document.createElement('input');
+    el.value = url;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    toast('Lien copié !');
+  }
+}
+
+// ═══ STATS HOMEPAGE TEMPS RÉEL ═══════════════════════════════════════════════
+async function loadSiteStats() {
+  const stats = await api('/stats');
+  if (!stats) return;
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const key = el.closest('.hero-stat')?.querySelector('.hero-stat-label')?.textContent?.toLowerCase() || '';
+    if (key.includes('talent')) el.dataset.count = stats.users;
+    else if (key.includes('mission')) el.dataset.count = stats.missions;
+    else if (key.includes('ville')) el.dataset.count = stats.villes;
+  });
+}
+
 // ═══ ADMIN ════════════════════════════════════════════════════════════════════
 let adminToken = null;
 
@@ -5978,24 +6230,48 @@ async function loadAdminData() {
       </div>`).join('');
   }
 
-  // Users table
-  const ub = document.getElementById('adminUsersBody');
-  if (ub && users) {
-    ub.innerHTML = users.map(u => `
-      <tr>
-        <td>${u.id}</td>
-        <td><strong>${u.prenom} ${u.nom}</strong></td>
-        <td>${u.email||'—'}</td>
-        <td>${u.ville||'—'}</td>
-        <td>${u.skill||'—'}</td>
-        <td>⭐ ${u.rating}</td>
-        <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR') : '—'}</td>
-        <td>
-          <button class="btn-toggle-valid ${u.validated?'active':'inactive'}" onclick="toggleUser(${u.id})">
-            ${u.validated ? 'Actif' : 'Suspendu'}
-          </button>
-        </td>
-      </tr>`).join('');
+  // Séparer en attente vs actifs
+  if (users) {
+    const pending = users.filter(u => !u.validated);
+    const active  = users.filter(u => u.validated);
+
+    const pw = document.getElementById('adminPendingWrap');
+    const pb = document.getElementById('adminPendingBody');
+    const pc = document.getElementById('adminPendingCount');
+    if (pw && pb) {
+      pw.style.display = pending.length ? '' : 'none';
+      if (pc) pc.textContent = pending.length;
+      pb.innerHTML = pending.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td><strong>${escHtml(u.prenom)} ${escHtml(u.nom)}</strong></td>
+          <td>${escHtml(u.email||'—')}</td>
+          <td>${escHtml(u.ville||'—')}</td>
+          <td>${escHtml(u.skill||'—')}</td>
+          <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+          <td>
+            <button type="button" class="btn-validate" onclick="validateUser(${u.id})">✅ Valider</button>
+            <button type="button" class="btn-toggle-valid inactive" style="margin-left:.3rem" onclick="toggleUser(${u.id})">Suspendre</button>
+          </td>
+        </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted)">Aucun profil en attente</td></tr>';
+    }
+
+    const ub = document.getElementById('adminUsersBody');
+    if (ub) {
+      ub.innerHTML = active.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td><strong>${escHtml(u.prenom)} ${escHtml(u.nom)}</strong></td>
+          <td>${escHtml(u.email||'—')}</td>
+          <td>${escHtml(u.ville||'—')}</td>
+          <td>${escHtml(u.skill||'—')}</td>
+          <td>⭐ ${u.rating}</td>
+          <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+          <td>
+            <button type="button" class="btn-toggle-valid active" onclick="toggleUser(${u.id})">Actif</button>
+          </td>
+        </tr>`).join('');
+    }
   }
 
   // Transactions table
@@ -6107,6 +6383,12 @@ function closeOnboarding() {
   document.getElementById('onboardingOverlay').classList.remove('open');
   document.body.style.overflow = '';
   localStorage.setItem('sc_onboarding_done', '1');
+}
+
+async function validateUser(userId) {
+  const u = await adminApi('/admin/users/' + userId + '/toggle', 'PUT');
+  if (u?.validated) toast('Profil validé — email envoyé à l\'utilisateur !');
+  loadAdminData();
 }
 
 async function toggleUser(userId) {
@@ -6467,6 +6749,16 @@ window.addEventListener('load', async () => {
     showPage('admin', document.getElementById('navAdminLink'));
   }
 
+  // Profil partagé via URL ?profil=123
+  const profilId = params.get('profil');
+  if (profilId && parseInt(profilId)) {
+    history.replaceState({}, '', '/');
+    showTalentProfile(parseInt(profilId));
+  }
+
+  // Stats temps réel homepage
+  loadSiteStats();
+
   // Onboarding au 1er login (vérifié après connexion)
   window._checkOnboarding = () => {
     if (!localStorage.getItem('sc_onboarding_done') && localStorage.getItem('sc_user_id')) {
@@ -6667,6 +6959,7 @@ async function loadJobs(page) {
   const budget = document.getElementById('jobBudgetFilter')?.value;
   if (q)           params.set('q', q);
   if (_jobCategory) params.set('category', _jobCategory);
+  if (_jobVille)    params.set('ville', _jobVille);
   if (budget)      params.set('budget', budget);
 
   const res  = await api('/jobs?' + params);
@@ -7002,6 +7295,8 @@ function closeJobModal() {
 }
 
 async function closeJobAndReload(jobId) {
+  const ok = await showConfirmModal('Clôturer cette offre ?', 'Les candidatures en attente seront archivées. Cette action est irréversible.');
+  if (!ok) return;
   const res = await api('/jobs/' + jobId + '/close', 'PUT', {});
   if (res?.success) {
     toast('Offre clôturée.');
@@ -7151,6 +7446,183 @@ if('serviceWorker' in navigator){
       .then(()=>console.log('✅ Service Worker enregistré'))
       .catch(()=>{});
   });
+}
+
+// ─── Confirm Modal ────────────────────────────────────────────────────────────
+function showConfirmModal(title, body, okLabel = 'Confirmer', okColor = '#e53e3e') {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('confirmModalOverlay');
+    document.getElementById('confirmModalTitle').textContent = title;
+    document.getElementById('confirmModalBody').textContent  = body;
+    const okBtn = document.getElementById('confirmModalOk');
+    okBtn.textContent = okLabel;
+    okBtn.style.background = okColor;
+    overlay.style.display = 'flex';
+    const close = (val) => { overlay.style.display = 'none'; resolve(val); };
+    okBtn.onclick = () => close(true);
+    document.getElementById('confirmModalCancel').onclick = () => close(false);
+    overlay.onclick = (e) => { if (e.target === overlay) close(false); };
+  });
+}
+
+// ─── Force du mot de passe ────────────────────────────────────────────────────
+function updatePasswordStrength(val) {
+  const wrap = document.getElementById('pwStrengthWrap');
+  const bar  = document.getElementById('pwStrengthBar');
+  const lbl  = document.getElementById('pwStrengthLabel');
+  if (!val) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  let score = 0;
+  if (val.length >= 8)                    score++;
+  if (val.length >= 12)                   score++;
+  if (/[A-Z]/.test(val))                  score++;
+  if (/[0-9]/.test(val))                  score++;
+  if (/[^A-Za-z0-9]/.test(val))          score++;
+  const levels = [
+    { pct: '20%', color: '#e53e3e', label: 'Très faible' },
+    { pct: '40%', color: '#dd6b20', label: 'Faible' },
+    { pct: '60%', color: '#d69e2e', label: 'Moyen' },
+    { pct: '80%', color: '#38a169', label: 'Fort' },
+    { pct: '100%', color: '#1D9E75', label: 'Très fort' },
+  ];
+  const lvl = levels[Math.min(score, 4)];
+  bar.style.width = lvl.pct;
+  bar.style.background = lvl.color;
+  lbl.textContent = lvl.label;
+  lbl.style.color = lvl.color;
+}
+
+// ─── Menu options chat ────────────────────────────────────────────────────────
+let _chatBlockedIds = new Set();
+
+function toggleChatMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('chatOptionsMenu');
+  const isOpen = menu.style.display !== 'none';
+  menu.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen && waActiveContactId) {
+    // Mettre à jour le libellé bloquer/débloquer
+    const blocked = _chatBlockedIds.has(waActiveContactId);
+    const btn = document.getElementById('blockContactBtn');
+    if (btn) btn.textContent = blocked ? 'Débloquer ce contact' : 'Bloquer ce contact';
+  }
+  if (!isOpen) {
+    setTimeout(() => document.addEventListener('click', closeChatMenu, { once: true }), 10);
+  }
+}
+
+function closeChatMenu() {
+  const menu = document.getElementById('chatOptionsMenu');
+  if (menu) menu.style.display = 'none';
+}
+
+async function blockChatContact() {
+  closeChatMenu();
+  if (!waActiveContactId) return;
+  const blocked = _chatBlockedIds.has(waActiveContactId);
+  const label = blocked ? 'Débloquer' : 'Bloquer';
+  const ok = await showConfirmModal(
+    `${label} ce contact ?`,
+    blocked ? 'Ce contact pourra à nouveau vous envoyer des messages.' : 'Ce contact ne pourra plus vous envoyer de messages.',
+    label,
+    blocked ? '#1D9E75' : '#e53e3e'
+  );
+  if (!ok) return;
+  if (blocked) {
+    await api('/users/' + waActiveContactId + '/block', 'DELETE');
+    _chatBlockedIds.delete(waActiveContactId);
+    toast('Contact débloqué.');
+  } else {
+    await api('/users/' + waActiveContactId + '/block', 'POST', {});
+    _chatBlockedIds.add(waActiveContactId);
+    toast('Contact bloqué. Il ne peut plus vous contacter.');
+  }
+}
+
+async function deleteChatConversation() {
+  closeChatMenu();
+  if (!waActiveContactId) return;
+  const uid = localStorage.getItem('sc_user_id');
+  const ok = await showConfirmModal(
+    'Supprimer la conversation ?',
+    'Tous les messages échangés seront définitivement effacés pour vous.',
+    'Supprimer'
+  );
+  if (!ok) return;
+  const res = await api('/messages/' + uid + '/' + waActiveContactId, 'DELETE');
+  if (res?.success) {
+    toast('Conversation supprimée.');
+    document.getElementById('waMessages').innerHTML = '';
+    waContacts = waContacts.filter(c => c.id !== waActiveContactId);
+    waActiveContactId = null;
+    document.getElementById('waActiveChat').style.display = 'none';
+    document.getElementById('waNoChat').style.display = 'flex';
+    loadWAContacts();
+  } else {
+    toast(res?.error || 'Erreur', 'error');
+  }
+}
+
+async function loadBlockedIds() {
+  const uid = localStorage.getItem('sc_user_id');
+  if (!uid) return;
+  const ids = await api('/users/blocked');
+  if (Array.isArray(ids)) _chatBlockedIds = new Set(ids);
+}
+
+// ─── Push Notifications (abonnement) ─────────────────────────────────────────
+let _pushSubscription = null;
+
+async function initPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const { publicKey } = await api('/push/vapid-key') || {};
+  if (!publicKey) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) { _pushSubscription = existing; updatePushBtn(true); return; }
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+    _pushSubscription = sub;
+    await api('/push/subscribe', 'POST', sub.toJSON());
+    updatePushBtn(true);
+  } catch(e) {
+    updatePushBtn(false);
+  }
+}
+
+async function togglePushNotifications() {
+  if (_pushSubscription) {
+    const ok = await showConfirmModal('Désactiver les notifications ?', 'Vous ne recevrez plus de notifications push.', 'Désactiver', '#dd6b20');
+    if (!ok) return;
+    await _pushSubscription.unsubscribe();
+    await api('/push/subscribe', 'DELETE', { endpoint: _pushSubscription.endpoint });
+    _pushSubscription = null;
+    updatePushBtn(false);
+    toast('Notifications désactivées.');
+  } else {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Permission refusée.', 'error'); return; }
+    await initPushNotifications();
+    if (_pushSubscription) toast('Notifications activées !');
+  }
+}
+
+function updatePushBtn(active) {
+  const btn = document.getElementById('pushToggleBtn');
+  if (!btn) return;
+  btn.textContent = active ? '🔔 Notifications activées' : '🔕 Activer les notifications';
+  btn.style.background = active ? 'rgba(29,158,117,.15)' : 'var(--border)';
+  btn.style.color = active ? 'var(--g600)' : 'var(--muted)';
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 </script>
 </body>

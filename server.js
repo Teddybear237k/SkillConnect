@@ -10,8 +10,18 @@ const rateLimit    = require('express-rate-limit');
 const nodemailer   = require('nodemailer');
 const crypto       = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
+const webPush      = require('web-push');
 const db           = require('./db/database');
 const campay       = require('./campay');
+
+// VAPID push notifications
+if (process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE) {
+  webPush.setVapidDetails(
+    'mailto:' + (process.env.SMTP_USER || 'admin@skillconnect.cm'),
+    process.env.VAPID_PUBLIC,
+    process.env.VAPID_PRIVATE
+  );
+}
 
 const app    = express();
 const server = http.createServer(app);
@@ -109,6 +119,25 @@ io.on('connection', (socket) => {
 function emitToUser(userId, event, data) {
   const sid = userSockets[String(userId)];
   if (sid) io.to(sid).emit(event, data);
+}
+
+async function pushToUser(userId, title, body, url = '/') {
+  try {
+    if (!process.env.VAPID_PUBLIC) return;
+    const subs = await db.getUserPushSubscriptions(userId);
+    for (const s of subs) {
+      try {
+        await webPush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          JSON.stringify({ title, body, icon: '/icon-192.svg', url })
+        );
+      } catch(e) {
+        if (e.statusCode === 410 || e.statusCode === 404) {
+          await db.deletePushSubscription(userId, s.endpoint);
+        }
+      }
+    }
+  } catch(e) {}
 }
 
 // ─── Africa's Talking SMS ─────────────────────────────────────────────────────
@@ -231,6 +260,13 @@ app.get('/api/talents/:id', async (req, res) => {
     const t = await db.getTalentById(parseInt(req.params.id));
     if (!t) return res.status(404).json({ error: 'Talent non trouvé' });
     const { password_hash: _ph, ...safe } = t;
+    // Enregistrer la vue (viewer_id depuis token optionnel)
+    let viewerId = null;
+    try {
+      const auth = req.headers.authorization;
+      if (auth) { const payload = require('jsonwebtoken').verify(auth.split(' ')[1], process.env.JWT_SECRET); viewerId = payload.userId; }
+    } catch(e) {}
+    db.recordProfileView(parseInt(req.params.id), viewerId).catch(()=>{});
     res.json(safe);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -278,6 +314,10 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
     if (req.user.userId !== parseInt(senderId))
       return res.status(403).json({ error: 'Accès refusé.' });
 
+    // Vérifier si le destinataire a bloqué l'expéditeur
+    if (await db.isBlocked(parseInt(receiverId), parseInt(senderId)))
+      return res.status(403).json({ error: 'Vous ne pouvez pas contacter cet utilisateur.' });
+
     const msg    = await db.sendMessage(parseInt(senderId), parseInt(receiverId), text || '', fileData || null, fileName || null, fileType || null);
     const sender = await db.getTalentById(parseInt(senderId));
 
@@ -288,6 +328,10 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
         message: `Nouveau message de ${sender.prenom} ${sender.nom}`,
       });
       emitToUser(receiverId, 'new_notification', notif);
+      // Push si l'utilisateur n'est pas connecté au socket
+      if (!userSockets[String(receiverId)]) {
+        pushToUser(receiverId, `Message de ${sender.prenom}`, text ? text.slice(0, 80) : 'Fichier joint');
+      }
     }
 
     emitToUser(receiverId, 'new_message', {
@@ -1144,6 +1188,65 @@ app.put('/api/jobs/:id/applications/:appId', authenticateToken, async (req, res)
     }
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Blocage utilisateurs ─────────────────────────────────────────────────────
+app.post('/api/users/:id/block', authenticateToken, async (req, res) => {
+  const blockedId = parseInt(req.params.id);
+  if (blockedId === req.user.userId) return res.status(400).json({ error: 'Impossible de se bloquer soi-même.' });
+  try { await db.blockUser(req.user.userId, blockedId); res.json({ success: true }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/users/:id/block', authenticateToken, async (req, res) => {
+  try { await db.unblockUser(req.user.userId, parseInt(req.params.id)); res.json({ success: true }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/users/blocked', authenticateToken, async (req, res) => {
+  try { res.json(await db.getBlockedIds(req.user.userId)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Suppression de conversation ──────────────────────────────────────────────
+app.delete('/api/messages/:userId/:contactId', authenticateToken, async (req, res) => {
+  if (req.user.userId !== parseInt(req.params.userId))
+    return res.status(403).json({ error: 'Accès refusé.' });
+  try { await db.deleteConversation(req.params.userId, req.params.contactId); res.json({ success: true }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Push Notifications (VAPID) ───────────────────────────────────────────────
+app.get('/api/push/vapid-key', (req, res) => {
+  res.json({ publicKey: process.env.VAPID_PUBLIC || null });
+});
+
+app.post('/api/push/subscribe', authenticateToken, async (req, res) => {
+  try {
+    await db.savePushSubscription(req.user.userId, req.body);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/push/subscribe', authenticateToken, async (req, res) => {
+  try {
+    await db.deletePushSubscription(req.user.userId, req.body.endpoint);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Sitemap XML ──────────────────────────────────────────────────────────────
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const [talents] = await require('./db/database').pool?.execute('SELECT id FROM users WHERE validated = 1').catch(()=>[[],[]]) || [[],[]];
+    const base = process.env.APP_URL || 'http://localhost:3000';
+    const urls = [
+      `<url><loc>${base}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
+      ...((talents||[]).map(t => `<url><loc>${base}/?profil=${t.id}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`)),
+    ];
+    res.setHeader('Content-Type', 'application/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join('')}</urlset>`);
+  } catch(e) { res.status(500).send(''); }
 });
 
 // ─── Démarrage ────────────────────────────────────────────────────────────────

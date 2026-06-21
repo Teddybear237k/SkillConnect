@@ -247,6 +247,40 @@ async function init() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  // Tables nouvelles
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS blocked_users (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      blocker_id INT NOT NULL,
+      blocked_id INT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_block (blocker_id, blocked_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      user_id    INT NOT NULL,
+      endpoint   TEXT NOT NULL,
+      p256dh     TEXT,
+      auth       TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_endpoint (user_id, endpoint(191))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS profile_views (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      talent_id  INT NOT NULL,
+      viewer_id  INT,
+      viewed_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_talent (talent_id),
+      INDEX idx_viewed (talent_id, viewed_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
   // Migrations non-destructives
   try { await pool.execute('ALTER TABLE job_posts ADD COLUMN deadline_days INT DEFAULT NULL'); } catch(e) {}
 
@@ -514,6 +548,7 @@ async function getDashboardData(userId) {
     [userId]
   );
 
+  const views = await getProfileViews(userId, 30);
   const { password_hash: _ph, ...safeUser } = user;
   return {
     user: safeUser,
@@ -521,7 +556,7 @@ async function getDashboardData(userId) {
     missions: completed.length,
     pending: missions.filter(m => m.status === 'pending').length,
     rating: user.rating,
-    views: 200 + (userId * 47) % 300,
+    views,
     unread,
     unreadNotifs,
     skillStats,
@@ -1045,6 +1080,75 @@ async function getTalentActiveCount(talentId) {
   return cnt;
 }
 
+// ─── Blocage d'utilisateurs ──────────────────────────────────────────────────
+async function blockUser(blockerId, blockedId) {
+  try {
+    await pool.execute('INSERT INTO blocked_users (blocker_id,blocked_id) VALUES (?,?)', [parseInt(blockerId), parseInt(blockedId)]);
+  } catch(e) {} // ignore duplicate
+}
+
+async function unblockUser(blockerId, blockedId) {
+  await pool.execute('DELETE FROM blocked_users WHERE blocker_id = ? AND blocked_id = ?', [parseInt(blockerId), parseInt(blockedId)]);
+}
+
+async function isBlocked(blockerId, blockedId) {
+  const [[{ cnt }]] = await pool.execute(
+    'SELECT COUNT(*) as cnt FROM blocked_users WHERE blocker_id = ? AND blocked_id = ?',
+    [parseInt(blockerId), parseInt(blockedId)]
+  );
+  return cnt > 0;
+}
+
+async function getBlockedIds(userId) {
+  const [rows] = await pool.execute('SELECT blocked_id FROM blocked_users WHERE blocker_id = ?', [parseInt(userId)]);
+  return rows.map(r => r.blocked_id);
+}
+
+// ─── Suppression de conversation ──────────────────────────────────────────────
+async function deleteConversation(userId, contactId) {
+  const u = parseInt(userId), c = parseInt(contactId);
+  await pool.execute(
+    'DELETE FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)',
+    [u, c, c, u]
+  );
+}
+
+// ─── Vues de profil ──────────────────────────────────────────────────────────
+async function recordProfileView(talentId, viewerId) {
+  const tid = parseInt(talentId);
+  const vid = viewerId ? parseInt(viewerId) : null;
+  if (vid === tid) return; // pas de comptage auto-visite
+  try {
+    await pool.execute('INSERT INTO profile_views (talent_id, viewer_id, viewed_at) VALUES (?,?,NOW())', [tid, vid]);
+  } catch(e) {}
+}
+
+async function getProfileViews(talentId, days = 30) {
+  const [[{ cnt }]] = await pool.execute(
+    'SELECT COUNT(*) as cnt FROM profile_views WHERE talent_id = ? AND viewed_at >= DATE_SUB(NOW(), INTERVAL ? DAY)',
+    [parseInt(talentId), days]
+  );
+  return cnt;
+}
+
+// ─── Push subscriptions ───────────────────────────────────────────────────────
+async function savePushSubscription(userId, subscription) {
+  const { endpoint, keys: { p256dh, auth } } = subscription;
+  await pool.execute(
+    'INSERT INTO push_subscriptions (user_id,endpoint,p256dh,auth) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE p256dh=VALUES(p256dh),auth=VALUES(auth)',
+    [parseInt(userId), endpoint, p256dh, auth]
+  );
+}
+
+async function deletePushSubscription(userId, endpoint) {
+  await pool.execute('DELETE FROM push_subscriptions WHERE user_id = ? AND endpoint = ?', [parseInt(userId), endpoint]);
+}
+
+async function getUserPushSubscriptions(userId) {
+  const [rows] = await pool.execute('SELECT * FROM push_subscriptions WHERE user_id = ?', [parseInt(userId)]);
+  return rows;
+}
+
 // ─── Stats publiques ─────────────────────────────────────────────────────────
 async function getSiteStats() {
   const [[{ users }]]    = await pool.execute('SELECT COUNT(*) as users FROM users WHERE validated = 1');
@@ -1094,6 +1198,10 @@ module.exports = {
   createNotification, getNotifications, markNotificationRead, markAllNotificationsRead,
   getPortfolio, createPortfolioItem, deletePortfolioItem,
   createResetToken, findResetToken, markResetTokenUsed, updatePassword,
+  blockUser, unblockUser, isBlocked, getBlockedIds,
+  deleteConversation,
+  recordProfileView, getProfileViews,
+  savePushSubscription, deletePushSubscription, getUserPushSubscriptions,
   getSiteStats,
   getAdminStats, getAllUsers, toggleUserValidation, getAllTransactions,
   createDispute, getDisputeByTxId, getAllDisputes, resolveDispute,

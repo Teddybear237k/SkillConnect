@@ -1,4 +1,4 @@
-const CACHE = 'skillconnect-v2';
+const CACHE = 'skillconnect-v3';
 const STATIC = [
   '/manifest.json',
   '/icon-192.svg',
@@ -16,6 +16,28 @@ self.addEventListener('activate', e => {
     Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
   ));
   self.clients.claim();
+});
+
+// ─── Push Notifications ───────────────────────────────────────────────────────
+self.addEventListener('push', e => {
+  if (!e.data) return;
+  let payload = { title: 'SkillConnect', body: '', icon: '/icon-192.svg', url: '/' };
+  try { Object.assign(payload, e.data.json()); } catch(_) { payload.body = e.data.text(); }
+  e.waitUntil(self.registration.showNotification(payload.title, {
+    body:  payload.body,
+    icon:  payload.icon || '/icon-192.svg',
+    badge: '/icon-192.svg',
+    data:  { url: payload.url || '/' },
+  }));
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || '/';
+  e.waitUntil(clients.matchAll({ type: 'window' }).then(wins => {
+    for (const w of wins) { if (w.url.startsWith(self.location.origin) && 'focus' in w) return w.focus(); }
+    return clients.openWindow(url);
+  }));
 });
 
 self.addEventListener('fetch', e => {
