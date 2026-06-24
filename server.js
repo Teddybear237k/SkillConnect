@@ -1200,6 +1200,69 @@ app.put('/api/jobs/:id/applications/:appId', authenticateToken, async (req, res)
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── Carte des talents ────────────────────────────────────────────────────────
+app.get('/api/talents/carte', async (req, res) => {
+  try {
+    const { competence, budget_max, ville } = req.query;
+    const talents = await db.getTalentsForCarte({
+      competence: competence || '',
+      budgetMax:  budget_max ? parseInt(budget_max) : null,
+      ville:      ville || '',
+    });
+    res.json(talents);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Détail transaction pour rapport PDF ──────────────────────────────────────
+app.get('/api/transactions/:id/detail', authenticateToken, async (req, res) => {
+  try {
+    const tx = await db.getTransactionDetail(parseInt(req.params.id), req.user.userId);
+    if (!tx) return res.status(404).json({ error: 'Transaction non trouvée.' });
+    res.json(tx);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Missions Groupées ────────────────────────────────────────────────────────
+app.post('/api/grouped-missions', authenticateToken, async (req, res) => {
+  try {
+    const { titre, description, talents } = req.body;
+    if (!titre || !talents?.length)
+      return res.status(400).json({ error: 'Titre et au moins un talent requis.' });
+
+    const mission = await db.createGroupedMission({
+      clientId: req.user.userId, titre, description
+    });
+
+    const results = [];
+    for (const t of talents) {
+      const entry = await db.addTalentToGroupedMission({
+        missionId: mission.id,
+        talentId:  t.talentId,
+        role:      t.role || '',
+        montant:   t.montant || 0,
+      });
+      results.push(entry);
+    }
+
+    res.json({ success: true, mission: { ...mission, talents: results } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/grouped-missions', authenticateToken, async (req, res) => {
+  try {
+    res.json(await db.getGroupedMissionsForClient(req.user.userId));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/grouped-missions/:id', authenticateToken, async (req, res) => {
+  try {
+    const gm = await db.getGroupedMission(parseInt(req.params.id));
+    if (!gm) return res.status(404).json({ error: 'Mission groupée non trouvée.' });
+    if (gm.client_id !== req.user.userId) return res.status(403).json({ error: 'Accès refusé.' });
+    res.json(gm);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── Blocage utilisateurs ─────────────────────────────────────────────────────
 app.post('/api/users/:id/block', authenticateToken, async (req, res) => {
   const blockedId = parseInt(req.params.id);

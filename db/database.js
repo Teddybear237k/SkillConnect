@@ -247,6 +247,34 @@ async function init() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  // ── Missions Groupées ─────────────────────────────────────────────────────
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS grouped_missions (
+      id          INT AUTO_INCREMENT PRIMARY KEY,
+      client_id   INT NOT NULL,
+      titre       VARCHAR(300) NOT NULL,
+      description TEXT,
+      statut      VARCHAR(30) DEFAULT 'active',
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_client (client_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS grouped_mission_talents (
+      id              INT AUTO_INCREMENT PRIMARY KEY,
+      mission_id      INT NOT NULL,
+      talent_id       INT NOT NULL,
+      role            VARCHAR(200),
+      montant         INT DEFAULT 0,
+      statut_paiement VARCHAR(30) DEFAULT 'pending',
+      tx_id           INT,
+      created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_mission (mission_id),
+      INDEX idx_talent (talent_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
   // Tables nouvelles
   await pool.query(`
     CREATE TABLE IF NOT EXISTS blocked_users (
@@ -1080,6 +1108,98 @@ async function getTalentActiveCount(talentId) {
   return cnt;
 }
 
+// ─── Missions Groupées ───────────────────────────────────────────────────────
+async function createGroupedMission({ clientId, titre, description }) {
+  const [r] = await pool.execute(
+    'INSERT INTO grouped_missions (client_id,titre,description,statut,created_at) VALUES (?,?,?,?,?)',
+    [parseInt(clientId), titre, description || '', 'active', fmtISO()]
+  );
+  return { id: r.insertId, client_id: parseInt(clientId), titre, description, statut: 'active' };
+}
+
+async function addTalentToGroupedMission({ missionId, talentId, role, montant }) {
+  const [r] = await pool.execute(
+    'INSERT INTO grouped_mission_talents (mission_id,talent_id,role,montant,statut_paiement,created_at) VALUES (?,?,?,?,?,?)',
+    [parseInt(missionId), parseInt(talentId), role || '', parseInt(montant) || 0, 'pending', fmtISO()]
+  );
+  return { id: r.insertId, mission_id: parseInt(missionId), talent_id: parseInt(talentId), role, montant };
+}
+
+async function updateGroupedMissionTalentTx(id, txId, statut) {
+  await pool.execute('UPDATE grouped_mission_talents SET tx_id=?, statut_paiement=? WHERE id=?', [txId, statut, id]);
+}
+
+async function getGroupedMission(id) {
+  const [[gm]] = await pool.execute('SELECT gm.*, u.prenom, u.nom FROM grouped_missions gm LEFT JOIN users u ON u.id=gm.client_id WHERE gm.id=?', [parseInt(id)]);
+  if (!gm) return null;
+  const [talents] = await pool.execute(
+    `SELECT gmt.*, u.prenom, u.nom, u.skill, u.tarif, u.initials, u.bg_color, u.text_color, u.photo
+     FROM grouped_mission_talents gmt
+     LEFT JOIN users u ON u.id = gmt.talent_id
+     WHERE gmt.mission_id = ?`,
+    [parseInt(id)]
+  );
+  return { ...gm, talents };
+}
+
+async function getGroupedMissionsForClient(clientId) {
+  const [rows] = await pool.execute(
+    'SELECT * FROM grouped_missions WHERE client_id=? ORDER BY created_at DESC',
+    [parseInt(clientId)]
+  );
+  return rows;
+}
+
+// ─── Carte des talents ────────────────────────────────────────────────────────
+const CITY_COORDS = {
+  'Yaoundé':   { lat: 3.848,  lng: 11.502 },
+  'Douala':    { lat: 4.051,  lng: 9.767  },
+  'Bafoussam': { lat: 5.478,  lng: 10.417 },
+  'Buea':      { lat: 4.155,  lng: 9.241  },
+  'Garoua':    { lat: 9.301,  lng: 13.397 },
+  'Ngaoundéré':{ lat: 7.330,  lng: 13.583 },
+  'Bamenda':   { lat: 5.951,  lng: 10.166 },
+  'Maroua':    { lat: 10.591, lng: 14.315 },
+  'Kribi':     { lat: 2.940,  lng: 9.906  },
+  'Limbe':     { lat: 4.019,  lng: 9.195  },
+};
+
+async function getTalentsForCarte({ competence, budgetMax, ville } = {}) {
+  let where = "WHERE t.availability = 'available' AND t.validated = 1";
+  const params = [];
+  if (competence) { where += ' AND (t.skill LIKE ? OR t.skill_custom LIKE ?)'; params.push('%'+competence+'%','%'+competence+'%'); }
+  if (budgetMax)  { where += ' AND t.tarif <= ?'; params.push(parseInt(budgetMax)); }
+  if (ville)      { where += ' AND t.ville = ?'; params.push(ville); }
+
+  const [rows] = await pool.execute(
+    `SELECT t.id, t.prenom, t.nom, t.skill, t.skill_custom, t.tarif, t.tarif_unit,
+            t.ville, t.rating, t.reviews, t.initials, t.bg_color, t.text_color, t.photo, t.availability
+     FROM users t ${where} ORDER BY t.rating DESC`,
+    params
+  );
+
+  return rows.map(t => ({
+    ...t,
+    coords: CITY_COORDS[t.ville] || null,
+  })).filter(t => t.coords);
+}
+
+// ─── Détail transaction pour rapport PDF ─────────────────────────────────────
+async function getTransactionDetail(txId, userId) {
+  const [[tx]] = await pool.execute(
+    `SELECT tx.*,
+       s.prenom AS sender_prenom, s.nom AS sender_nom, s.email AS sender_email, s.phone AS sender_phone,
+       r.prenom AS receiver_prenom, r.nom AS receiver_nom, r.email AS receiver_email, r.phone AS receiver_phone,
+       r.skill, r.skill_custom
+     FROM transactions tx
+     LEFT JOIN users s ON s.id = tx.sender_id
+     LEFT JOIN users r ON r.id = tx.receiver_id
+     WHERE tx.id = ? AND (tx.sender_id = ? OR tx.receiver_id = ?)`,
+    [parseInt(txId), parseInt(userId), parseInt(userId)]
+  );
+  return tx || null;
+}
+
 // ─── Blocage d'utilisateurs ──────────────────────────────────────────────────
 async function blockUser(blockerId, blockedId) {
   try {
@@ -1198,6 +1318,9 @@ module.exports = {
   createNotification, getNotifications, markNotificationRead, markAllNotificationsRead,
   getPortfolio, createPortfolioItem, deletePortfolioItem,
   createResetToken, findResetToken, markResetTokenUsed, updatePassword,
+  createGroupedMission, addTalentToGroupedMission, updateGroupedMissionTalentTx,
+  getGroupedMission, getGroupedMissionsForClient,
+  getTalentsForCarte, getTransactionDetail,
   blockUser, unblockUser, isBlocked, getBlockedIds,
   deleteConversation,
   recordProfileView, getProfileViews,

@@ -2124,6 +2124,50 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 .admin-pending-badge{display:inline-block;background:#e53e3e;color:#fff;font-size:.7rem;font-weight:700;padding:.15rem .4rem;border-radius:99px;margin-left:.4rem}
 .btn-validate{padding:.3rem .7rem;border-radius:var(--r-md);border:none;background:rgba(29,158,117,.15);color:var(--g600);font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s}
 .btn-validate:hover{background:var(--g600);color:#fff}
+
+/* ═══════════════════════════════════════════════════════════════
+   CARTE DES TALENTS
+═══════════════════════════════════════════════════════════════ */
+#carteMap{width:100%;height:520px;border-radius:var(--r-xl);overflow:hidden;border:1.5px solid var(--border);box-shadow:var(--shadow-md)}
+.carte-filters{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:flex-end}
+.carte-filters input,.carte-filters select{flex:1;min-width:140px;padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:var(--r-full);background:var(--surface-2,#fff);font-size:.85rem;color:var(--text)}
+.carte-filters input:focus,.carte-filters select:focus{border-color:var(--g500);outline:none}
+.carte-btn-search{padding:.55rem 1.25rem;border-radius:var(--r-full);border:none;background:var(--g500);color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.carte-stat{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem}
+.carte-stat-item{background:var(--surface-2,#fff);border:1px solid var(--border);border-radius:var(--r-md);padding:.45rem .9rem;font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:.4rem}
+.carte-stat-item strong{color:var(--g600)}
+.leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:0 4px 20px rgba(0,0,0,.15)!important;padding:0!important}
+.leaflet-popup-content{margin:0!important;width:220px!important}
+.carte-popup{padding:1rem}
+.carte-popup-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0}
+.carte-popup-name{font-weight:700;font-size:.9rem;color:var(--text,#111)}
+.carte-popup-skill{font-size:.78rem;color:var(--muted,#777);margin:.1rem 0}
+.carte-popup-price{font-size:.82rem;font-weight:700;color:var(--g600,#0F6E56)}
+.carte-popup-btn{display:block;width:100%;margin-top:.75rem;padding:.45rem;border-radius:var(--r-full);border:none;background:var(--g500,#1D9E75);color:#fff;font-weight:700;font-size:.8rem;cursor:pointer;text-align:center}
+
+/* ═══════════════════════════════════════════════════════════════
+   MISSIONS GROUPÉES
+═══════════════════════════════════════════════════════════════ */
+.group-talent-row{display:flex;gap:.6rem;align-items:center;background:var(--surface-2,#f9f9f9);border:1.5px solid var(--border);border-radius:var(--r-md);padding:.65rem .9rem;margin-bottom:.6rem}
+.group-talent-row select,.group-talent-row input{flex:1;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.83rem;background:var(--surface-2,#fff);color:var(--text);min-width:0}
+.group-talent-row input{max-width:110px}
+.group-remove-btn{background:none;border:none;color:#e53e3e;cursor:pointer;font-size:1.1rem;flex-shrink:0;padding:.2rem .4rem;border-radius:var(--r-sm);transition:.15s}
+.group-remove-btn:hover{background:rgba(229,62,62,.1)}
+.group-add-btn{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border:1.5px dashed var(--g400);border-radius:var(--r-md);background:none;color:var(--g500);font-size:.85rem;font-weight:600;cursor:pointer;width:100%;justify-content:center;transition:.2s;margin-bottom:.75rem}
+.group-add-btn:hover{background:rgba(29,158,117,.06)}
+.group-total-box{background:var(--g50,#E1F5EE);border:1.5px solid var(--g200);border-radius:var(--r-md);padding:.85rem 1rem}
+.group-total-line{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);margin-bottom:.3rem}
+.group-total-line.grand{font-weight:800;font-size:1rem;color:var(--g800);margin-top:.5rem;border-top:1px solid var(--g200);padding-top:.5rem}
+.group-mission-card{background:var(--surface-2,#fff);border:1.5px solid var(--border);border-radius:var(--r-xl);padding:1.1rem 1.25rem;margin-bottom:.85rem;box-shadow:var(--shadow-sm)}
+.group-mission-title{font-weight:700;font-size:.95rem;color:var(--text);margin-bottom:.5rem}
+.group-talent-pill{display:inline-flex;align-items:center;gap:.4rem;background:var(--g50);border-radius:var(--r-full);padding:.25rem .65rem;font-size:.78rem;color:var(--g700,#085041);margin:.2rem .2rem 0 0}
+
+/* ═══════════════════════════════════════════════════════════════
+   RAPPORT PDF (bouton)
+═══════════════════════════════════════════════════════════════ */
+.rapport-btn{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .65rem;border-radius:var(--r-full);border:1.5px solid var(--p400,#7F77DD);background:none;color:var(--p600,#534AB7);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s}
+.rapport-btn:hover{background:var(--p50,#EEEDFE)}
+@media(max-width:600px){#carteMap{height:340px}.carte-filters{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -2157,6 +2201,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
     <div class="nav-link active" onclick="showPage('accueil',this)" data-i18n="nav_accueil">Accueil</div>
     <div class="nav-link" onclick="showPage('explorer',this)" data-i18n="nav_explorer">Explorer</div>
     <div class="nav-link" onclick="showPage('offres',this)" data-i18n="nav_offres">Offres</div>
+    <div class="nav-link" onclick="showPage('carte',this)">Carte</div>
     <div class="nav-link" onclick="showPage('inscription',this)" data-i18n="nav_inscription">S'inscrire</div>
     <div class="nav-link" onclick="showPage('paiement',this)" data-i18n="nav_paiement">Paiement</div>
     <div class="nav-link" onclick="showPage('dashboard',this)" data-i18n="nav_dashboard">Tableau de bord</div>
@@ -2632,6 +2677,10 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Historique
         </button>
+        <button class="pay-tab" id="ptab-groupe" onclick="switchPayTab('groupe')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Mission groupée
+        </button>
       </div>
     </div>
 
@@ -2886,6 +2935,56 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
           <div class="tx-empty-icon">🧾</div>
           <p>Chargement…</p>
         </div>
+      </div>
+    </div>
+
+    <!-- ─── Onglet 4 : Mission Groupée ───────────────────────────── -->
+    <div class="pay-panel" id="ppanel-groupe" style="display:none">
+
+      <!-- Créer une mission groupée -->
+      <div style="background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow-sm)">
+        <h3 style="font-family:var(--font-display);font-size:1.1rem;font-weight:800;margin-bottom:1rem">
+          Nouvelle mission groupée
+        </h3>
+
+        <div style="display:grid;gap:.75rem;margin-bottom:1rem">
+          <div>
+            <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.3rem">Titre de la mission *</label>
+            <input type="text" id="gmTitre" class="form-input" placeholder="Ex: Refonte site + logo + photos"/>
+          </div>
+          <div>
+            <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.3rem">Description</label>
+            <textarea id="gmDesc" class="form-input" rows="2" placeholder="Décrivez brièvement la mission…" style="resize:vertical"></textarea>
+          </div>
+        </div>
+
+        <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.5rem">Talents & rôles</label>
+        <div id="gmTalentRows"></div>
+
+        <button class="group-add-btn" onclick="gmAddTalentRow()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+          Ajouter un talent
+        </button>
+
+        <!-- Total -->
+        <div class="group-total-box" id="gmTotalBox" style="display:none">
+          <div id="gmTotalLines"></div>
+          <div class="group-total-line grand">
+            <span>Total à payer</span>
+            <span id="gmGrandTotal">0 FCFA</span>
+          </div>
+        </div>
+
+        <button class="pay-confirm-btn" style="margin-top:1rem" onclick="submitGroupedMission()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>
+          Créer la mission groupée
+        </button>
+      </div>
+
+      <!-- Historique missions groupées -->
+      <h3 style="font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:.75rem">Mes missions groupées</h3>
+      <div id="gmHistorique">
+        <div class="tx-empty"><div class="tx-empty-icon">👥</div><p>Aucune mission groupée</p></div>
       </div>
     </div>
 
@@ -3617,6 +3716,41 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 </div>
 
 <!-- ════════════════ PAGE PROFIL INDIVIDUELLE ════════════════ -->
+<!-- ════════════════════════ PAGE CARTE ════════════════════════ -->
+<div class="page" id="page-carte" style="padding-top:80px">
+  <section style="max-width:1100px;margin:0 auto;padding:2rem 1.25rem">
+    <h2 style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;margin-bottom:.35rem">
+      Carte des talents
+    </h2>
+    <p style="color:var(--muted);margin-bottom:1.25rem;font-size:.9rem">
+      Trouve les talents disponibles près de chez toi au Cameroun.
+    </p>
+
+    <!-- Filtres -->
+    <div class="carte-filters">
+      <input type="text" id="carteFilterSkill" placeholder="Compétence (ex: Design, Cours…)" onkeydown="if(event.key==='Enter')rechercherCarte()"/>
+      <input type="number" id="carteFilterBudget" placeholder="Budget max (FCFA)" min="0" step="1000"/>
+      <select id="carteFilterVille">
+        <option value="">Toutes les villes</option>
+        <option>Yaoundé</option><option>Douala</option><option>Bafoussam</option>
+        <option>Buea</option><option>Garoua</option><option>Ngaoundéré</option>
+        <option>Bamenda</option><option>Maroua</option><option>Kribi</option><option>Limbe</option>
+      </select>
+      <button class="carte-btn-search" onclick="rechercherCarte()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;vertical-align:middle;margin-right:.3rem"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Rechercher
+      </button>
+    </div>
+
+    <!-- Carte Leaflet -->
+    <div id="carteMap"></div>
+
+    <!-- Stats rapides -->
+    <div class="carte-stat" id="carteStats"></div>
+  </section>
+</div>
+
+<!-- ════════════════════════ PAGE PROFIL ════════════════════════ -->
 <div class="page" id="page-profil" style="padding-top:80px">
   <section style="max-width:960px;margin:0 auto;padding:2rem 1.25rem">
     <button type="button" class="profil-back-btn" onclick="showPage('explorer',document.querySelectorAll('.nav-link')[1])">
@@ -3773,6 +3907,7 @@ function showPage(id,linkEl){
   if(id==='dashboard') { initDashboard(); loadDashPortfolio(); initDashMissions(); initPushNotifications(); }
   if(id==='messages') { initWA(); loadBlockedIds(); }
   if(id==='explorer') { loadOnlineUsers().then(renderTalents); loadVilles(); }
+  if(id==='carte') { setTimeout(initCarte, 50); }
   if(id==='offres') {
     _jobCategory = '';
     _jobVille = '';
@@ -4330,9 +4465,10 @@ async function initPayPage(){
 }
 
 function switchPayTab(tab){
-  ['pay','wallet','history'].forEach(t=>{
+  ['pay','wallet','history','groupe'].forEach(t=>{
     const btn = document.getElementById('ptab-'+t);
     const panel = document.getElementById('ppanel-'+t);
+    if (!btn || !panel) return;
     btn.classList.toggle('active', t===tab);
     if(t===tab){ panel.style.display='block'; panel.style.animation='none'; void panel.offsetWidth; panel.style.animation=''; }
     else panel.style.display='none';
@@ -4340,6 +4476,7 @@ function switchPayTab(tab){
   updateTabSlider();
   if(tab==='wallet') loadWallet();
   if(tab==='history') loadTransactions();
+  if(tab==='groupe') { loadGroupedMissions(); gmAddTalentRow(); }
 }
 
 function updateTabSlider(){
@@ -4706,6 +4843,10 @@ function renderTxList(userId){
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Reçu PDF
         </button>
+        ${tx.status==='completed'?`<button class="rapport-btn" onclick="event.stopPropagation();generateMissionReport(${tx.id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Rapport
+        </button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -5447,6 +5588,9 @@ loadExchangeRates();
 if(localStorage.getItem('sc_user_id')) loadNotifications();
 // Socket.io (initialisé après chargement du CDN dans le second bloc script)
 </script>
+<!-- CDN : Leaflet.js (carte) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <!-- CDN : jsPDF + Socket.io -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
@@ -7446,6 +7590,348 @@ if('serviceWorker' in navigator){
       .then(()=>console.log('✅ Service Worker enregistré'))
       .catch(()=>{});
   });
+}
+
+// ════════════════════════════════════════════════════════════════
+// 1. CARTE DES TALENTS (Leaflet)
+// ════════════════════════════════════════════════════════════════
+let _carteMap = null;
+let _carteMarkers = [];
+
+function initCarte() {
+  if (!window.L) { document.getElementById('carteMap').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">Carte indisponible (Leaflet non chargé)</p>'; return; }
+  if (_carteMap) { _carteMap.invalidateSize(); rechercherCarte(); return; }
+
+  _carteMap = L.map('carteMap').setView([5.5, 11.5], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
+    maxZoom: 18,
+  }).addTo(_carteMap);
+
+  rechercherCarte();
+}
+
+async function rechercherCarte() {
+  const skill  = document.getElementById('carteFilterSkill')?.value?.trim() || '';
+  const budget = document.getElementById('carteFilterBudget')?.value || '';
+  const ville  = document.getElementById('carteFilterVille')?.value || '';
+
+  const params = new URLSearchParams();
+  if (skill)  params.set('competence', skill);
+  if (budget) params.set('budget_max', budget);
+  if (ville)  params.set('ville', ville);
+
+  const talents = await api('/talents/carte?' + params.toString());
+  if (!talents) return;
+
+  // Supprimer anciens marqueurs
+  _carteMarkers.forEach(m => m.remove());
+  _carteMarkers = [];
+
+  // Regrouper par ville pour un léger décalage si plusieurs talents même coords
+  const byCity = {};
+  talents.forEach(t => {
+    const key = t.ville;
+    if (!byCity[key]) byCity[key] = [];
+    byCity[key].push(t);
+  });
+
+  Object.values(byCity).forEach(group => {
+    group.forEach((t, i) => {
+      const jitter = group.length > 1 ? (i - group.length / 2) * 0.012 : 0;
+      const lat = t.coords.lat + jitter;
+      const lng = t.coords.lng + jitter * 0.8;
+
+      const marker = L.circleMarker([lat, lng], {
+        radius: 13,
+        fillColor: t.bg_color || '#1D9E75',
+        color: '#fff',
+        weight: 2.5,
+        opacity: 1,
+        fillOpacity: 0.92,
+      }).addTo(_carteMap);
+
+      const name  = ((t.prenom||'') + ' ' + (t.nom||'')).trim();
+      const skill = t.skill || t.skill_custom || '—';
+      const price = (t.tarif||0).toLocaleString('fr-FR') + ' FCFA/' + (t.tarif_unit||'h');
+      const initials = t.initials || name.slice(0,2).toUpperCase();
+      const photo = t.photo ? `<img src="${escHtml(t.photo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : initials;
+
+      marker.bindPopup(`
+        <div class="carte-popup">
+          <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem">
+            <div class="carte-popup-avatar" style="background:${escHtml(t.bg_color||'#C8EFE3')};color:${escHtml(t.text_color||'#085041')}">${photo}</div>
+            <div>
+              <div class="carte-popup-name">${escHtml(name)}</div>
+              <div class="carte-popup-skill">${escHtml(skill)} · ${escHtml(t.ville||'')}</div>
+              <div class="carte-popup-price">${price}</div>
+            </div>
+          </div>
+          <button class="carte-popup-btn" onclick="showTalentProfile(${t.id});_carteMap?.closePopup?.()">Voir le profil</button>
+        </div>
+      `, { maxWidth: 240 });
+
+      _carteMarkers.push(marker);
+    });
+  });
+
+  // Stats
+  const statsEl = document.getElementById('carteStats');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="carte-stat-item"><strong>${talents.length}</strong> talent${talents.length>1?'s':''} trouvé${talents.length>1?'s':''}</div>
+      ${ville ? `<div class="carte-stat-item">📍 <strong>${escHtml(ville)}</strong></div>` : ''}
+      ${skill ? `<div class="carte-stat-item">🔍 <strong>${escHtml(skill)}</strong></div>` : ''}
+    `;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// 5. RAPPORT DE MISSION PDF (jsPDF)
+// ════════════════════════════════════════════════════════════════
+async function generateMissionReport(txId) {
+  if (!window.jspdf) { toast('PDF indisponible (CDN non chargé)', 'error'); return; }
+  const btn = event?.target?.closest('button');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳…'; }
+
+  const tx = await api('/transactions/' + txId + '/detail');
+  if (!btn) {} else { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Rapport'; }
+  if (!tx) { toast('Erreur : données introuvables', 'error'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const ref = 'RPT-' + String(tx.id).padStart(6, '0');
+  const dateStr = tx.completed_at ? new Date(tx.completed_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : new Date(tx.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+
+  // ── En-tête ──
+  doc.setFillColor(29, 158, 117);
+  doc.rect(0, 0, 210, 40, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24); doc.setFont('helvetica', 'bold');
+  doc.text('SkillConnect', 20, 20);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.text('Plateforme des talents camerounais', 20, 28);
+  doc.text('Rapport de mission', 190, 18, { align: 'right' });
+  doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+  doc.text(ref, 190, 27, { align: 'right' });
+
+  // ── Sous-titre ──
+  doc.setTextColor(40, 40, 40);
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+  doc.text('Généré le ' + new Date().toLocaleDateString('fr-FR'), 20, 50);
+  doc.text('Date de mission : ' + dateStr, 20, 56);
+
+  // ── Ligne séparatrice ──
+  doc.setDrawColor(29, 158, 117); doc.setLineWidth(0.4);
+  doc.line(20, 62, 190, 62);
+
+  // ── Parties impliquées ──
+  const clientName   = [tx.sender_prenom, tx.sender_nom].filter(Boolean).join(' ') || 'Client';
+  const talentName   = [tx.receiver_prenom, tx.receiver_nom].filter(Boolean).join(' ') || 'Talent';
+  const talentSkill  = tx.skill || tx.skill_custom || '—';
+
+  doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+  doc.text('Client', 20, 72);
+  doc.text('Talent', 110, 72);
+  doc.setLineWidth(0.2); doc.line(20, 74, 90, 74); doc.line(110, 74, 190, 74);
+
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  doc.text(clientName, 20, 82);
+  if (tx.sender_email) doc.text(tx.sender_email, 20, 89);
+  if (tx.sender_phone) doc.text(tx.sender_phone, 20, 96);
+
+  doc.text(talentName, 110, 82);
+  doc.text(talentSkill, 110, 89);
+  if (tx.receiver_email) doc.text(tx.receiver_email, 110, 96);
+
+  // ── Mission ──
+  doc.setDrawColor(29, 158, 117); doc.setLineWidth(0.4);
+  doc.line(20, 106, 190, 106);
+  doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+  doc.text('Description de la mission', 20, 114);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  const descLines = doc.splitTextToSize(tx.description || 'Non spécifiée', 170);
+  doc.text(descLines, 20, 122);
+
+  let y = 122 + descLines.length * 6 + 8;
+
+  // ── Financier ──
+  doc.line(20, y, 190, y); y += 8;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+  doc.text('Détail financier', 20, y); y += 10;
+
+  const net = tx.net_amount || (tx.amount - tx.commission) || 0;
+  const rows = [
+    ['Montant brut de la mission', (tx.amount || 0).toLocaleString('fr-FR') + ' FCFA'],
+    ['Commission SkillConnect (7%)', '− ' + (tx.commission || 0).toLocaleString('fr-FR') + ' FCFA'],
+    ['Montant net reçu par le talent', net.toLocaleString('fr-FR') + ' FCFA'],
+    ['Réseau de paiement', tx.network || 'Mobile Money'],
+  ];
+
+  rows.forEach(([label, val], i) => {
+    if (i % 2 === 0) { doc.setFillColor(245, 250, 248); doc.rect(20, y - 5, 170, 10, 'F'); }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5);
+    doc.text(label, 25, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(val, 185, y, { align: 'right' });
+    y += 12;
+  });
+
+  // ── Total ──
+  y += 4;
+  doc.setFillColor(29, 158, 117);
+  doc.rect(120, y, 70, 16, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+  doc.text('Total net', 125, y + 10.5);
+  doc.text(net.toLocaleString('fr-FR') + ' FCFA', 187, y + 10.5, { align: 'right' });
+
+  // ── Pied de page ──
+  doc.setTextColor(160, 160, 160); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+  doc.line(20, 274, 190, 274);
+  doc.text('SkillConnect Cameroun · Plateforme sécurisée · skillconnect.cm', 105, 280, { align: 'center' });
+  doc.text('Ce document est généré automatiquement et vaut justificatif de transaction.', 105, 285, { align: 'center' });
+
+  doc.save('rapport-mission-' + ref + '.pdf');
+}
+
+// ════════════════════════════════════════════════════════════════
+// 7. MISSIONS GROUPÉES
+// ════════════════════════════════════════════════════════════════
+let _gmTalentList = [];   // { id, prenom, nom, skill, tarif }
+let _gmRows = 0;
+
+async function loadGmTalentOptions() {
+  if (_gmTalentList.length) return _gmTalentList;
+  const res = await api('/talents/carte');
+  _gmTalentList = res || [];
+  return _gmTalentList;
+}
+
+async function gmAddTalentRow() {
+  await loadGmTalentOptions();
+  _gmRows++;
+  const rowId = 'gmRow' + _gmRows;
+  const container = document.getElementById('gmTalentRows');
+
+  const options = _gmTalentList.map(t =>
+    `<option value="${t.id}" data-tarif="${t.tarif||0}">${escHtml((t.prenom||'')+ ' ' +(t.nom||''))} — ${escHtml(t.skill||t.skill_custom||'')}</option>`
+  ).join('');
+
+  const row = document.createElement('div');
+  row.className = 'group-talent-row';
+  row.id = rowId;
+  row.innerHTML = `
+    <select onchange="gmUpdateTotal()" style="flex:2">
+      <option value="">Choisir un talent…</option>
+      ${options}
+    </select>
+    <input type="text" placeholder="Rôle (ex: Designer)" style="flex:1.5"/>
+    <input type="number" placeholder="Montant (FCFA)" min="0" step="1000" oninput="gmUpdateTotal()" style="max-width:130px"/>
+    <button class="group-remove-btn" onclick="document.getElementById('${rowId}').remove();gmUpdateTotal()" title="Supprimer">✕</button>
+  `;
+  container.appendChild(row);
+  gmUpdateTotal();
+}
+
+function gmUpdateTotal() {
+  const rows = document.querySelectorAll('#gmTalentRows .group-talent-row');
+  const box  = document.getElementById('gmTotalBox');
+  const lines = document.getElementById('gmTotalLines');
+  if (!rows.length) { box.style.display = 'none'; return; }
+
+  let grand = 0;
+  let html = '';
+  rows.forEach(row => {
+    const sel = row.querySelector('select');
+    const inp = row.querySelectorAll('input')[1];
+    const montant = parseInt(inp?.value) || 0;
+    if (!montant) return;
+    const name = sel?.selectedOptions[0]?.text?.split('—')[0]?.trim() || 'Talent';
+    const comm = Math.round(montant * 0.07);
+    grand += montant;
+    html += `<div class="group-total-line"><span>${escHtml(name)}</span><span>${montant.toLocaleString('fr-FR')} FCFA <small style="color:var(--muted)">(−${comm.toLocaleString('fr-FR')} comm.)</small></span></div>`;
+  });
+
+  box.style.display = grand ? 'block' : 'none';
+  lines.innerHTML = html;
+  document.getElementById('gmGrandTotal').textContent = grand.toLocaleString('fr-FR') + ' FCFA';
+}
+
+async function submitGroupedMission() {
+  const uid = localStorage.getItem('sc_user_id');
+  if (!uid) { toast('Connectez-vous d\'abord.', 'error'); return; }
+
+  const titre = document.getElementById('gmTitre')?.value?.trim();
+  const desc  = document.getElementById('gmDesc')?.value?.trim();
+  if (!titre) { toast('Le titre est obligatoire.', 'error'); return; }
+
+  const rows = document.querySelectorAll('#gmTalentRows .group-talent-row');
+  const talents = [];
+  let valid = true;
+
+  rows.forEach(row => {
+    const sel     = row.querySelector('select');
+    const roleInp = row.querySelectorAll('input')[0];
+    const montInp = row.querySelectorAll('input')[1];
+    const talentId = parseInt(sel?.value);
+    const montant  = parseInt(montInp?.value) || 0;
+    if (!talentId || !montant) { valid = false; return; }
+    talents.push({ talentId, role: roleInp?.value?.trim() || '', montant });
+  });
+
+  if (!valid || !talents.length) { toast('Remplissez tous les talents avec montant.', 'error'); return; }
+
+  const res = await api('/grouped-missions', 'POST', { titre, description: desc, talents });
+  if (res?.success) {
+    toast('Mission groupée créée !');
+    document.getElementById('gmTitre').value = '';
+    document.getElementById('gmDesc').value = '';
+    document.getElementById('gmTalentRows').innerHTML = '';
+    document.getElementById('gmTotalBox').style.display = 'none';
+    _gmRows = 0;
+    loadGroupedMissions();
+  } else {
+    toast(res?.error || 'Erreur', 'error');
+  }
+}
+
+async function loadGroupedMissions() {
+  const uid = localStorage.getItem('sc_user_id');
+  if (!uid) return;
+  const list = await api('/grouped-missions');
+  const el = document.getElementById('gmHistorique');
+  if (!el) return;
+  if (!list?.length) {
+    el.innerHTML = '<div class="tx-empty"><div class="tx-empty-icon">👥</div><p>Aucune mission groupée pour l\'instant</p></div>';
+    return;
+  }
+  el.innerHTML = list.map(gm => `
+    <div class="group-mission-card" onclick="loadGroupedMissionDetail(${gm.id},this)" style="cursor:pointer">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="group-mission-title">${escHtml(gm.titre)}</div>
+        <span style="font-size:.75rem;padding:.2rem .55rem;border-radius:var(--r-full);background:var(--g50);color:var(--g600);font-weight:700">${gm.statut}</span>
+      </div>
+      ${gm.description ? `<p style="font-size:.82rem;color:var(--muted);margin:.3rem 0 .6rem">${escHtml(gm.description)}</p>` : ''}
+      <div style="font-size:.75rem;color:var(--muted)">${new Date(gm.created_at).toLocaleDateString('fr-FR')}</div>
+      <div id="gmDetail-${gm.id}"></div>
+    </div>
+  `).join('');
+}
+
+async function loadGroupedMissionDetail(id, cardEl) {
+  const detailEl = document.getElementById('gmDetail-' + id);
+  if (!detailEl || detailEl.dataset.loaded) return;
+  const gm = await api('/grouped-missions/' + id);
+  if (!gm?.talents?.length) return;
+  detailEl.dataset.loaded = '1';
+  detailEl.innerHTML = '<div style="margin-top:.6rem;display:flex;flex-wrap:wrap">' +
+    gm.talents.map(t => `
+      <span class="group-talent-pill">
+        ${escHtml((t.prenom||'')+(t.nom?' '+t.nom:''))}
+        ${t.role ? ' · ' + escHtml(t.role) : ''}
+        · ${(t.montant||0).toLocaleString('fr-FR')} FCFA
+      </span>
+    `).join('') + '</div>';
 }
 
 // ─── Confirm Modal ────────────────────────────────────────────────────────────
