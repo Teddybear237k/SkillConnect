@@ -1198,7 +1198,7 @@ footer{
    MOBILE
 ═══════════════════════════════════════════════════════════════ */
 /* ─── Mobile nav overlay ─────────────────────────────────────────── */
-.nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;touch-action:none}
+.nav-overlay{display:none;position:fixed;inset:0;background:transparent;z-index:150;touch-action:none}
 .nav-overlay.open{display:block}
 
 @media(max-width:768px){
@@ -3068,6 +3068,11 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
           <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
           Cours de maths · Yaoundé
         </div>
+        <!-- Modifier profil -->
+        <button onclick="openEditProfile()" style="display:inline-flex;align-items:center;gap:.35rem;padding:.32rem .8rem;border-radius:var(--r-full);border:1px solid var(--hairline);background:var(--surface);color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer;transition:.2s;margin-bottom:.5rem" onmouseover="this.style.background='var(--g50)';this.style.color='var(--g600)'" onmouseout="this.style.background='var(--surface)';this.style.color='var(--muted)'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Modifier le profil
+        </button>
         <!-- Sélecteur de disponibilité -->
         <div class="avail-selector" id="availSelector">
           <button class="avail-btn available active" onclick="setAvailability('available',this)"><span class="avail-dot avail-available"></span>Disponible</button>
@@ -3428,6 +3433,127 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
     <div class="litige-btns">
       <button class="litige-btn-cancel" onclick="closeReportModal()">Annuler</button>
       <button class="litige-btn-submit" onclick="submitReport()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="litige-overlay" id="editProfileOverlay" onclick="if(event.target===this)closeEditProfile()">
+  <div class="litige-card" style="max-width:520px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <h3 style="margin:0">Modifier mon profil</h3>
+      <button class="modal-close" onclick="closeEditProfile()" aria-label="Fermer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12" stroke-width="2"/></svg>
+      </button>
+    </div>
+
+    <!-- Photo -->
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem">
+      <div id="epAvatar" style="width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;font-family:var(--font-display);flex-shrink:0;overflow:hidden;background:var(--g100);color:var(--g700)">AM</div>
+      <label style="cursor:pointer;font-size:.82rem;color:var(--g600);font-weight:600;display:flex;align-items:center;gap:.4rem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Changer la photo
+        <input type="file" accept="image/*" style="display:none" onchange="epPreviewPhoto(this)">
+      </label>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div>
+        <label class="form-label" style="font-size:.78rem">Prénom *</label>
+        <input class="form-input" id="epPrenom" placeholder="Prénom" maxlength="80">
+      </div>
+      <div>
+        <label class="form-label" style="font-size:.78rem">Nom *</label>
+        <input class="form-input" id="epNom" placeholder="Nom" maxlength="80">
+      </div>
+    </div>
+
+    <div style="margin-bottom:.75rem">
+      <label class="form-label" style="font-size:.78rem">Compétence principale / Poste *</label>
+      <input class="form-input" id="epSkill" placeholder="Ex : Développeur web, Graphiste…" maxlength="150">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div>
+        <label class="form-label" style="font-size:.78rem">Ville</label>
+        <input class="form-input" id="epVille" placeholder="Ex : Yaoundé" maxlength="80">
+      </div>
+      <div>
+        <label class="form-label" style="font-size:.78rem">Catégorie</label>
+        <select class="form-input" id="epCat">
+          <option value="Développement">Développement</option>
+          <option value="Design">Design</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Éducation">Éducation</option>
+          <option value="Rédaction">Rédaction</option>
+          <option value="Vidéo & Photo">Vidéo &amp; Photo</option>
+          <option value="Musique">Musique</option>
+          <option value="Finance">Finance</option>
+          <option value="Santé">Santé</option>
+          <option value="Artisanat">Artisanat</option>
+          <option value="Autres">Autres</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div>
+        <label class="form-label" style="font-size:.78rem">Téléphone</label>
+        <input class="form-input" id="epPhone" placeholder="+237 6XX XXX XXX" maxlength="20" type="tel">
+      </div>
+      <div>
+        <label class="form-label" style="font-size:.78rem">Réseau Mobile Money</label>
+        <select class="form-input" id="epMm">
+          <option value="MTN MoMo">MTN MoMo</option>
+          <option value="Orange Money">Orange Money</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div>
+        <label class="form-label" style="font-size:.78rem">Tarif (FCFA)</label>
+        <input class="form-input" id="epTarif" type="number" min="0" placeholder="0">
+      </div>
+      <div>
+        <label class="form-label" style="font-size:.78rem">Unité</label>
+        <select class="form-input" id="epTarifUnit">
+          <option value="par heure">par heure</option>
+          <option value="par jour">par jour</option>
+          <option value="par projet">par projet</option>
+          <option value="par mois">par mois</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1rem">
+      <label class="form-label" style="font-size:.78rem">Bio</label>
+      <textarea class="form-input" id="epBio" rows="3" placeholder="Parlez de vous, de vos compétences…" style="resize:vertical;min-height:70px" maxlength="600"></textarea>
+    </div>
+
+    <!-- Mot de passe -->
+    <details style="margin-bottom:1rem">
+      <summary style="font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;user-select:none">Changer le mot de passe</summary>
+      <div style="margin-top:.75rem;display:flex;flex-direction:column;gap:.6rem">
+        <div id="epCurrentPwWrap">
+          <label class="form-label" style="font-size:.78rem">Mot de passe actuel</label>
+          <input class="form-input" id="epCurrentPw" type="password" placeholder="Mot de passe actuel" autocomplete="current-password">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:.78rem">Nouveau mot de passe</label>
+          <input class="form-input" id="epNewPw" type="password" placeholder="Min. 8 caractères" autocomplete="new-password">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:.78rem">Confirmer</label>
+          <input class="form-input" id="epConfirmPw" type="password" placeholder="Répétez le mot de passe" autocomplete="new-password">
+        </div>
+      </div>
+    </details>
+
+    <div id="epMsg" style="display:none;margin-bottom:.75rem;font-size:.82rem;padding:.5rem .75rem;border-radius:var(--r-sm)"></div>
+    <div class="litige-btns">
+      <button class="litige-btn-cancel" onclick="closeEditProfile()">Annuler</button>
+      <button class="litige-btn-submit" id="epSaveBtn" onclick="saveEditProfile()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -5714,6 +5840,139 @@ function emitTyping() {
   typingTimer = setTimeout(() => {
     socket.emit('stop_typing', { to: waActiveContactId });
   }, 2000);
+}
+
+// ═══ EDIT PROFILE ═════════════════════════════════════════════════════
+let _epPhotoBase64 = null;
+
+function openEditProfile(){
+  const uid = localStorage.getItem('sc_user_id');
+  if(!uid) return;
+  api('/dashboard/'+uid).then(data=>{
+    const u = data?.user;
+    if(!u) return;
+    document.getElementById('epPrenom').value   = u.prenom  || '';
+    document.getElementById('epNom').value      = u.nom     || '';
+    document.getElementById('epSkill').value    = u.skill   || '';
+    document.getElementById('epVille').value    = u.ville   || '';
+    document.getElementById('epPhone').value    = u.phone   || '';
+    document.getElementById('epTarif').value    = u.tarif   || '';
+    document.getElementById('epBio').value      = u.bio     || '';
+    const catEl = document.getElementById('epCat');
+    if(catEl) [...catEl.options].forEach(o=>o.selected=o.value===(u.cat||'Autres'));
+    const mmEl  = document.getElementById('epMm');
+    if(mmEl)  [...mmEl.options].forEach(o=>o.selected=o.value===(u.mm_network||'MTN MoMo'));
+    const tuEl  = document.getElementById('epTarifUnit');
+    if(tuEl)  [...tuEl.options].forEach(o=>o.selected=o.value===(u.tarif_unit||'par heure'));
+    // Avatar preview
+    const av = document.getElementById('epAvatar');
+    if(av){
+      if(u.photo){
+        av.innerHTML='';av.style.padding='0';
+        const img=document.createElement('img');
+        img.src=u.photo;img.style.cssText='width:100%;height:100%;object-fit:cover';
+        av.appendChild(img);
+      } else {
+        av.style.background=u.bg_color||'var(--g100)';av.style.color=u.text_color||'var(--g700)';
+        av.textContent=u.initials||'?';
+      }
+    }
+    // Cacher le champ mot de passe actuel si pas de mot de passe (compte Google)
+    const cpw = document.getElementById('epCurrentPwWrap');
+    if(cpw) cpw.style.display = u.password_hash || u.has_password ? '' : 'none';
+    _epPhotoBase64 = null;
+    document.getElementById('epMsg').style.display='none';
+    document.getElementById('epCurrentPw').value='';
+    document.getElementById('epNewPw').value='';
+    document.getElementById('epConfirmPw').value='';
+    document.getElementById('editProfileOverlay').style.display='flex';
+    document.body.style.overflow='hidden';
+  });
+}
+
+function epPreviewPhoto(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    _epPhotoBase64=e.target.result;
+    const av=document.getElementById('epAvatar');
+    av.innerHTML='';av.style.padding='0';
+    const img=document.createElement('img');
+    img.src=_epPhotoBase64;img.style.cssText='width:100%;height:100%;object-fit:cover';
+    av.appendChild(img);
+  };
+  reader.readAsDataURL(file);
+}
+
+function closeEditProfile(){
+  document.getElementById('editProfileOverlay').style.display='none';
+  document.body.style.overflow='';
+}
+
+async function saveEditProfile(){
+  const uid = localStorage.getItem('sc_user_id');
+  if(!uid) return;
+  const msg  = document.getElementById('epMsg');
+  const btn  = document.getElementById('epSaveBtn');
+  const orig = btn.textContent;
+  btn.disabled=true; btn.textContent='Enregistrement…';
+  msg.style.display='none';
+
+  const prenom = document.getElementById('epPrenom').value.trim();
+  const nom    = document.getElementById('epNom').value.trim();
+  if(!prenom||!nom){
+    msg.style.cssText='display:block;background:rgba(229,62,62,.1);color:#c53030;padding:.5rem .75rem;border-radius:8px;font-size:.82rem';
+    msg.textContent='Prénom et nom sont requis.';
+    btn.disabled=false;btn.textContent=orig;return;
+  }
+
+  const body = {
+    prenom, nom,
+    skill:      document.getElementById('epSkill').value.trim(),
+    ville:      document.getElementById('epVille').value.trim(),
+    cat:        document.getElementById('epCat').value,
+    phone:      document.getElementById('epPhone').value.trim(),
+    mm_network: document.getElementById('epMm').value,
+    tarif:      parseInt(document.getElementById('epTarif').value)||0,
+    tarif_unit: document.getElementById('epTarifUnit').value,
+    bio:        document.getElementById('epBio').value.trim(),
+  };
+  if(_epPhotoBase64) body.photo=_epPhotoBase64;
+
+  const newPw = document.getElementById('epNewPw').value;
+  if(newPw){
+    body.new_password     = newPw;
+    body.confirm_password = document.getElementById('epConfirmPw').value;
+    body.current_password = document.getElementById('epCurrentPw').value;
+  }
+
+  const result = await api('/profile/'+uid, {method:'PUT', body});
+  btn.disabled=false; btn.textContent=orig;
+
+  if(result?.success){
+    msg.style.cssText='display:block;background:rgba(29,158,117,.12);color:var(--g700);padding:.5rem .75rem;border-radius:8px;font-size:.82rem';
+    msg.textContent='✅ Profil mis à jour !';
+    // Mettre à jour l'affichage du dashboard sans recharger la page
+    if(result.user){
+      const u=result.user;
+      const n=document.getElementById('dashName');
+      if(n) n.textContent=(u.prenom||'')+' '+(u.nom||'');
+      const r=document.getElementById('dashRole');
+      if(r){
+        const txt=[u.skill,u.ville].filter(Boolean).join(' · ')||'Complétez votre profil';
+        r.querySelector('svg')&&(r.innerHTML=r.querySelector('svg').outerHTML+txt);
+      }
+      const av=document.getElementById('dashAvatar');
+      if(av){
+        if(u.photo){av.innerHTML='';av.style.cssText='';const i=document.createElement('img');i.src=u.photo;i.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit';av.appendChild(i);}
+        else{av.textContent=u.initials||'?';av.style.background=u.bg_color;av.style.color=u.text_color;}
+      }
+    }
+    setTimeout(closeEditProfile, 1200);
+  } else {
+    msg.style.cssText='display:block;background:rgba(229,62,62,.1);color:#c53030;padding:.5rem .75rem;border-radius:8px;font-size:.82rem';
+    msg.textContent=result?.error||'Erreur lors de la mise à jour.';
+  }
 }
 
 // ═══ NOTIFICATIONS ════════════════════════════════════════════════════

@@ -296,8 +296,28 @@ app.put('/api/profile/:userId', authenticateToken, async (req, res) => {
   if (req.user.userId !== parseInt(req.params.userId))
     return res.status(403).json({ error: 'Accès refusé.' });
   try {
-    await db.updateUser(parseInt(req.params.userId), req.body);
-    res.json({ success: true });
+    const body = { ...req.body };
+
+    // Changement de mot de passe (optionnel)
+    if (body.new_password) {
+      if (body.new_password !== body.confirm_password)
+        return res.status(400).json({ error: 'Les mots de passe ne correspondent pas.' });
+      if (body.new_password.length < 8)
+        return res.status(400).json({ error: 'Mot de passe trop court (min 8 caractères).' });
+      const user = await db.getTalentById(parseInt(req.params.userId));
+      if (user?.password_hash) {
+        const valid = await bcrypt.compare(body.current_password || '', user.password_hash);
+        if (!valid) return res.status(401).json({ error: 'Mot de passe actuel incorrect.' });
+      }
+      body.password_hash = await bcrypt.hash(body.new_password, 12);
+    }
+    delete body.new_password;
+    delete body.confirm_password;
+    delete body.current_password;
+
+    await db.updateUser(parseInt(req.params.userId), body);
+    const updated = await db.getTalentById(parseInt(req.params.userId));
+    res.json({ success: true, user: updated });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

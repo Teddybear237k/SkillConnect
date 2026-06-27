@@ -504,17 +504,32 @@ async function createUser(body) {
 }
 
 async function updateUser(id, body) {
-  const { bio, tarif, tarif_unit, availability, photo, mm_network, phone } = body;
+  const { prenom, nom, skill, ville, cat, bio, tarif, tarif_unit, availability, photo, mm_network, phone, password_hash } = body;
   const sets = [];
   const params = [];
+  if (prenom       !== undefined) { sets.push('prenom = ?');       params.push(prenom); }
+  if (nom          !== undefined) { sets.push('nom = ?');          params.push(nom); }
+  if (skill        !== undefined) { sets.push('skill = ?');        params.push(skill); }
+  if (ville        !== undefined) { sets.push('ville = ?');        params.push(ville); }
+  if (cat          !== undefined) { sets.push('cat = ?');          params.push(cat); }
   if (bio          !== undefined) { sets.push('bio = ?');          params.push(bio); }
   if (tarif        !== undefined) { sets.push('tarif = ?');        params.push(parseInt(tarif)||0); }
   if (tarif_unit   !== undefined) { sets.push('tarif_unit = ?');   params.push(tarif_unit); }
   if (availability !== undefined) { sets.push('availability = ?'); params.push(availability); }
   if (photo        !== undefined) { sets.push('photo = ?');        params.push(photo); }
   if (mm_network   !== undefined) { sets.push('mm_network = ?');   params.push(mm_network); }
-  if (phone        !== undefined) { sets.push('phone = ?');        params.push(phone); }
+  if (phone         !== undefined) { sets.push('phone = ?');         params.push(phone); }
+  if (password_hash !== undefined) { sets.push('password_hash = ?'); params.push(password_hash); }
   if (sets.length === 0) return;
+  // Recalculer les initiales si prénom/nom changé
+  if (prenom !== undefined || nom !== undefined) {
+    const [rows] = await pool.execute('SELECT prenom, nom FROM users WHERE id = ?', [id]);
+    const cur = rows[0] || {};
+    const p = (prenom !== undefined ? prenom : cur.prenom) || '?';
+    const n = (nom    !== undefined ? nom    : cur.nom)    || '?';
+    sets.push('initials = ?');
+    params.push((p[0] + n[0]).toUpperCase());
+  }
   params.push(id);
   await pool.execute(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
 }
@@ -592,6 +607,7 @@ async function getDashboardData(userId) {
 
   const views = await getProfileViews(userId, 30);
   const { password_hash: _ph, ...safeUser } = user;
+  safeUser.has_password = !!_ph;
   return {
     user: safeUser,
     revenue: Math.round(revenue * 0.93),
