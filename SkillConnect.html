@@ -2633,7 +2633,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
               <div class="skill-counter"><span id="fSkillCount">0</span>/4 talents supplémentaires</div>
             </div>
             <div class="form-group">
-              <label class="form-label">Tarif (FCFA) <sup>*</sup></label>
+              <label class="form-label">Tarif (FCFA) <span style="font-weight:400;color:var(--muted)">(optionnel)</span></label>
               <input type="number" class="form-input" placeholder="Ex: 5000" id="fTarif"/>
             </div>
             <div class="form-group">
@@ -2647,7 +2647,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
               <input type="tel" class="form-input" placeholder="6XX XXX XXX" id="fPhone"/>
             </div>
             <div class="form-group full">
-              <label class="form-label">Réseau Mobile Money <sup>*</sup></label>
+              <label class="form-label">Réseau Mobile Money</label>
               <select class="form-select form-input" id="fMM">
                 <option>MTN MoMo</option><option>Orange Money</option>
               </select>
@@ -4465,9 +4465,13 @@ async function submitForm(){
   const email=document.getElementById('fEmail').value;
   const password=document.getElementById('fPassword').value;
 
-  if(!prenom||!nom||!ville||!skill||!phone){toast('Veuillez remplir tous les champs obligatoires');return}
-  if(!password||password.length<6){toast('Mot de passe requis (minimum 6 caractères)');return}
-  if(skill==='Autres'&&!skillCustom){toast('Veuillez préciser votre compétence');return}
+  if(!prenom)        { toast('Veuillez entrer votre prénom'); return; }
+  if(!nom)           { toast('Veuillez entrer votre nom'); return; }
+  if(!ville)         { toast('Veuillez sélectionner votre ville'); return; }
+  if(!skill)         { toast('Veuillez sélectionner votre compétence principale'); return; }
+  if(skill==='Autres'&&!skillCustom){ toast('Veuillez préciser votre compétence'); return; }
+  if(!phone)         { toast('Veuillez entrer votre numéro Mobile Money'); return; }
+  if(!password||password.length<6){ toast('Mot de passe requis (minimum 6 caractères)'); return; }
 
   let photoBase64='';
   const photoFile=document.getElementById('fPhotoFile')?.files?.[0];
