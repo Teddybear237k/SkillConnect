@@ -2712,6 +2712,15 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 <div class="page" id="page-paiement" style="padding-top:80px">
   <section style="padding-top:2rem;max-width:960px;margin:0 auto">
 
+    <!-- Bannière développement -->
+    <div style="display:flex;align-items:center;gap:.75rem;background:rgba(245,158,11,.1);border:1.5px solid rgba(245,158,11,.35);border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:1.5rem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div>
+        <strong style="color:#92590a;font-size:.9rem">Section en cours de développement</strong>
+        <p style="margin:.2rem 0 0;font-size:.82rem;color:#b45309;line-height:1.4">Le système de paiement Mobile Money sera bientôt disponible. Contactez directement les talents pour convenir d'un paiement en attendant.</p>
+      </div>
+    </div>
+
     <!-- Hero Banner -->
     <div class="pay-hero fade-up">
       <div class="pay-hero-orb" style="width:200px;height:200px;right:-50px;top:-60px;background:rgba(255,255,255,.06);--tx:20px;--ty:-20px"></div>
@@ -5117,17 +5126,8 @@ async function initDashboard(){
     document.getElementById('dashName').textContent=u.prenom+' '+u.nom;
     const _roleText=[u.skill,u.ville].filter(Boolean).join(' · ')||'Complétez votre profil';
     document.getElementById('dashRole').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> ${escHtml(_roleText)}`;
-    // Bannière validation en attente
-    let valBanner = document.getElementById('validationBanner');
-    if (!u.validated) {
-      if (!valBanner) {
-        valBanner = document.createElement('div');
-        valBanner.id = 'validationBanner';
-        valBanner.style.cssText = 'background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);border-radius:var(--r-md);padding:.75rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#92590a;display:flex;align-items:center;gap:.6rem';
-        valBanner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span><strong>Profil en attente de validation</strong> — Notre équipe vérifie votre profil. Vous recevrez un email dès qu\'il sera approuvé.</span>';
-        document.getElementById('page-dashboard').querySelector('section')?.prepend(valBanner);
-      }
-    } else if (valBanner) valBanner.remove();
+    const valBanner = document.getElementById('validationBanner');
+    if (valBanner) valBanner.remove();
     setTimeout(()=>{
       animCount(document.getElementById('metricRevenu'),data.revenue,' FCFA');
       animCount(document.getElementById('metricMissions'),data.missions);
