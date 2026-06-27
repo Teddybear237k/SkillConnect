@@ -2168,22 +2168,6 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 /* ═══════════════════════════════════════════════════════════════
    CARTE DES TALENTS
 ═══════════════════════════════════════════════════════════════ */
-#carteMap{width:100%;height:520px;border-radius:var(--r-xl);overflow:hidden;border:1.5px solid var(--border);box-shadow:var(--shadow-md)}
-.carte-filters{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:flex-end}
-.carte-filters input,.carte-filters select{flex:1;min-width:140px;padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:var(--r-full);background:var(--surface-2,#fff);font-size:.85rem;color:var(--text)}
-.carte-filters input:focus,.carte-filters select:focus{border-color:var(--g500);outline:none}
-.carte-btn-search{padding:.55rem 1.25rem;border-radius:var(--r-full);border:none;background:var(--g500);color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.carte-stat{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem}
-.carte-stat-item{background:var(--surface-2,#fff);border:1px solid var(--border);border-radius:var(--r-md);padding:.45rem .9rem;font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:.4rem}
-.carte-stat-item strong{color:var(--g600)}
-.leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:0 4px 20px rgba(0,0,0,.15)!important;padding:0!important}
-.leaflet-popup-content{margin:0!important;width:220px!important}
-.carte-popup{padding:1rem}
-.carte-popup-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0}
-.carte-popup-name{font-weight:700;font-size:.9rem;color:var(--text,#111)}
-.carte-popup-skill{font-size:.78rem;color:var(--muted,#777);margin:.1rem 0}
-.carte-popup-price{font-size:.82rem;font-weight:700;color:var(--g600,#0F6E56)}
-.carte-popup-btn{display:block;width:100%;margin-top:.75rem;padding:.45rem;border-radius:var(--r-full);border:none;background:var(--g500,#1D9E75);color:#fff;font-weight:700;font-size:.8rem;cursor:pointer;text-align:center}
 
 /* ═══════════════════════════════════════════════════════════════
    MISSIONS GROUPÉES
@@ -2207,7 +2191,6 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 ═══════════════════════════════════════════════════════════════ */
 .rapport-btn{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .65rem;border-radius:var(--r-full);border:1.5px solid var(--p400,#7F77DD);background:none;color:var(--p600,#534AB7);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s}
 .rapport-btn:hover{background:var(--p50,#EEEDFE)}
-@media(max-width:600px){#carteMap{height:340px}.carte-filters{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -2241,7 +2224,6 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
     <div class="nav-link active" onclick="showPage('accueil',this)" data-i18n="nav_accueil">Accueil</div>
     <div class="nav-link" onclick="showPage('explorer',this)" data-i18n="nav_explorer">Explorer</div>
     <div class="nav-link" onclick="showPage('offres',this)" data-i18n="nav_offres">Offres</div>
-    <div class="nav-link" onclick="showPage('carte',this)">Carte</div>
     <div class="nav-link" onclick="showPage('inscription',this)" data-i18n="nav_inscription">S'inscrire</div>
     <div class="nav-link" onclick="showPage('paiement',this)" data-i18n="nav_paiement">Paiement</div>
     <div class="nav-link" onclick="showPage('dashboard',this)" data-i18n="nav_dashboard">Tableau de bord</div>
@@ -3936,39 +3918,6 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 </div>
 
 <!-- ════════════════ PAGE PROFIL INDIVIDUELLE ════════════════ -->
-<!-- ════════════════════════ PAGE CARTE ════════════════════════ -->
-<div class="page" id="page-carte" style="padding-top:80px">
-  <section style="max-width:1100px;margin:0 auto;padding:2rem 1.25rem">
-    <h2 style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;margin-bottom:.35rem">
-      Carte des talents
-    </h2>
-    <p style="color:var(--muted);margin-bottom:1.25rem;font-size:.9rem">
-      Trouve les talents disponibles près de chez toi au Cameroun.
-    </p>
-
-    <!-- Filtres -->
-    <div class="carte-filters">
-      <input type="text" id="carteFilterSkill" placeholder="Compétence (ex: Design, Cours…)" onkeydown="if(event.key==='Enter')rechercherCarte()"/>
-      <input type="number" id="carteFilterBudget" placeholder="Budget max (FCFA)" min="0" step="1000"/>
-      <select id="carteFilterVille">
-        <option value="">Toutes les villes</option>
-        <option>Yaoundé</option><option>Douala</option><option>Bafoussam</option>
-        <option>Buea</option><option>Garoua</option><option>Ngaoundéré</option>
-        <option>Bamenda</option><option>Maroua</option><option>Kribi</option><option>Limbe</option>
-      </select>
-      <button class="carte-btn-search" onclick="rechercherCarte()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;vertical-align:middle;margin-right:.3rem"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        Rechercher
-      </button>
-    </div>
-
-    <!-- Carte Leaflet -->
-    <div id="carteMap"></div>
-
-    <!-- Stats rapides -->
-    <div class="carte-stat" id="carteStats"></div>
-  </section>
-</div>
 
 <!-- ════════════════════════ PAGE PROFIL ════════════════════════ -->
 <div class="page" id="page-profil" style="padding-top:80px">
@@ -4127,7 +4076,6 @@ function showPage(id,linkEl){
   if(id==='dashboard') { initDashboard(); loadDashPortfolio(); initDashMissions(); initPushNotifications(); }
   if(id==='messages') { initWA(); loadBlockedIds(); }
   if(id==='explorer') { loadOnlineUsers().then(renderTalents); loadVilles(); }
-  if(id==='carte') { setTimeout(initCarte, 50); }
   if(id==='offres') {
     _jobCategory = '';
     _jobVille = '';
@@ -5823,9 +5771,6 @@ loadExchangeRates();
 if(localStorage.getItem('sc_user_id')) loadNotifications();
 // Socket.io (initialisé après chargement du CDN dans le second bloc script)
 </script>
-<!-- CDN : Leaflet.js (carte) -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <!-- CDN : jsPDF + Socket.io -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
@@ -8103,100 +8048,7 @@ if('serviceWorker' in navigator){
   });
 }
 
-// ════════════════════════════════════════════════════════════════
-// 1. CARTE DES TALENTS (Leaflet)
-// ════════════════════════════════════════════════════════════════
-let _carteMap = null;
-let _carteMarkers = [];
 
-function initCarte() {
-  if (!window.L) { document.getElementById('carteMap').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">Carte indisponible (Leaflet non chargé)</p>'; return; }
-  if (_carteMap) { _carteMap.invalidateSize(); rechercherCarte(); return; }
-
-  _carteMap = L.map('carteMap').setView([5.5, 11.5], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-    maxZoom: 18,
-  }).addTo(_carteMap);
-
-  rechercherCarte();
-}
-
-async function rechercherCarte() {
-  const skill  = document.getElementById('carteFilterSkill')?.value?.trim() || '';
-  const budget = document.getElementById('carteFilterBudget')?.value || '';
-  const ville  = document.getElementById('carteFilterVille')?.value || '';
-
-  const params = new URLSearchParams();
-  if (skill)  params.set('competence', skill);
-  if (budget) params.set('budget_max', budget);
-  if (ville)  params.set('ville', ville);
-
-  const talents = await api('/talents/carte?' + params.toString());
-  if (!talents) return;
-
-  // Supprimer anciens marqueurs
-  _carteMarkers.forEach(m => m.remove());
-  _carteMarkers = [];
-
-  // Regrouper par ville pour un léger décalage si plusieurs talents même coords
-  const byCity = {};
-  talents.forEach(t => {
-    const key = t.ville;
-    if (!byCity[key]) byCity[key] = [];
-    byCity[key].push(t);
-  });
-
-  Object.values(byCity).forEach(group => {
-    group.forEach((t, i) => {
-      const jitter = group.length > 1 ? (i - group.length / 2) * 0.012 : 0;
-      const lat = t.coords.lat + jitter;
-      const lng = t.coords.lng + jitter * 0.8;
-
-      const avatarContent = t.photo
-        ? `<img src="${escHtml(t.photo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
-        : `<span style="font-size:10px;font-weight:700;color:${escHtml(t.text_color||'#085041')}">${escHtml(t.initials||'?')}</span>`;
-      const divIcon = L.divIcon({
-        className:'',
-        html:`<div style="width:36px;height:36px;border-radius:50%;background:${escHtml(t.bg_color||'#C8EFE3')};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer">${avatarContent}</div>`,
-        iconSize:[36,36],iconAnchor:[18,18],popupAnchor:[0,-20]
-      });
-      const marker = L.marker([lat, lng], {icon:divIcon}).addTo(_carteMap);
-
-      const name  = ((t.prenom||'') + ' ' + (t.nom||'')).trim();
-      const skill = t.skill || t.skill_custom || '—';
-      const price = (t.tarif||0).toLocaleString('fr-FR') + ' FCFA/' + (t.tarif_unit||'h');
-      const initials = t.initials || name.slice(0,2).toUpperCase();
-      const photo = t.photo ? `<img src="${escHtml(t.photo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : initials;
-
-      marker.bindPopup(`
-        <div class="carte-popup">
-          <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem">
-            <div class="carte-popup-avatar" style="background:${escHtml(t.bg_color||'#C8EFE3')};color:${escHtml(t.text_color||'#085041')}">${photo}</div>
-            <div>
-              <div class="carte-popup-name">${escHtml(name)}</div>
-              <div class="carte-popup-skill">${escHtml(skill)} · ${escHtml(t.ville||'')}</div>
-              <div class="carte-popup-price">${price}</div>
-            </div>
-          </div>
-          <button class="carte-popup-btn" onclick="showTalentProfile(${t.id});_carteMap?.closePopup?.()">Voir le profil</button>
-        </div>
-      `, { maxWidth: 240 });
-
-      _carteMarkers.push(marker);
-    });
-  });
-
-  // Stats
-  const statsEl = document.getElementById('carteStats');
-  if (statsEl) {
-    statsEl.innerHTML = `
-      <div class="carte-stat-item"><strong>${talents.length}</strong> talent${talents.length>1?'s':''} trouvé${talents.length>1?'s':''}</div>
-      ${ville ? `<div class="carte-stat-item">📍 <strong>${escHtml(ville)}</strong></div>` : ''}
-      ${skill ? `<div class="carte-stat-item">🔍 <strong>${escHtml(skill)}</strong></div>` : ''}
-    `;
-  }
-}
 
 // ════════════════════════════════════════════════════════════════
 // 5. RAPPORT DE MISSION PDF (jsPDF)
