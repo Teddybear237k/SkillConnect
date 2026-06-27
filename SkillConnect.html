@@ -82,7 +82,7 @@ input, select, textarea {
 }
 
 /* ── Navbar ─────────────────────────────────────────────────── */
-html.dark .nav { background: rgba(15,17,23,.92); }
+/* html.dark .nav background géré par .nav::before dans la section .nav */
 html.dark .nav-link:hover, html.dark .nav-link.active { background: rgba(255,255,255,.07); color: var(--ink); }
 html.dark .nav-mobile-toggle span { background: var(--ink); }
 html.dark .nav-links { background: #0F1117; border-color: #232836; }
@@ -461,11 +461,20 @@ body:has(button:hover) .cursor{background:var(--a400);width:16px;height:16px}
   position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;align-items:center;gap:.75rem;
   padding:0 2.5rem;height:64px;
-  background:rgba(250,250,248,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  /* Pas de backdrop-filter ici — ça cassait position:fixed des enfants sur mobile */
   border-bottom:1px solid transparent;
   transition:border-color .3s,box-shadow .3s;
   overflow:visible;
 }
+/* Le flou est sur un pseudo-élément qui ne crée pas de containing block pour les enfants */
+.nav::before{
+  content:'';position:absolute;inset:0;z-index:-1;
+  background:rgba(250,250,248,.92);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  transition:background .3s;
+}
+html.dark .nav::before{background:rgba(15,17,23,.95)}
+html.dark .nav{background:transparent}
 .nav.scrolled{border-color:var(--hairline);box-shadow:var(--shadow-sm)}
 .nav-logo{
   font-family:var(--font-display);font-size:1.25rem;font-weight:800;
@@ -518,6 +527,20 @@ body:has(button:hover) .cursor{background:var(--a400);width:16px;height:16px}
 .btn-delete-account:hover{background:rgba(229,62,62,.08);border-color:#e53e3e}
 /* ─── Login modal ───────────────────────────────────────────── */
 .login-modal{max-width:420px}
+/* ─── Multi-skill tags ──────────────────────────────────────── */
+.skills-tags-wrap{border:1.5px solid var(--hairline);border-radius:var(--r-md);padding:.6rem .75rem;background:var(--surface);transition:border-color .2s}
+.skills-tags-wrap:focus-within{border-color:var(--g400)}
+.skill-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.5rem;min-height:0}
+.skill-tag{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .65rem;border-radius:var(--r-full);background:var(--g50);color:var(--g700);font-size:.78rem;font-weight:600;border:1px solid rgba(29,158,117,.2)}
+.skill-tag-rm{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;line-height:1;padding:0;display:flex;align-items:center;transition:color .15s}
+.skill-tag-rm:hover{color:var(--ink)}
+.skill-add-row{display:flex;gap:.5rem;align-items:center}
+.skill-add-row input{flex:1;border:none;outline:none;background:transparent;font-size:.875rem;font-family:inherit;color:var(--ink)}
+.skill-add-row input::placeholder{color:var(--muted)}
+.skill-add-btn{padding:.22rem .7rem;border-radius:var(--r-full);border:1.5px solid var(--g300);background:transparent;color:var(--g600);font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.skill-add-btn:hover{background:var(--g50)}
+.skill-counter{font-size:.72rem;color:var(--muted);margin-top:.3rem}
+html.dark .skills-tags-wrap{background:rgba(255,255,255,.04);border-color:var(--hairline)}
 /* ─── Validate mission button ───────────────────────────────── */
 .validate-btn{padding:.35rem .85rem;border-radius:var(--r-full);border:none;background:var(--g500);color:#fff;font-size:.75rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;transition:all .2s}
 .validate-btn:hover{background:var(--g600);transform:translateY(-1px)}
@@ -2599,6 +2622,18 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
               <label class="form-label">Précisez votre compétence <sup>*</sup></label>
               <input type="text" class="form-input" id="fSkillCustom" placeholder="Ex : Coaching sportif, Musique, Cuisine, Plomberie…"/>
             </div>
+            <div class="form-group full">
+              <label class="form-label">Autres talents <span style="font-weight:400;color:var(--muted)">(optionnel, max 4 supplémentaires)</span></label>
+              <div class="skills-tags-wrap" id="fSkillsWrap">
+                <div class="skill-tags" id="fSkillTags"></div>
+                <div class="skill-add-row">
+                  <input id="fSkillTagInput" placeholder="Ex : Photoshop, Python, Cuisine…" maxlength="80"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();fAddSkill()}">
+                  <button type="button" class="skill-add-btn" onclick="fAddSkill()">+ Ajouter</button>
+                </div>
+              </div>
+              <div class="skill-counter"><span id="fSkillCount">0</span>/4 talents supplémentaires</div>
+            </div>
             <div class="form-group">
               <label class="form-label">Tarif (FCFA) <sup>*</sup></label>
               <input type="number" class="form-input" placeholder="Ex: 5000" id="fTarif"/>
@@ -3469,8 +3504,16 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
     </div>
 
     <div style="margin-bottom:.75rem">
-      <label class="form-label" style="font-size:.78rem">Compétence principale / Poste *</label>
-      <input class="form-input" id="epSkill" placeholder="Ex : Développeur web, Graphiste…" maxlength="150">
+      <label class="form-label" style="font-size:.78rem">Talents / Compétences * <span style="font-weight:400;color:var(--muted)">(max 5)</span></label>
+      <div class="skills-tags-wrap" id="epSkillsWrap">
+        <div class="skill-tags" id="epSkillTags"></div>
+        <div class="skill-add-row">
+          <input id="epSkillInput" placeholder="Ex : Développeur web, Graphiste…" maxlength="80"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();epAddSkill()}">
+          <button type="button" class="skill-add-btn" onclick="epAddSkill()">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="skill-counter"><span id="epSkillCount">0</span>/5 talents ajoutés</div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
@@ -4464,7 +4507,10 @@ async function submitForm(){
   if(photoFile){
     photoBase64=await new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(photoFile);});
   }
-  const result=await api('/register',{method:'POST',body:{prenom,nom,ville,skill,skill_custom:skillCustom,tarif:parseInt(tarif)||0,tarif_unit:unit,phone,mm_network:mm,bio,email,password,photo:photoBase64||undefined}});
+  // Construire le tableau de skills (principal + supplémentaires)
+  const mainSkill = skill==='Autres' ? skillCustom : skill;
+  const allSkills = [mainSkill, ..._fSkills].filter(Boolean).slice(0,5);
+  const result=await api('/register',{method:'POST',body:{prenom,nom,ville,skill:mainSkill,skill_custom:skillCustom,skills:JSON.stringify(allSkills),tarif:parseInt(tarif)||0,tarif_unit:unit,phone,mm_network:mm,bio,email,password,photo:photoBase64||undefined}});
 
   if(result&&result.success){
     const u=result.user;
@@ -4511,6 +4557,8 @@ function resetForm(){
   ['fPrenom','fNom','fPhone','fEmail','fTarif','fBio','fSkillCustom','fPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
   ['fVille','fSkill','fUnit','fMM'].forEach(id=>document.getElementById(id).selectedIndex=0);
   document.getElementById('skillCustomGroup')?.classList.remove('visible');
+  _fSkills = [];
+  _renderSkillTags(_fSkills,'fSkillTags','fSkillCount',4);
 }
 
 function updateNavUser(){
@@ -5842,6 +5890,50 @@ function emitTyping() {
   }, 2000);
 }
 
+// ═══ MULTI-SKILL TAGS ════════════════════════════════════════════════
+let _epSkills = [];   // edit profile
+let _fSkills  = [];   // inscription form
+
+function _renderSkillTags(arr, tagsId, counterId, max){
+  const container = document.getElementById(tagsId);
+  if(!container) return;
+  container.innerHTML = arr.map((s,i)=>
+    `<span class="skill-tag">${escHtml(s)}<button type="button" class="skill-tag-rm" onclick="_removeSkill(${i},'${tagsId}','${counterId}',${max})">×</button></span>`
+  ).join('');
+  const c = document.getElementById(counterId);
+  if(c) c.textContent = arr.length;
+}
+
+function _removeSkill(i, tagsId, counterId, max){
+  const arr = tagsId.startsWith('ep') ? _epSkills : _fSkills;
+  arr.splice(i,1);
+  _renderSkillTags(arr, tagsId, counterId, max);
+}
+
+function epAddSkill(){
+  const input = document.getElementById('epSkillInput');
+  const val   = input.value.trim();
+  if(!val){ input.focus(); return; }
+  if(_epSkills.length >= 5){ toast('Maximum 5 talents atteint.'); return; }
+  if(_epSkills.map(s=>s.toLowerCase()).includes(val.toLowerCase())){ input.value=''; return; }
+  _epSkills.push(val);
+  input.value='';
+  _renderSkillTags(_epSkills,'epSkillTags','epSkillCount',5);
+  input.focus();
+}
+
+function fAddSkill(){
+  const input = document.getElementById('fSkillTagInput');
+  const val   = input.value.trim();
+  if(!val){ input.focus(); return; }
+  if(_fSkills.length >= 4){ toast('Maximum 4 talents supplémentaires.'); return; }
+  if(_fSkills.map(s=>s.toLowerCase()).includes(val.toLowerCase())){ input.value=''; return; }
+  _fSkills.push(val);
+  input.value='';
+  _renderSkillTags(_fSkills,'fSkillTags','fSkillCount',4);
+  input.focus();
+}
+
 // ═══ EDIT PROFILE ═════════════════════════════════════════════════════
 let _epPhotoBase64 = null;
 
@@ -5853,8 +5945,13 @@ function openEditProfile(){
     if(!u) return;
     document.getElementById('epPrenom').value   = u.prenom  || '';
     document.getElementById('epNom').value      = u.nom     || '';
-    document.getElementById('epSkill').value    = u.skill   || '';
     document.getElementById('epVille').value    = u.ville   || '';
+    // Charger les skills
+    let skills = [];
+    try { skills = JSON.parse(u.skills||'[]'); } catch(_){}
+    if(!skills.length && u.skill) skills = [u.skill];
+    _epSkills = skills;
+    _renderSkillTags(_epSkills,'epSkillTags','epSkillCount',5);
     document.getElementById('epPhone').value    = u.phone   || '';
     document.getElementById('epTarif').value    = u.tarif   || '';
     document.getElementById('epBio').value      = u.bio     || '';
@@ -5926,9 +6023,15 @@ async function saveEditProfile(){
     btn.disabled=false;btn.textContent=orig;return;
   }
 
+  if(!_epSkills.length){
+    msg.style.cssText='display:block;background:rgba(229,62,62,.1);color:#c53030;padding:.5rem .75rem;border-radius:8px;font-size:.82rem';
+    msg.textContent='Ajoutez au moins un talent.';
+    btn.disabled=false;btn.textContent=orig;return;
+  }
   const body = {
     prenom, nom,
-    skill:      document.getElementById('epSkill').value.trim(),
+    skill:      _epSkills[0] || '',
+    skills:     JSON.stringify(_epSkills),
     ville:      document.getElementById('epVille').value.trim(),
     cat:        document.getElementById('epCat').value,
     phone:      document.getElementById('epPhone').value.trim(),
@@ -6485,7 +6588,9 @@ async function loadTalentProfile(id) {
   const unit  = t.unit || t.tarif_unit || 'FCFA';
   const avail = t.availability || 'available';
   const avlLbl = {available:'Disponible', busy:'Occupé', pause:'En pause'};
-  const tags  = Array.isArray(t.tags) ? t.tags : (t.skill_custom ? [t.skill_custom] : []);
+  let tags = [];
+  try { tags = JSON.parse(t.skills || '[]'); } catch(_){}
+  if(!tags.length) tags = Array.isArray(t.tags) ? t.tags : (t.skill_custom ? [t.skill_custom] : []);
   const uid   = parseInt(localStorage.getItem('sc_user_id'));
   const tid   = t.id || parseInt(id);
   const isOnline = window._onlineUsers && window._onlineUsers.has(tid);

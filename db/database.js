@@ -179,6 +179,7 @@ async function init() {
 
   // Migrations — colonnes ajoutées après la création initiale
   try { await pool.query('ALTER TABLE users ADD COLUMN email_verified TINYINT DEFAULT 1'); } catch (_) {}
+  try { await pool.query('ALTER TABLE users ADD COLUMN skills TEXT'); } catch (_) {}
   try { await pool.query('ALTER TABLE reviews ADD COLUMN reply TEXT'); } catch (_) {}
   try { await pool.query('ALTER TABLE reviews ADD COLUMN reply_at DATETIME'); } catch (_) {}
   try { await pool.query('ALTER TABLE messages ADD COLUMN file_data LONGTEXT'); } catch (_) {}
@@ -479,17 +480,20 @@ async function getTalentById(id) {
 }
 
 async function createUser(body) {
-  const { prenom, nom, ville, skill, skill_custom, tarif, tarif_unit, phone, mm_network, bio, email, password_hash, photo } = body;
+  const { prenom, nom, ville, skill, skill_custom, skills, tarif, tarif_unit, phone, mm_network, bio, email, password_hash, photo } = body;
   const skillName = skill === 'Autres' ? (skill_custom || 'Autre compétence') : skill;
   const cat = mapSkillToCat(skillName);
   const initials = ((prenom || ' ')[0] + (nom || ' ')[0]).toUpperCase();
   const [[{ cnt }]] = await pool.execute('SELECT COUNT(*) as cnt FROM users');
   const color = COLORS[cnt % COLORS.length];
+  // Stocker le JSON des skills (ou construire depuis skillName si non fourni)
+  const skillsJson = skills || JSON.stringify([skillName].filter(Boolean));
 
   const [result] = await pool.execute(
-    `INSERT INTO users (prenom,nom,ville,skill,skill_custom,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,email_verified,created_at)
+    `INSERT INTO users (prenom,nom,ville,skill,skill_custom,skills,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,email_verified,created_at)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,0,'available',?,?,0,?)`,
-    [prenom||null, nom||null, ville||null, skillName, skill_custom||null, parseInt(tarif)||0, tarif_unit||'par heure',
+    [prenom||null, nom||null, ville||null, skillName, skill_custom||null, skillsJson,
+     parseInt(tarif)||0, tarif_unit||'par heure',
      phone||null, mm_network||'MTN MoMo', bio||'', email||'', initials, color.bg, color.col,
      cat, photo||null, password_hash||null, fmtISO()]
   );
@@ -497,19 +501,20 @@ async function createUser(body) {
   return {
     id: result.insertId,
     prenom, nom, ville,
-    skill: skillName, cat,
+    skill: skillName, skills: skillsJson, cat,
     initials, bg_color: color.bg, text_color: color.col,
     email: email || '', phone,
   };
 }
 
 async function updateUser(id, body) {
-  const { prenom, nom, skill, ville, cat, bio, tarif, tarif_unit, availability, photo, mm_network, phone, password_hash } = body;
+  const { prenom, nom, skill, skills, ville, cat, bio, tarif, tarif_unit, availability, photo, mm_network, phone, password_hash } = body;
   const sets = [];
   const params = [];
   if (prenom       !== undefined) { sets.push('prenom = ?');       params.push(prenom); }
   if (nom          !== undefined) { sets.push('nom = ?');          params.push(nom); }
   if (skill        !== undefined) { sets.push('skill = ?');        params.push(skill); }
+  if (skills       !== undefined) { sets.push('skills = ?');       params.push(skills); }
   if (ville        !== undefined) { sets.push('ville = ?');        params.push(ville); }
   if (cat          !== undefined) { sets.push('cat = ?');          params.push(cat); }
   if (bio          !== undefined) { sets.push('bio = ?');          params.push(bio); }
