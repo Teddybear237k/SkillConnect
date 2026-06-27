@@ -1234,7 +1234,6 @@ footer{
     background:var(--card);border-left:1px solid var(--hairline);
     padding:72px 1.25rem 2rem;
     z-index:200;overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
     transform:translateX(100%);
     transition:transform .28s cubic-bezier(.25,.1,.25,1);
@@ -1244,6 +1243,7 @@ footer{
   .nav-links .nav-link{
     padding:.72rem 1rem;border-radius:var(--r-md);
     font-size:.95rem;width:100%;text-align:left;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;
   }
   .nav-links .nav-login,.nav-links .nav-cta{
     display:block;width:100%;text-align:center;
@@ -1796,6 +1796,22 @@ footer{
   font-size:1.25rem;color:var(--muted);transition:background .2s;flex-shrink:0;
 }
 .wa-emoji-btn:hover,.wa-attach-btn:hover{background:rgba(0,0,0,.07)}
+.wa-emoji-picker{
+  position:absolute;bottom:calc(100% + 8px);left:0;
+  background:var(--card);border:1px solid var(--hairline);
+  border-radius:var(--r-lg);box-shadow:0 8px 32px rgba(0,0,0,.15);
+  padding:.6rem;display:grid;grid-template-columns:repeat(8,1fr);
+  gap:.15rem;z-index:400;width:280px;
+  animation:fadeIn .15s ease;
+}
+.wa-emoji-picker button{
+  background:none;border:none;cursor:pointer;font-size:1.3rem;
+  padding:.3rem;border-radius:var(--r-sm);transition:background .15s;
+  line-height:1;
+}
+.wa-emoji-picker button:hover{background:rgba(0,0,0,.07)}
+html.dark .wa-emoji-picker button:hover{background:rgba(255,255,255,.1)}
+.wa-emoji-wrap{position:relative}
 .wa-input-main{
   flex:1;padding:.65rem 1rem;border:none;border-radius:10px;background:#fff;
   font-size:.9rem;outline:none;color:var(--ink);font-family:var(--font-body);
@@ -3282,9 +3298,12 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
           <button class="wa-file-preview-clear" onclick="clearWAFile()" title="Retirer">✕</button>
         </div>
         <div class="wa-input-bar">
-          <button class="wa-emoji-btn" title="Emoji" onclick="insertEmoji()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5" stroke-linecap="round"/></svg>
-          </button>
+          <div class="wa-emoji-wrap">
+            <button class="wa-emoji-btn" title="Emoji" onclick="toggleEmojiPicker(event)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px;height:24px"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </button>
+            <div class="wa-emoji-picker" id="emojiPicker" style="display:none"></div>
+          </div>
           <input class="wa-input-main" id="waInput" placeholder="Tapez un message" data-i18n-placeholder="msg_placeholder" oninput="emitTyping()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWAMsg()}"/>
           <input type="file" id="waFileInput" style="display:none" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" onchange="onWAFileSelect(this)">
           <button class="wa-attach-btn" title="Joindre un fichier" data-i18n-title="attach_file" onclick="openFileAttach()">
@@ -5379,12 +5398,44 @@ async function sendWAMsg(){
   loadWAContacts();
 }
 
-function insertEmoji(){
-  const emojis=['😊','👍','🙏','✅','📚','💡','🎉','🔥','👏','😄'];
-  const input=document.getElementById('waInput');
-  if(input)input.value+=emojis[Math.floor(Math.random()*emojis.length)];
-  input?.focus();
+const EMOJI_LIST = [
+  '😊','😄','😂','🤣','😍','🥰','😘','😎','🤩','🥳',
+  '😅','😆','🙂','🤔','😮','😢','😭','😡','🤯','😴',
+  '👍','👎','👏','🙌','🤝','🙏','💪','✌️','👌','🤞',
+  '❤️','🧡','💛','💚','💙','💜','🖤','🤍','💔','❣️',
+  '🎉','🎊','🎁','🎂','🏆','⭐','🌟','✨','💥','🔥',
+  '😀','😁','😃','🥹','🤗','🤭','🫡','🫠','🥺','😇',
+  '👋','🤙','☝️','✅','❌','⚡','💡','📚','💰','📱',
+  '🍕','🍔','🍜','☕','🎵','🚀','🌍','🏠','💼','📸'
+];
+
+function toggleEmojiPicker(e){
+  e.stopPropagation();
+  const picker = document.getElementById('emojiPicker');
+  if(!picker) return;
+  const isOpen = picker.style.display !== 'none';
+  if(isOpen){ picker.style.display='none'; return; }
+  if(!picker.innerHTML){
+    picker.innerHTML = EMOJI_LIST.map(em =>
+      `<button onclick="pickEmoji('${em}')" title="${em}">${em}</button>`
+    ).join('');
+  }
+  picker.style.display = 'grid';
 }
+function pickEmoji(em){
+  const input = document.getElementById('waInput');
+  if(input){
+    const pos = input.selectionStart ?? input.value.length;
+    input.value = input.value.slice(0,pos) + em + input.value.slice(pos);
+    input.setSelectionRange(pos+em.length, pos+em.length);
+    input.focus();
+  }
+  document.getElementById('emojiPicker').style.display='none';
+}
+document.addEventListener('click', ()=>{
+  const picker = document.getElementById('emojiPicker');
+  if(picker) picker.style.display='none';
+});
 
 // ═══ TESTIMONIALS ════════════════════════════════════════════════════
 function initTestimonials(){
