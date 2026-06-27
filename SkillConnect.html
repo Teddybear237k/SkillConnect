@@ -2188,13 +2188,18 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 /* ═══════════════════════════════════════════════════════════════
    MISSIONS GROUPÉES
 ═══════════════════════════════════════════════════════════════ */
-.group-talent-row{display:flex;gap:.6rem;align-items:center;background:var(--surface-2,#f9f9f9);border:1.5px solid var(--border);border-radius:var(--r-md);padding:.65rem .9rem;margin-bottom:.6rem}
-.group-talent-row select,.group-talent-row input{flex:1;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.83rem;background:var(--surface-2,#fff);color:var(--text);min-width:0}
-.group-talent-row input{max-width:110px}
+.group-talent-row{display:flex;gap:.6rem;align-items:center;background:var(--card);border:1.5px solid var(--hairline);border-radius:var(--r-md);padding:.65rem .9rem;margin-bottom:.6rem}
+.group-talent-row select,.group-talent-row input{flex:1;padding:.4rem .7rem;border:1.5px solid var(--hairline);border-radius:var(--r-sm);font-size:.83rem;background:var(--surface,#f8f9fa);color:var(--ink);min-width:0;outline:none;transition:border-color .15s}
+.group-talent-row select:focus,.group-talent-row input:focus{border-color:var(--g500)}
+.group-talent-row input{max-width:120px}
+html.dark .group-talent-row{background:#1A2030;border-color:#2A3244}
+html.dark .group-talent-row select,html.dark .group-talent-row input{background:#141921;border-color:#2A3244;color:var(--ink)}
 .group-remove-btn{background:none;border:none;color:#e53e3e;cursor:pointer;font-size:1.1rem;flex-shrink:0;padding:.2rem .4rem;border-radius:var(--r-sm);transition:.15s}
 .group-remove-btn:hover{background:rgba(229,62,62,.1)}
-.group-add-btn{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border:1.5px dashed var(--g400);border-radius:var(--r-md);background:none;color:var(--g500);font-size:.85rem;font-weight:600;cursor:pointer;width:100%;justify-content:center;transition:.2s;margin-bottom:.75rem}
+.group-add-btn{display:flex;align-items:center;gap:.5rem;padding:.55rem 1rem;border:1.5px dashed var(--g400);border-radius:var(--r-md);background:none;color:var(--g500);font-size:.85rem;font-weight:600;cursor:pointer;width:100%;justify-content:center;transition:.2s;margin-bottom:.75rem;line-height:1}
+.group-add-btn svg{flex-shrink:0;display:block}
 .group-add-btn:hover{background:rgba(29,158,117,.06)}
+html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
 .group-total-box{background:var(--g50,#E1F5EE);border:1.5px solid var(--g200);border-radius:var(--r-md);padding:.85rem 1rem}
 .group-total-line{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);margin-bottom:.3rem}
 .group-total-line.grand{font-weight:800;font-size:1rem;color:var(--g800);margin-top:.5rem;border-top:1px solid var(--g200);padding-top:.5rem}
