@@ -464,6 +464,7 @@ body:has(button:hover) .cursor{background:var(--a400);width:16px;height:16px}
   background:rgba(250,250,248,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-bottom:1px solid transparent;
   transition:border-color .3s,box-shadow .3s;
+  overflow:visible;
 }
 .nav.scrolled{border-color:var(--hairline);box-shadow:var(--shadow-sm)}
 .nav-logo{
@@ -1197,22 +1198,26 @@ footer{
    MOBILE
 ═══════════════════════════════════════════════════════════════ */
 /* ─── Mobile nav overlay ─────────────────────────────────────────── */
-.nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:98;touch-action:none}
+.nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;touch-action:none}
 .nav-overlay.open{display:block}
 
 @media(max-width:768px){
   /* Slide-in drawer from the right */
   .nav-links{
     display:flex;flex-direction:column;align-items:stretch;
-    position:fixed;top:0;right:-100%;bottom:0;
+    position:fixed;top:0;right:0;
+    height:100svh;height:100vh; /* svh = small viewport (without browser chrome) */
     width:min(280px,85vw);
     background:var(--card);border-left:1px solid var(--hairline);
     padding:72px 1.25rem 2rem;
-    z-index:99;overflow-y:auto;
-    transition:right .28s cubic-bezier(.25,.1,.25,1);
+    z-index:200;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    transform:translateX(100%);
+    transition:transform .28s cubic-bezier(.25,.1,.25,1);
     gap:.15rem;margin-left:0;
   }
-  .nav-links.open{right:0;box-shadow:-8px 0 32px rgba(0,0,0,.18)}
+  .nav-links.open{transform:translateX(0);box-shadow:-8px 0 32px rgba(0,0,0,.18)}
   .nav-links .nav-link{
     padding:.72rem 1rem;border-radius:var(--r-md);
     font-size:.95rem;width:100%;text-align:left;
