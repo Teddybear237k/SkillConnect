@@ -491,7 +491,7 @@ async function createUser(body) {
 
   const [result] = await pool.execute(
     `INSERT INTO users (prenom,nom,ville,skill,skill_custom,skills,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,email_verified,created_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,0,'available',?,?,0,?)`,
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,0,'available',?,?,0,?)`,
     [prenom||null, nom||null, ville||null, skillName, skill_custom||null, skillsJson,
      parseInt(tarif)||0, tarif_unit||'par heure',
      phone||null, mm_network||'MTN MoMo', bio||'', email||'', initials, color.bg, color.col,
