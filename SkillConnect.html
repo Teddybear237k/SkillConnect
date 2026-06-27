@@ -1658,6 +1658,7 @@ footer{
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   transition:background .2s;color:var(--muted);
 }
+.wa-back-mobile{display:none}
 .wa-icon-btn:hover{background:rgba(0,0,0,.07)}
 .wa-icon-btn svg{width:20px;height:20px}
 .wa-sidebar-actions{display:flex;gap:.25rem}
@@ -1784,6 +1785,7 @@ footer{
   .wa-chat-panel{display:none;position:fixed;inset:64px 0 0 0;z-index:50}
   .wa-chat-panel.mobile-open{display:flex}
   .wa-wrap{height:calc(100vh - 64px)}
+  .wa-back-mobile{display:flex}
 }
 
 /* ─── Filtres avancés ───────────────────────────────────────────────── */
@@ -2620,6 +2622,22 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
               <input type="email" class="form-input" placeholder="ton@email.com" id="fEmail"/>
             </div>
             <div class="form-group full">
+              <label class="form-label">Photo de profil <span style="font-weight:400;color:var(--muted)">(optionnel)</span></label>
+              <div style="display:flex;align-items:center;gap:1rem">
+                <div id="inscPhotoPreview" style="width:68px;height:68px;border-radius:50%;background:var(--g50);border:2px dashed var(--g200);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;transition:border-color .2s">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" style="width:26px;height:26px;stroke:var(--g300)"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div>
+                  <label class="photo-upload-label" for="fPhotoFile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Choisir une photo
+                    <input type="file" id="fPhotoFile" accept="image/*" onchange="previewInscPhoto(this)">
+                  </label>
+                  <div class="photo-msg">JPG, PNG — max 5 Mo. Tu pourras en ajouter une plus tard depuis ton profil.</div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group full">
               <label class="form-label">Mot de passe <sup>*</sup></label>
               <input type="password" class="form-input" placeholder="Minimum 6 caractères" id="fPassword" oninput="updatePasswordStrength(this.value)"/>
               <div id="pwStrengthWrap" style="margin-top:.4rem;display:none">
@@ -3191,6 +3209,9 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
       <!-- Chat actif -->
       <div class="wa-active-chat" id="waActiveChat">
         <div class="wa-chat-header">
+          <button class="wa-icon-btn wa-back-mobile" onclick="closeMobileChat()" aria-label="Retour" title="Retour">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          </button>
           <div class="wa-chat-avatar" id="waChatAvatar" style="background:var(--g50);color:var(--g800)">KN</div>
           <div class="wa-chat-info">
             <div class="wa-chat-name" id="waChatName">Kevin Nkomo</div>
@@ -3295,7 +3316,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
           Payer directement
         </button>
       </div>
-      <div style="display:flex;gap:.5rem;margin-top:.1rem">
+      <div style="display:flex;gap:.5rem;margin-top:.1rem;align-items:center;flex-wrap:wrap">
         <button class="report-btn" onclick="openReportModal(currentModalTalentId)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span data-i18n="report_profile">Signaler ce profil</span>
@@ -3303,6 +3324,10 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
         <button class="report-btn" onclick="generateModalContract()" style="color:var(--g600)" id="modalContractBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           <span data-i18n="contract_pdf">Contrat PDF</span>
+        </button>
+        <button class="report-btn" onclick="closeModal();showTalentProfile(currentModalTalentId)" style="color:var(--g600);margin-left:auto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Voir le profil complet →
         </button>
       </div>
       <!-- Avertissement conflits de réservation -->
@@ -4291,7 +4316,12 @@ async function submitForm(){
   if(!password||password.length<6){toast('Mot de passe requis (minimum 6 caractères)');return}
   if(skill==='Autres'&&!skillCustom){toast('Veuillez préciser votre compétence');return}
 
-  const result=await api('/register',{method:'POST',body:{prenom,nom,ville,skill,skill_custom:skillCustom,tarif:parseInt(tarif)||0,tarif_unit:unit,phone,mm_network:mm,bio,email,password}});
+  let photoBase64='';
+  const photoFile=document.getElementById('fPhotoFile')?.files?.[0];
+  if(photoFile){
+    photoBase64=await new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(photoFile);});
+  }
+  const result=await api('/register',{method:'POST',body:{prenom,nom,ville,skill,skill_custom:skillCustom,tarif:parseInt(tarif)||0,tarif_unit:unit,phone,mm_network:mm,bio,email,password,photo:photoBase64||undefined}});
 
   if(result&&result.success){
     const u=result.user;
@@ -4314,6 +4344,22 @@ async function submitForm(){
   toast('Profil créé avec succès !');
   updateNavUser();
   if (window._checkOnboarding) window._checkOnboarding();
+}
+
+function previewInscPhoto(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  if(file.size>5*1024*1024){toast('Image trop lourde (max 5 Mo)');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const prev=document.getElementById('inscPhotoPreview');
+    if(prev)prev.innerHTML=`<img src="${e.target.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function closeMobileChat(){
+  document.getElementById('waChatPanel')?.classList.remove('mobile-open');
 }
 
 function resetForm(){
@@ -4917,7 +4963,7 @@ async function initDashboard(){
     },200);
 
     const bars=data.skillStats.length?data.skillStats.map(s=>({label:s.title,val:Math.round((s.cnt/data.missions)*100)||10,n:s.cnt})):
-      [{label:u.skill,val:80,n:data.missions}];
+      [{label:u.skill||'Compétence principale',val:80,n:data.missions||0}];
     renderDashBars(bars);
 
     const acts=data.recentActivity.length?data.recentActivity.map(a=>({
@@ -7652,14 +7698,15 @@ async function rechercherCarte() {
       const lat = t.coords.lat + jitter;
       const lng = t.coords.lng + jitter * 0.8;
 
-      const marker = L.circleMarker([lat, lng], {
-        radius: 13,
-        fillColor: t.bg_color || '#1D9E75',
-        color: '#fff',
-        weight: 2.5,
-        opacity: 1,
-        fillOpacity: 0.92,
-      }).addTo(_carteMap);
+      const avatarContent = t.photo
+        ? `<img src="${escHtml(t.photo)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
+        : `<span style="font-size:10px;font-weight:700;color:${escHtml(t.text_color||'#085041')}">${escHtml(t.initials||'?')}</span>`;
+      const divIcon = L.divIcon({
+        className:'',
+        html:`<div style="width:36px;height:36px;border-radius:50%;background:${escHtml(t.bg_color||'#C8EFE3')};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer">${avatarContent}</div>`,
+        iconSize:[36,36],iconAnchor:[18,18],popupAnchor:[0,-20]
+      });
+      const marker = L.marker([lat, lng], {icon:divIcon}).addTo(_carteMap);
 
       const name  = ((t.prenom||'') + ' ' + (t.nom||'')).trim();
       const skill = t.skill || t.skill_custom || '—';

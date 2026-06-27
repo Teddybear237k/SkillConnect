@@ -465,7 +465,7 @@ async function getTalentById(id) {
 }
 
 async function createUser(body) {
-  const { prenom, nom, ville, skill, skill_custom, tarif, tarif_unit, phone, mm_network, bio, email, password_hash } = body;
+  const { prenom, nom, ville, skill, skill_custom, tarif, tarif_unit, phone, mm_network, bio, email, password_hash, photo } = body;
   const skillName = skill === 'Autres' ? (skill_custom || 'Autre compétence') : skill;
   const cat = mapSkillToCat(skillName);
   const initials = ((prenom || ' ')[0] + (nom || ' ')[0]).toUpperCase();
@@ -474,10 +474,10 @@ async function createUser(body) {
 
   const [result] = await pool.execute(
     `INSERT INTO users (prenom,nom,ville,skill,skill_custom,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,email_verified,created_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,1,'available',null,?,0,?)`,
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,1,'available',?,?,0,?)`,
     [prenom||null, nom||null, ville||null, skillName, skill_custom||null, parseInt(tarif)||0, tarif_unit||'par heure',
      phone||null, mm_network||'MTN MoMo', bio||'', email||'', initials, color.bg, color.col,
-     cat, password_hash||null, fmtISO()]
+     cat, photo||null, password_hash||null, fmtISO()]
   );
 
   return {
