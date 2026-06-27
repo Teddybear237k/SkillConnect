@@ -4675,16 +4675,17 @@ async function confirmPayment(){
   if(result && result.success){
     const comm = Math.round(amount * 0.07);
     const net  = amount - comm;
-    let msg = `${net.toLocaleString('fr-FR')} FCFA en séquestre via ${paySelectedMM} MoMo. Ils seront libérés après validation de la mission.`;
-    if(result.campay){
-      msg = `📲 Confirmez ${amount.toLocaleString('fr-FR')} FCFA sur votre téléphone (${result.campay.operator||paySelectedMM}). Code USSD : ${result.campay.ussd_code||'—'}`;
+    let msg = `${net.toLocaleString('fr-FR')} FCFA en séquestre via ${paySelectedMM}. Ils seront libérés après validation de la mission.`;
+    if(result.monetbil?.payment_url){
+      window.open(result.monetbil.payment_url, '_blank');
+      msg = `📲 La page de paiement Monetbil s'est ouverte dans un nouvel onglet. Finalisez le paiement de ${amount.toLocaleString('fr-FR')} FCFA.`;
     }
     document.getElementById('paySuccessMsg').textContent = msg;
     document.getElementById('payFormBody').style.display = 'none';
     const succ = document.getElementById('paySuccess');
     succ.style.display = 'block';
     succ.classList.add('show');
-    toast(result.campay ? 'Confirmez sur votre téléphone !' : 'Paiement enregistré avec succès !');
+    toast(result.monetbil ? 'Page de paiement ouverte !' : 'Paiement enregistré !');
   } else {
     btn.disabled = false;
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Confirmer le paiement sécurisé';
@@ -4756,7 +4757,7 @@ async function requestDeposit(){
 
   const btn = document.querySelector('[onclick="requestDeposit()"]');
   const orig = btn.textContent;
-  btn.disabled = true; btn.textContent = '⟳ Connexion Campay…';
+  btn.disabled = true; btn.textContent = '⟳ Connexion Monetbil…';
 
   // Récupère le numéro de téléphone de l'utilisateur
   const dashData = await api('/dashboard/' + userId);
@@ -4769,16 +4770,15 @@ async function requestDeposit(){
   btn.disabled = false; btn.textContent = orig;
 
   if(result && result.success){
-    if(result.campay){
-      // Campay actif — demander la confirmation sur le téléphone
+    if(result.monetbil?.payment_url){
+      // Monetbil actif — ouvrir la page de paiement
+      window.open(result.monetbil.payment_url, '_blank');
       msg.className = 'withdraw-msg success';
-      msg.innerHTML = `📲 <strong>Confirmez sur votre téléphone !</strong><br>
-        Un prompt de paiement a été envoyé sur le <strong>${network}</strong> (${phone}).<br>
-        Montant : <strong>${amount.toLocaleString('fr-FR')} FCFA</strong><br>
-        <small style="color:var(--muted)">Code USSD : ${result.campay.ussd_code||'—'}</small>`;
+      msg.innerHTML = `📲 <strong>Page de paiement ouverte !</strong><br>
+        Finalisez le paiement de <strong>${amount.toLocaleString('fr-FR')} FCFA</strong> dans l'onglet Monetbil.<br>
+        <small style="color:var(--muted)">Votre portefeuille sera crédité automatiquement après confirmation.</small>`;
       startPollingDeposit(result.transaction.id, msg);
     } else {
-      // Mode simulation
       msg.className = 'withdraw-msg success';
       msg.textContent = `✅ Dépôt de ${amount.toLocaleString('fr-FR')} FCFA confirmé (mode simulation).`;
       setTimeout(()=>loadWallet(), 800);
@@ -4791,13 +4791,13 @@ async function requestDeposit(){
   }
 }
 
-// Polling — vérifie si le paiement Campay a été confirmé
+// Polling — vérifie si le paiement Monetbil a été confirmé (fallback si webhook manquant)
 function startPollingDeposit(txId, msgEl){
   let attempts = 0;
-  const max = 20; // 20 × 3s = 60s
+  const max = 20; // 20 × 6s = 2min
   const timer = setInterval(async ()=>{
     attempts++;
-    const status = await api('/transactions/'+txId+'/campay-status');
+    const status = await api('/transactions/'+txId+'/payment-status');
     if(status && status.status === 'completed'){
       clearInterval(timer);
       msgEl.innerHTML = `✅ <strong>Paiement confirmé !</strong> Votre portefeuille a été crédité.`;
@@ -4810,9 +4810,9 @@ function startPollingDeposit(txId, msgEl){
       msgEl.textContent = '❌ Paiement échoué ou annulé. Veuillez réessayer.';
     } else if(attempts >= max){
       clearInterval(timer);
-      msgEl.innerHTML += '<br><small style="color:var(--muted)">Délai dépassé — le paiement sera crédité automatiquement si confirmé.</small>';
+      msgEl.innerHTML += '<br><small style="color:var(--muted)">Le paiement sera crédité automatiquement une fois confirmé par Monetbil.</small>';
     }
-  }, 3000);
+  }, 6000);
 }
 
 async function requestWithdraw(){
@@ -4838,11 +4838,7 @@ async function requestWithdraw(){
 
   if(result && result.success){
     msg.className = 'withdraw-msg success';
-    if(result.transaction?.campay_status === 'SUCCESSFUL'){
-      msg.textContent = `✅ ${amount.toLocaleString('fr-FR')} FCFA envoyés sur ${phone} via ${network} !`;
-    } else {
-      msg.textContent = `✅ Retrait de ${amount.toLocaleString('fr-FR')} FCFA initié. Vous recevrez les fonds sous peu.`;
-    }
+    msg.textContent = `✅ Retrait de ${amount.toLocaleString('fr-FR')} FCFA demandé. Traitement sous 24–48h par notre équipe.`;
     document.getElementById('withdrawAmount').value = '';
     loadWallet();
     loadTransactions();
@@ -5493,7 +5489,7 @@ const LEGAL_CONTENT = {
         <ul>
           <li>Créer et gérer votre compte sur SkillConnect</li>
           <li>Faciliter la mise en relation avec des talents ou des clients</li>
-          <li>Traiter les paiements Mobile Money via Campay (partenaire agréé)</li>
+          <li>Traiter les paiements Mobile Money via Monetbil (partenaire agréé)</li>
           <li>Vous envoyer des notifications et confirmations de paiement par SMS</li>
           <li>Améliorer nos services et la sécurité de la plateforme</li>
         </ul>
@@ -5502,7 +5498,7 @@ const LEGAL_CONTENT = {
         <h3>4. Partage des données</h3>
         <p>Nous ne vendons jamais vos données. Elles peuvent être partagées avec :</p>
         <ul>
-          <li><strong>Campay</strong> : notre prestataire de paiement Mobile Money, pour le traitement des transactions MTN MoMo et Orange Money</li>
+          <li><strong>Monetbil</strong> : notre prestataire de paiement Mobile Money, pour le traitement des transactions MTN MoMo et Orange Money</li>
           <li><strong>Africa's Talking</strong> : notre prestataire SMS pour les notifications</li>
           <li>Les autorités compétentes, uniquement si requis par la loi camerounaise</li>
         </ul>
@@ -5520,7 +5516,7 @@ const LEGAL_CONTENT = {
       </div>
       <div class="legal-section">
         <h3>6. Sécurité</h3>
-        <p>Vos mots de passe sont chiffrés (bcrypt). Les tokens d'authentification sont sécurisés (JWT). Nous n'avons jamais accès à votre code PIN Mobile Money — les paiements sont traités directement par Campay.</p>
+        <p>Vos mots de passe sont chiffrés (bcrypt). Les tokens d'authentification sont sécurisés (JWT). Nous n'avons jamais accès à votre code PIN Mobile Money — les paiements sont traités directement par Monetbil.</p>
       </div>
       <div class="legal-section">
         <h3>7. Contact</h3>
@@ -5620,7 +5616,7 @@ const LEGAL_CONTENT = {
         <p>Nous utilisons des ressources externes limitées :</p>
         <ul>
           <li><strong>Google Fonts</strong> — pour les polices d'écriture (Syne, DM Sans). Google peut déposer des cookies de performance</li>
-          <li><strong>Campay</strong> — notre prestataire de paiement gère ses propres cookies lors du traitement des transactions</li>
+          <li><strong>Monetbil</strong> — notre prestataire de paiement gère ses propres cookies lors du traitement des transactions</li>
         </ul>
         <p>Nous n'utilisons <strong>aucun cookie publicitaire, de suivi ou d'analytique</strong> (pas de Google Analytics, pas de Facebook Pixel).</p>
       </div>

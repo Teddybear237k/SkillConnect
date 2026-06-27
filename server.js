@@ -12,7 +12,7 @@ const crypto       = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const webPush      = require('web-push');
 const db           = require('./db/database');
-const campay       = require('./campay');
+const monetbil     = require('./monetbil');
 
 // VAPID push notifications
 if (process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE) {
@@ -400,20 +400,25 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
     const sender   = await db.getTalentById(parseInt(req.body.senderId));
     const receiver = await db.getTalentById(parseInt(req.body.receiverId));
 
-    if (campay.isConfigured() && sender?.phone) {
-      let campayResult;
+    if (monetbil.isConfigured() && sender?.phone) {
+      let mbResult;
       try {
-        campayResult = await campay.collect({
-          amount:      parseInt(req.body.amount),
-          phone:       sender.phone,
-          description: `Mission : ${req.body.description}`,
-          externalRef: `sc-pay-${Date.now()}`,
+        const appUrl = process.env.APP_URL || 'http://localhost:3000';
+        mbResult = await monetbil.initPayment({
+          amount:    parseInt(req.body.amount),
+          phone:     sender.phone,
+          firstName: sender.prenom,
+          lastName:  sender.nom,
+          email:     sender.email || '',
+          itemRef:   `sc-pay-${Date.now()}`,
+          notifyUrl: `${appUrl}/api/monetbil/webhook`,
+          returnUrl: appUrl,
         });
-      } catch (campayErr) {
-        return res.status(502).json({ error: 'Erreur Campay : ' + campayErr.message });
+      } catch (mbErr) {
+        return res.status(502).json({ error: 'Erreur Monetbil : ' + mbErr.message });
       }
 
-      const tx  = await db.createTransaction({ ...req.body, campay_reference: campayResult.reference });
+      const tx  = await db.createTransaction({ ...req.body, campay_reference: mbResult.transaction_id });
       const net = tx.amount - tx.commission;
       emitToUser(tx.receiver_id, 'new_notification', {
         type: 'payment',
@@ -421,11 +426,10 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
       });
       return res.json({
         success: true, transaction: tx,
-        campay: {
-          reference: campayResult.reference,
-          ussd_code: campayResult.ussd_code,
-          operator:  campayResult.operator,
-          message:   `Confirmez ${tx.amount.toLocaleString('fr-FR')} FCFA sur votre téléphone (${campayResult.operator || req.body.network || 'MoMo'})`,
+        monetbil: {
+          transaction_id: mbResult.transaction_id,
+          payment_url:    mbResult.payment_url,
+          message: `Cliquez sur le lien pour payer ${tx.amount.toLocaleString('fr-FR')} FCFA via Mobile Money.`,
         },
       });
     }
@@ -533,22 +537,8 @@ app.post('/api/withdraw', authenticateToken, async (req, res) => {
       amount, network: req.body.network, phone: req.body.phone,
     });
 
-    if (campay.isConfigured()) {
-      try {
-        const result = await campay.transfer({
-          amount, phone: req.body.phone,
-          description: `Retrait SkillConnect #${tx.id}`,
-          externalRef: `sc-withdraw-${tx.id}`,
-        });
-        await db.updateTransactionStatus(tx.id, result.status === 'SUCCESSFUL' ? 'completed' : 'pending');
-        tx.campay_reference = result.reference;
-        tx.campay_status    = result.status;
-      } catch (campayErr) {
-        console.error('Campay transfer error:', campayErr.message);
-      }
-    } else {
-      await db.updateTransactionStatus(tx.id, 'completed');
-    }
+    // Monetbil ne supporte pas les paiements sortants — traitement manuel par l'admin
+    await db.updateTransactionStatus(tx.id, 'pending');
 
     sendSMS(req.body.phone, `SkillConnect : Retrait de ${amount.toLocaleString('fr-FR')} FCFA via ${req.body.network} initié.`);
     res.json({ success: true, transaction: tx });
@@ -567,31 +557,32 @@ app.post('/api/deposit', authenticateToken, async (req, res) => {
     if (isNaN(amount) || amount < 100)
       return res.status(400).json({ error: 'Montant minimum : 100 FCFA.' });
 
-    if (campay.isConfigured()) {
-      let campayResult;
+    if (monetbil.isConfigured()) {
+      let mbResult;
       try {
-        campayResult = await campay.collect({
+        const appUrl = process.env.APP_URL || 'http://localhost:3000';
+        mbResult = await monetbil.initPayment({
           amount, phone: req.body.phone,
-          description: 'Dépôt SkillConnect',
-          externalRef: `sc-deposit-${Date.now()}`,
+          itemRef:   `sc-deposit-${Date.now()}`,
+          notifyUrl: `${appUrl}/api/monetbil/webhook`,
+          returnUrl: appUrl,
         });
-      } catch (campayErr) {
-        return res.status(502).json({ error: 'Erreur Campay : ' + campayErr.message });
+      } catch (mbErr) {
+        return res.status(502).json({ error: 'Erreur Monetbil : ' + mbErr.message });
       }
 
       const tx = await db.createDeposit({
         userId: parseInt(req.body.userId),
         amount, network: req.body.network, phone: req.body.phone,
-        campay_reference: campayResult.reference,
+        campay_reference: mbResult.transaction_id,
       });
 
       return res.json({
         success: true, transaction: tx,
-        campay: {
-          reference: campayResult.reference,
-          ussd_code: campayResult.ussd_code,
-          operator:  campayResult.operator,
-          message:   `Confirmez ${amount.toLocaleString('fr-FR')} FCFA sur votre téléphone (${campayResult.operator || req.body.network})`,
+        monetbil: {
+          transaction_id: mbResult.transaction_id,
+          payment_url:    mbResult.payment_url,
+          message: `Cliquez sur le lien pour déposer ${amount.toLocaleString('fr-FR')} FCFA via Mobile Money.`,
         },
       });
     }
@@ -604,65 +595,73 @@ app.post('/api/deposit', authenticateToken, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-// ─── Statut Campay (polling) ──────────────────────────────────────────────────
-app.get('/api/transactions/:id/campay-status', authenticateToken, async (req, res) => {
+// ─── Statut Monetbil (polling fallback) ───────────────────────────────────────
+app.get('/api/transactions/:id/payment-status', authenticateToken, async (req, res) => {
   try {
     const txList = await db.getTransactions(req.user.userId);
     const tx = txList.find(t => String(t.id) === String(req.params.id));
     if (!tx) return res.status(404).json({ error: 'Transaction non trouvée.' });
 
-    if (!tx.campay_reference || !campay.isConfigured())
-      return res.json({ status: tx.status, campay_status: null });
+    if (!tx.campay_reference || !monetbil.isConfigured())
+      return res.json({ status: tx.status });
 
-    const result = await campay.checkTransaction(tx.campay_reference);
-    if (!result) return res.json({ status: tx.status, campay_status: null });
+    const result = await monetbil.checkPayment(tx.campay_reference);
+    if (!result) return res.json({ status: tx.status });
 
-    if (result.status === 'SUCCESSFUL' && tx.status !== 'completed') {
+    // status Monetbil : 1 = succès, 2 = en attente, 3 = échec
+    if ((result.status === 1 || result.status === '1') && tx.status !== 'completed') {
       await db.updateTransactionStatus(tx.id, 'completed');
       const notif = await db.createNotification({
         userId: req.user.userId,
         type: 'payment',
-        message: `Dépôt de ${Number(result.amount).toLocaleString('fr-FR')} FCFA confirmé !`,
+        message: `Dépôt de ${Number(result.amount || tx.amount).toLocaleString('fr-FR')} FCFA confirmé !`,
       });
       emitToUser(req.user.userId, 'new_notification', notif);
-    } else if (result.status === 'FAILED' && tx.status === 'pending') {
+    } else if ((result.status === 3 || result.status === '3') && tx.status === 'pending') {
       await db.updateTransactionStatus(tx.id, 'cancelled');
     }
 
-    res.json({
-      status: result.status === 'SUCCESSFUL' ? 'completed' : result.status.toLowerCase(),
-      campay_status: result.status,
-    });
+    const statusMap = { '1': 'completed', '2': 'pending', '3': 'cancelled' };
+    res.json({ status: statusMap[String(result.status)] || tx.status });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ─── Webhook Campay ───────────────────────────────────────────────────────────
-app.post('/api/campay/webhook', async (req, res) => {
+// ─── Webhook Monetbil ─────────────────────────────────────────────────────────
+app.post('/api/monetbil/webhook', async (req, res) => {
   try {
-    const { reference, status } = req.body;
-    console.log(`🔔 Campay webhook : ref=${reference} status=${status}`);
-    if (!reference || !status) return res.status(400).json({ error: 'Données manquantes' });
+    const { transaction_id, status, payment_ref, amount } = req.body;
+    console.log(`🔔 Monetbil webhook : txId=${transaction_id} status=${status}`);
 
-    const tx = await db.findTransactionByCampayRef(reference);
+    if (!monetbil.verifyWebhook(req.body)) {
+      console.warn('Monetbil webhook signature invalide');
+      return res.status(400).json({ error: 'Signature invalide' });
+    }
+
+    const tx = await db.findTransactionByCampayRef(transaction_id || payment_ref);
     if (tx) {
-      if (status === 'SUCCESSFUL' && tx.status !== 'completed') {
+      const success = status === 1 || status === '1' || status === 'success';
+      const failed  = status === 3 || status === '3' || status === 'failed';
+
+      if (success && tx.status !== 'completed') {
         await db.updateTransactionStatus(tx.id, 'completed');
         const userId = tx.type === 'deposit' ? tx.receiver_id : tx.sender_id;
         const notif  = await db.createNotification({
           userId,
           type: 'payment',
-          message: `Paiement de ${Number(tx.amount).toLocaleString('fr-FR')} FCFA confirmé via ${tx.network} !`,
+          message: `Paiement de ${Number(amount || tx.amount).toLocaleString('fr-FR')} FCFA confirmé via Mobile Money !`,
         });
         emitToUser(userId, 'new_notification', notif);
         emitToUser(userId, 'payment_confirmed', { txId: tx.id, amount: tx.amount });
-      } else if (status === 'FAILED') {
+      } else if (failed) {
         await db.updateTransactionStatus(tx.id, 'cancelled');
+        const userId = tx.type === 'deposit' ? tx.receiver_id : tx.sender_id;
+        emitToUser(userId, 'payment_failed', { txId: tx.id });
       }
     }
 
     res.json({ received: true });
   } catch (e) {
-    console.error('Webhook error:', e.message);
+    console.error('Webhook Monetbil error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
