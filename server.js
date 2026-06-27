@@ -385,6 +385,10 @@ app.put('/api/messages/read/:userId/:contactId', authenticateToken, async (req, 
     return res.status(403).json({ error: 'Accès refusé.' });
   try {
     await db.markAsRead(parseInt(req.params.userId), parseInt(req.params.contactId));
+    // Notifier l'expéditeur que ses messages ont été lus
+    emitToUser(parseInt(req.params.contactId), 'messages_read', {
+      by: parseInt(req.params.userId),
+    });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

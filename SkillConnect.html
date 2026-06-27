@@ -1750,7 +1750,8 @@ footer{
 .wa-msg-bubble.me{background:#d9fdd3;color:var(--ink);border-radius:7.5px 0 7.5px 7.5px}
 .wa-msg-footer{display:flex;align-items:center;justify-content:flex-end;gap:.25rem;margin-top:.2rem}
 .wa-msg-time{font-size:.68rem;color:rgba(0,0,0,.45);white-space:nowrap}
-.wa-msg-ticks{font-size:.75rem;color:var(--g500)}
+.wa-msg-ticks{font-size:.75rem;color:var(--muted)}
+.wa-msg-ticks.read{color:#34B7F1}
 
 .wa-typing{display:flex;align-items:center;gap:.3rem;padding:.45rem .85rem;
   background:#fff;border-radius:0 7.5px 7.5px 7.5px;width:fit-content;
@@ -5143,12 +5144,13 @@ async function loadWAMessages(contactId){
       lastDate=dateStr;
     }
     const time=dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const tickClass = isMe ? (m.read ? 'wa-msg-ticks read' : 'wa-msg-ticks') : '';
     html+=`<div class="wa-msg${isMe?' me':''}">
       <div class="wa-msg-bubble ${isMe?'me':'them'}">
         ${renderWAFileContent(m)}
         <div class="wa-msg-footer">
           <span class="wa-msg-time">${time}</span>
-          ${isMe?'<span class="wa-msg-ticks">✓✓</span>':''}
+          ${isMe?`<span class="${tickClass}">✓✓</span>`:''}
         </div>
       </div>
     </div>`;
@@ -5250,28 +5252,7 @@ async function sendWAMsg(){
   container.scrollTop=container.scrollHeight;
 
   const result=await api('/messages',{method:'POST',body});
-  if(result)el.querySelector('.wa-msg-ticks').textContent='✓✓';
-
-  // Typing indicator + auto-reply
-  setTimeout(()=>{
-    const bar=document.getElementById('waTypingBar');
-    if(bar)bar.style.display='block';
-  },600);
-  setTimeout(()=>{
-    const bar=document.getElementById('waTypingBar');
-    if(bar)bar.style.display='none';
-    const replies=["Parfait, c'est noté !","D'accord, je vous confirme ça.","Super, on fait comme ça !","Entendu ! Je vous envoie un devis.","Merci pour votre message, je vous réponds dès que possible."];
-    const reply=replies[Math.floor(Math.random()*replies.length)];
-    const replyTime=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    const el2=document.createElement('div');
-    el2.className='wa-msg';
-    el2.innerHTML=`<div class="wa-msg-bubble them">${reply}<div class="wa-msg-footer"><span class="wa-msg-time">${replyTime}</span></div></div>`;
-    container.appendChild(el2);
-    container.scrollTop=container.scrollHeight;
-    loadWAContacts();
-    // Save auto-reply to API
-    api('/messages',{method:'POST',body:{senderId:waActiveContactId,receiverId:waCurrentUserId,text:reply}});
-  },2200);
+  if(result) el.querySelector('.wa-msg-ticks').textContent='✓✓';
 
   loadWAContacts();
 }
@@ -5708,6 +5689,18 @@ function initSocket(){
       if(String(from) === String(waActiveContactId)){
         document.getElementById('waTypingBar').style.display = 'none';
       }
+    });
+
+    socket.on('messages_read', ({ by }) => {
+      if(String(by) === String(waActiveContactId)){
+        document.querySelectorAll('#waMessages .wa-msg-bubble.me .wa-msg-ticks').forEach(el => {
+          el.classList.add('read');
+        });
+      }
+    });
+
+    socket.on('payment_failed', ({ txId }) => {
+      toast('Paiement #' + txId + ' échoué ou annulé.');
     });
 
   } catch(e){ /* Socket.io non disponible */ }
