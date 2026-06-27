@@ -216,7 +216,21 @@ async function init() {
       reason      VARCHAR(200),
       description TEXT,
       status      VARCHAR(30) DEFAULT 'pending',
+      admin_note  TEXT,
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS bans (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      user_id    INT NOT NULL UNIQUE,
+      ban_type   VARCHAR(30) DEFAULT 'temp',
+      ban_until  DATETIME,
+      reason     TEXT,
+      admin_note TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX(user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
@@ -474,7 +488,7 @@ async function createUser(body) {
 
   const [result] = await pool.execute(
     `INSERT INTO users (prenom,nom,ville,skill,skill_custom,tarif,tarif_unit,phone,mm_network,bio,email,initials,bg_color,text_color,rating,reviews,badge,cat,validated,availability,photo,password_hash,email_verified,created_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,1,'available',?,?,0,?)`,
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,5.0,0,'new',?,0,'available',?,?,0,?)`,
     [prenom||null, nom||null, ville||null, skillName, skill_custom||null, parseInt(tarif)||0, tarif_unit||'par heure',
      phone||null, mm_network||'MTN MoMo', bio||'', email||'', initials, color.bg, color.col,
      cat, photo||null, password_hash||null, fmtISO()]
@@ -991,7 +1005,56 @@ async function createReport({ reporterId, reportedId, reason, description }) {
 }
 
 async function getAllReports() {
-  const [rows] = await pool.execute('SELECT * FROM reports ORDER BY created_at DESC');
+  const [rows] = await pool.execute(`
+    SELECT r.*,
+      u1.prenom AS reporter_prenom, u1.nom AS reporter_nom,
+      u2.prenom AS reported_prenom, u2.nom AS reported_nom
+    FROM reports r
+    LEFT JOIN users u1 ON u1.id = r.reporter_id
+    LEFT JOIN users u2 ON u2.id = r.reported_id
+    ORDER BY r.created_at DESC
+  `);
+  return rows;
+}
+
+async function updateReportStatus(reportId, status, adminNote) {
+  await pool.execute(
+    'UPDATE reports SET status=?, admin_note=? WHERE id=?',
+    [status, adminNote||null, parseInt(reportId)]
+  );
+}
+
+// ─── Bannissements ────────────────────────────────────────────────────────────
+async function banUser(userId, banType, banUntil, reason, adminNote) {
+  await pool.execute(
+    `INSERT INTO bans (user_id,ban_type,ban_until,reason,admin_note,created_at)
+     VALUES (?,?,?,?,?,?)
+     ON DUPLICATE KEY UPDATE ban_type=VALUES(ban_type),ban_until=VALUES(ban_until),reason=VALUES(reason),admin_note=VALUES(admin_note),created_at=VALUES(created_at)`,
+    [parseInt(userId), banType||'temp', banUntil||null, reason||'', adminNote||'', fmtISO()]
+  );
+}
+
+async function unbanUser(userId) {
+  await pool.execute('DELETE FROM bans WHERE user_id=?', [parseInt(userId)]);
+}
+
+async function getUserBan(userId) {
+  const [rows] = await pool.execute('SELECT * FROM bans WHERE user_id=?', [parseInt(userId)]);
+  if (!rows.length) return null;
+  const ban = rows[0];
+  if (ban.ban_type === 'temp' && ban.ban_until && new Date(ban.ban_until) < new Date()) {
+    await unbanUser(userId);
+    return null;
+  }
+  return ban;
+}
+
+async function getAllBans() {
+  const [rows] = await pool.execute(`
+    SELECT b.*, u.prenom, u.nom, u.email FROM bans b
+    LEFT JOIN users u ON u.id = b.user_id
+    ORDER BY b.created_at DESC
+  `);
   return rows;
 }
 
@@ -1328,7 +1391,8 @@ module.exports = {
   getSiteStats,
   getAdminStats, getAllUsers, toggleUserValidation, getAllTransactions,
   createDispute, getDisputeByTxId, getAllDisputes, resolveDispute,
-  createReport, getAllReports,
+  createReport, getAllReports, updateReportStatus,
+  banUser, unbanUser, getUserBan, getAllBans,
   createVerifyToken, findVerifyToken, markEmailVerified,
   replyToReview,
   createJobPost, getJobs, getJobById, applyToJob, getJobApplications,

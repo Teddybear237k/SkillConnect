@@ -3230,6 +3230,7 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
               </button>
               <div id="chatOptionsMenu" style="display:none;position:absolute;right:0;top:110%;background:var(--surface-2,#fff);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:200px;z-index:300;overflow:hidden">
                 <button onclick="blockChatContact()" style="width:100%;text-align:left;padding:.65rem 1rem;background:none;border:none;cursor:pointer;font-size:.88rem;color:var(--text);border-bottom:1px solid var(--border)" id="blockContactBtn">Bloquer ce contact</button>
+                <button onclick="reportChatContact()" style="width:100%;text-align:left;padding:.65rem 1rem;background:none;border:none;cursor:pointer;font-size:.88rem;color:#e07c00;border-bottom:1px solid var(--border)">🚩 Signaler ce contact</button>
                 <button onclick="deleteChatConversation()" style="width:100%;text-align:left;padding:.65rem 1rem;background:none;border:none;cursor:pointer;font-size:.88rem;color:#e53e3e">Supprimer la conversation</button>
               </div>
             </div>
@@ -3408,10 +3409,12 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
     <div style="font-size:.8rem;font-weight:600;color:var(--ink);margin-bottom:.35rem">Motif *</div>
     <select id="reportReason" style="margin-bottom:.75rem">
       <option value="">Choisissez un motif…</option>
-      <option value="spam">Spam ou arnaque</option>
-      <option value="comportement">Comportement inapproprié</option>
-      <option value="faux_profil">Faux profil</option>
+      <option value="irrespect">Irrespect / langage abusif</option>
       <option value="harcelement">Harcèlement</option>
+      <option value="fraude">Fraude / escroquerie</option>
+      <option value="spam">Spam</option>
+      <option value="faux_profil">Faux profil</option>
+      <option value="comportement">Comportement inapproprié</option>
       <option value="autre">Autre</option>
     </select>
     <textarea id="reportDescription" placeholder="Détails supplémentaires (optionnel)…" style="min-height:60px"></textarea>
@@ -3737,8 +3740,16 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
       <div class="admin-section-title" style="margin-top:2rem">Signalements</div>
       <div style="overflow-x:auto">
         <table class="admin-table">
-          <thead><tr><th>ID</th><th>Signaleur</th><th>Signalé</th><th>Motif</th><th>Description</th><th>Statut</th><th>Date</th></tr></thead>
-          <tbody id="adminReportsBody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1rem">Chargement…</td></tr></tbody>
+          <thead><tr><th>ID</th><th>Signaleur</th><th>Signalé</th><th>Motif</th><th>Description</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="adminReportsBody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1rem">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="admin-section-title" style="margin-top:2rem">Comptes bannis</div>
+      <div style="overflow-x:auto">
+        <table class="admin-table">
+          <thead><tr><th>Utilisateur</th><th>Email</th><th>Type</th><th>Jusqu'au</th><th>Motif</th><th>Actions</th></tr></thead>
+          <tbody id="adminBansBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1rem">Chargement…</td></tr></tbody>
         </table>
       </div>
 
@@ -4423,6 +4434,7 @@ async function loginUser(){
     if (window._checkOnboarding) window._checkOnboarding();
   } else {
     errEl.textContent=result?.error||'Email ou mot de passe incorrect.';
+    if (result?.banned) errEl.style.background='rgba(229,62,62,.12)';
     errEl.style.display='block';
   }
 }
@@ -4955,6 +4967,17 @@ async function initDashboard(){
     document.getElementById('dashName').textContent=u.prenom+' '+u.nom;
     const _roleText=[u.skill,u.ville].filter(Boolean).join(' · ')||'Complétez votre profil';
     document.getElementById('dashRole').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> ${escHtml(_roleText)}`;
+    // Bannière validation en attente
+    let valBanner = document.getElementById('validationBanner');
+    if (!u.validated) {
+      if (!valBanner) {
+        valBanner = document.createElement('div');
+        valBanner.id = 'validationBanner';
+        valBanner.style.cssText = 'background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);border-radius:var(--r-md);padding:.75rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#92590a;display:flex;align-items:center;gap:.6rem';
+        valBanner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span><strong>Profil en attente de validation</strong> — Notre équipe vérifie votre profil. Vous recevrez un email dès qu\'il sera approuvé.</span>';
+        document.getElementById('page-dashboard').querySelector('section')?.prepend(valBanner);
+      }
+    } else if (valBanner) valBanner.remove();
     setTimeout(()=>{
       animCount(document.getElementById('metricRevenu'),data.revenue,' FCFA');
       animCount(document.getElementById('metricMissions'),data.missions);
@@ -6514,17 +6537,48 @@ async function loadAdminData() {
   const rb = document.getElementById('adminReportsBody');
   if (rb) {
     if (!reports || !reports.length) {
-      rb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1rem">Aucun signalement</td></tr>';
+      rb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1rem">Aucun signalement</td></tr>';
     } else {
-      rb.innerHTML = reports.map(r => `
-        <tr>
+      rb.innerHTML = reports.map(r => {
+        const reporterName = r.reporter_prenom ? `${r.reporter_prenom} ${r.reporter_nom||''}` : `#${r.reporter_id}`;
+        const reportedName = r.reported_prenom ? `${r.reported_prenom} ${r.reported_nom||''}` : `#${r.reported_id}`;
+        const isPending = r.status === 'pending';
+        return `<tr>
           <td>${r.id}</td>
-          <td>${r.reporter_id}</td>
-          <td>${r.reported_id}</td>
-          <td>${r.reason||'—'}</td>
-          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.description||''}">${(r.description||'—').slice(0,50)}</td>
-          <td><span style="color:${r.status==='pending'?'var(--a500)':'var(--muted)'}">${r.status}</span></td>
+          <td>${escHtml(reporterName)}</td>
+          <td>${escHtml(reportedName)}</td>
+          <td>${escHtml(r.reason||'—')}</td>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(r.description||'')}">${escHtml((r.description||'—').slice(0,40))}</td>
+          <td><span style="color:${r.status==='pending'?'#e07c00':r.status==='resolved'?'var(--g600)':'var(--muted)'}">${r.status}</span></td>
           <td>${r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+          <td style="white-space:nowrap;display:flex;gap:.3rem;flex-wrap:wrap">
+            ${isPending ? `
+              <button class="btn-toggle-valid" style="font-size:.7rem;padding:.2rem .5rem;background:#e07c00" onclick="adminWarnUser(${r.reported_id},${r.id})">⚠️ Avertir</button>
+              <button class="btn-toggle-valid" style="font-size:.7rem;padding:.2rem .5rem;background:#e53e3e" onclick="adminBanUser(${r.reported_id},${r.id},'temp',7)">🔒 7j</button>
+              <button class="btn-toggle-valid" style="font-size:.7rem;padding:.2rem .5rem;background:#7B2D2D" onclick="adminBanUser(${r.reported_id},${r.id},'permanent')">⛔ Perm.</button>
+              <button class="btn-toggle-valid active" style="font-size:.7rem;padding:.2rem .5rem" onclick="adminResolveReport(${r.id})">✓ Résoudre</button>
+            ` : '—'}
+          </td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // Bans table
+  const bansData = await api('/admin/bans', { method:'GET', headers:{ Authorization:'Bearer '+adminToken } });
+  const bb = document.getElementById('adminBansBody');
+  if (bb) {
+    if (!bansData || !bansData.length) {
+      bb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1rem">Aucun compte banni</td></tr>';
+    } else {
+      bb.innerHTML = bansData.map(b => `
+        <tr>
+          <td>${escHtml((b.prenom||'')+' '+(b.nom||''))}</td>
+          <td>${escHtml(b.email||'—')}</td>
+          <td><span style="color:${b.ban_type==='permanent'?'#e53e3e':'#e07c00'}">${b.ban_type==='permanent'?'Permanent':'Temporaire'}</span></td>
+          <td>${b.ban_until ? new Date(b.ban_until).toLocaleDateString('fr-FR') : '—'}</td>
+          <td>${escHtml((b.reason||'—').slice(0,50))}</td>
+          <td><button class="btn-toggle-valid active" style="font-size:.7rem;padding:.2rem .5rem" onclick="adminUnbanUser(${b.user_id})">Débannir</button></td>
         </tr>`).join('');
     }
   }
@@ -6603,6 +6657,44 @@ async function adminResolveDispute(disputeId) {
   loadAdminData();
 }
 
+async function adminResolveReport(reportId) {
+  await adminApi('/admin/reports/' + reportId, 'PUT', { status: 'resolved', adminNote: 'Résolu par admin' });
+  toast('Signalement marqué comme résolu');
+  loadAdminData();
+}
+
+async function adminWarnUser(userId, reportId) {
+  const reason = prompt('Motif de l\'avertissement :') || 'Comportement signalé';
+  if (!reason) return;
+  await adminApi('/admin/reports/' + reportId, 'PUT', { status: 'warned', adminNote: reason });
+  toast('Avertissement enregistré — l\'utilisateur sera notifié');
+  loadAdminData();
+}
+
+async function adminBanUser(userId, reportId, banType, days) {
+  const reason = prompt(`Motif du bannissement${banType==='permanent'?' permanent':` (${days}j)`} :`) || 'Violation des CGU';
+  const ok = await adminApi('/admin/users/' + userId + '/ban', 'POST', { banType, reason, days });
+  if (ok?.success) {
+    await adminApi('/admin/reports/' + reportId, 'PUT', { status: 'banned', adminNote: reason });
+    toast(banType === 'permanent' ? 'Compte banni définitivement' : `Compte banni ${days} jours`);
+    loadAdminData();
+  }
+}
+
+async function adminUnbanUser(userId) {
+  if (!confirm('Débannir cet utilisateur ?')) return;
+  const ok = await adminApi('/admin/users/' + userId + '/ban', 'DELETE');
+  if (ok?.success) { toast('Compte réactivé'); loadAdminData(); }
+}
+
+function adminApi(path, method, body) {
+  return fetch('/api' + path, {
+    method: method || 'GET',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + adminToken },
+    ...(body ? { body: JSON.stringify(body) } : {})
+  }).then(r => r.json()).catch(() => null);
+}
+
 // ═══ LITIGE ═══════════════════════════════════════════════════════════════════
 let disputeTxId = null;
 
@@ -6663,6 +6755,11 @@ function openReportModal(userId) {
 function closeReportModal() {
   document.getElementById('reportOverlay').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+function reportChatContact() {
+  toggleChatMenu();
+  if (waActiveContactId) openReportModal(waActiveContactId);
 }
 
 async function submitReport() {

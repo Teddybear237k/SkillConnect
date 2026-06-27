@@ -230,6 +230,12 @@ app.post('/api/login', authLimiter, async (req, res) => {
     const match = await bcrypt.compare(req.body.password, user.password_hash);
     if (!match) return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
 
+    const ban = await db.getUserBan(user.id);
+    if (ban) {
+      const until = ban.ban_until ? ` jusqu'au ${new Date(ban.ban_until).toLocaleDateString('fr-FR')}` : ' définitivement';
+      return res.status(403).json({ error: `Compte suspendu${until}. Motif : ${ban.reason||'Violation des CGU'}.`, banned: true });
+    }
+
     const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     const { password_hash: _ph, ...safeUser } = user;
     res.json({ success: true, user: safeUser, token });
@@ -1037,6 +1043,57 @@ app.post('/api/reports', authenticateToken, async (req, res) => {
 
 app.get('/api/admin/reports', authenticateAdmin, async (req, res) => {
   try { res.json(await db.getAllReports()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/reports/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { status, adminNote } = req.body;
+    await db.updateReportStatus(req.params.id, status, adminNote);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/users/:id/ban', authenticateAdmin, async (req, res) => {
+  try {
+    const { banType, reason, days } = req.body;
+    const banUntil = banType === 'temp' && days
+      ? new Date(Date.now() + parseInt(days) * 86400000).toISOString().slice(0, 19).replace('T', ' ')
+      : null;
+    await db.banUser(req.params.id, banType || 'temp', banUntil, reason, '');
+    const user = await db.getTalentById(parseInt(req.params.id));
+    if (user?.email) sendEmail(user.email, 'Compte suspendu — SkillConnect',
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+        <h2 style="color:#e53e3e">SkillConnect — Suspension de compte</h2>
+        <p>Bonjour ${user.prenom},</p>
+        <p>Votre compte a été <strong>suspendu</strong>${banUntil ? ` jusqu'au ${new Date(banUntil).toLocaleDateString('fr-FR')}` : ' définitivement'}.</p>
+        <p><strong>Motif :</strong> ${reason || 'Violation des conditions d\'utilisation.'}</p>
+        <p>Si vous pensez qu'il s'agit d'une erreur, contactez-nous à tddmodo@gmail.com.</p>
+      </div>`
+    );
+    const notif = await db.createNotification({ userId: parseInt(req.params.id), type: 'system', message: `Votre compte a été suspendu. Motif : ${reason||'Violation des CGU'}.` });
+    emitToUser(parseInt(req.params.id), 'new_notification', notif);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/admin/users/:id/ban', authenticateAdmin, async (req, res) => {
+  try {
+    await db.unbanUser(req.params.id);
+    const user = await db.getTalentById(parseInt(req.params.id));
+    if (user?.email) sendEmail(user.email, 'Compte réactivé — SkillConnect',
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+        <h2 style="color:#1D9E75">SkillConnect</h2>
+        <p>Bonjour ${user.prenom},</p>
+        <p>Votre compte a été <strong>réactivé</strong>. Vous pouvez à nouveau vous connecter.</p>
+      </div>`
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/bans', authenticateAdmin, async (req, res) => {
+  try { res.json(await db.getAllBans()); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
