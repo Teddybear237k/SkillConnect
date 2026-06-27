@@ -448,6 +448,22 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
         type: 'payment',
         message: `Paiement de ${net.toLocaleString('fr-FR')} FCFA attendu pour "${tx.description}"`,
       });
+      if (receiver?.email) sendEmail(
+        receiver.email,
+        `Nouvelle réservation — SkillConnect`,
+        `<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;border-radius:12px;border:1px solid #e5e7eb">
+          <h2 style="color:#1D9E75;margin-top:0">SkillConnect</h2>
+          <p>Bonjour <strong>${receiver.prenom}</strong>,</p>
+          <p><strong>${sender?.prenom||'Un client'} ${sender?.nom||''}</strong> vient de réserver vos services :</p>
+          <div style="background:#f0fdf4;border-left:4px solid #1D9E75;border-radius:6px;padding:14px 16px;margin:16px 0">
+            <p style="margin:0;font-size:1rem"><strong>${tx.description}</strong></p>
+            <p style="margin:6px 0 0;color:#1D9E75;font-size:1.1rem;font-weight:700">${net.toLocaleString('fr-FR')} FCFA</p>
+          </div>
+          <p style="color:#6b7280;font-size:.9rem">Le paiement est en cours de traitement via Mobile Money. Vous recevrez une confirmation dès qu'il sera validé.</p>
+          <a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:8px">Voir sur SkillConnect</a>
+          <p style="color:#9ca3af;font-size:.8rem;margin-top:24px">SkillConnect — La plateforme des talents camerounais</p>
+        </div>`
+      );
       return res.json({
         success: true, transaction: tx,
         monetbil: {
@@ -668,14 +684,33 @@ app.post('/api/monetbil/webhook', async (req, res) => {
 
       if (success && tx.status !== 'completed') {
         await db.updateTransactionStatus(tx.id, 'completed');
-        const userId = tx.type === 'deposit' ? tx.receiver_id : tx.sender_id;
-        const notif  = await db.createNotification({
+        const userId   = tx.type === 'deposit' ? tx.receiver_id : tx.sender_id;
+        const notif    = await db.createNotification({
           userId,
           type: 'payment',
           message: `Paiement de ${Number(amount || tx.amount).toLocaleString('fr-FR')} FCFA confirmé via Mobile Money !`,
         });
         emitToUser(userId, 'new_notification', notif);
         emitToUser(userId, 'payment_confirmed', { txId: tx.id, amount: tx.amount });
+        const talent = await db.getTalentById(tx.receiver_id);
+        const client = await db.getTalentById(tx.sender_id);
+        const net    = Number(tx.amount) - Number(tx.commission || 0);
+        if (talent?.email) sendEmail(
+          talent.email,
+          `Paiement confirmé — SkillConnect`,
+          `<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;border-radius:12px;border:1px solid #e5e7eb">
+            <h2 style="color:#1D9E75;margin-top:0">SkillConnect</h2>
+            <p>Bonjour <strong>${talent.prenom}</strong>,</p>
+            <p>Le paiement de <strong>${client?.prenom||'votre client'} ${client?.nom||''}</strong> a été confirmé ✅</p>
+            <div style="background:#f0fdf4;border-left:4px solid #1D9E75;border-radius:6px;padding:14px 16px;margin:16px 0">
+              <p style="margin:0;font-size:1rem"><strong>${tx.description}</strong></p>
+              <p style="margin:6px 0 0;color:#1D9E75;font-size:1.1rem;font-weight:700">${net.toLocaleString('fr-FR')} FCFA</p>
+            </div>
+            <p style="color:#6b7280;font-size:.9rem">Les fonds sont en séquestre sécurisé et seront libérés une fois la mission validée par le client.</p>
+            <a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:8px">Voir sur SkillConnect</a>
+            <p style="color:#9ca3af;font-size:.8rem;margin-top:24px">SkillConnect — La plateforme des talents camerounais</p>
+          </div>`
+        );
       } else if (failed) {
         await db.updateTransactionStatus(tx.id, 'cancelled');
         const userId = tx.type === 'deposit' ? tx.receiver_id : tx.sender_id;
