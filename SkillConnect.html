@@ -2697,8 +2697,11 @@ html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <h3>Profil créé avec succès !</h3>
-          <p id="formSuccessMsg">Ton profil est en cours de validation. Tu recevras un SMS dans les 24h.</p>
-          <button class="form-submit" style="margin-top:1.5rem;max-width:240px" onclick="resetForm()">Créer un autre profil</button>
+          <p id="formSuccessMsg">Ton profil est maintenant en ligne et visible par les clients.</p>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem">
+            <button class="form-submit" style="max-width:220px" onclick="showPage('dashboard',document.querySelectorAll('.nav-link')[5])">Voir mon tableau de bord</button>
+            <button class="form-submit" style="max-width:200px;background:transparent;border:2px solid var(--g500);color:var(--g600)" onclick="resetForm()">Créer un autre profil</button>
+          </div>
         </div>
       </div>
     </div>
@@ -4500,7 +4503,7 @@ async function submitForm(){
 
   document.getElementById('formContent').style.display='none';
   document.getElementById('formSuccess').classList.add('show');
-  document.getElementById('formSuccessMsg').textContent=`Bienvenue ${prenom} ! Ton profil est en cours de validation. Tu recevras un SMS au ${phone} dans les 24h.`;
+  document.getElementById('formSuccessMsg').textContent=`Bienvenue ${prenom} ! Ton profil est maintenant en ligne et visible par les clients. Tu peux te connecter à tout moment depuis le tableau de bord.`;
   toast('Profil créé avec succès !');
   updateNavUser();
   if (window._checkOnboarding) window._checkOnboarding();
