@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>SkillConnect Cameroun — Trouve un talent. Gagne de l'argent.</title>
 <meta name="description" content="SkillConnect est la plateforme camerounaise pour trouver des talents locaux (cours, design, informatique, couture…) et être payé via MTN MoMo ou Orange Money."/>
 <meta name="keywords" content="freelance cameroun, talent cameroun, cours particuliers, momo, prestataire, skillconnect"/>
@@ -1826,11 +1826,49 @@ html.dark .wa-emoji-picker button:hover{background:rgba(255,255,255,.1)}
 .wa-send-btn svg{width:20px;height:20px;stroke:#fff}
 
 @media(max-width:768px){
-  .wa-sidebar{width:100%}
-  .wa-chat-panel{display:none;position:fixed;inset:64px 0 0 0;z-index:50}
+  /* Sidebar = plein écran, cachée quand conversation ouverte */
+  .wa-sidebar{width:100%;min-height:0}
+  .wa-wrap{height:calc(100svh - 64px);height:calc(100vh - 64px)}
+
+  /* Panneau conversation : overlay fixe plein écran sous la nav */
+  .wa-chat-panel{
+    display:none;
+    position:fixed;
+    top:64px;left:0;right:0;bottom:0;
+    bottom:env(safe-area-inset-bottom,0px);
+    z-index:90;
+    flex-direction:column;
+    min-height:0;
+  }
   .wa-chat-panel.mobile-open{display:flex}
-  .wa-wrap{height:calc(100vh - 64px)}
   .wa-back-mobile{display:flex}
+
+  /* Header : plus compact, boutons non-essentiels cachés */
+  .wa-chat-header{padding:8px 10px;gap:.5rem;min-height:54px}
+  .wa-chat-header .wa-icon-btn[title="Rechercher"]{display:none}
+  .pay-confirm-btn{display:none}
+
+  /* Zone messages : flex:1 borné */
+  .wa-messages-wrap{padding:.6rem .75rem;min-height:0}
+
+  /* Barre de saisie : colle au bas + safe area iOS */
+  .wa-input-bar{
+    padding:.5rem .75rem;
+    padding-bottom:max(.5rem, env(safe-area-inset-bottom));
+    flex-shrink:0;
+  }
+  .wa-input-main{font-size:16px} /* évite le zoom auto sur iOS */
+  .wa-emoji-btn,.wa-attach-btn{width:36px;height:36px}
+  .wa-send-btn{width:42px;height:42px}
+
+  /* Picker emoji : contraint à la largeur de l'écran */
+  .wa-emoji-picker{
+    width:min(280px, calc(100vw - 2rem));
+    max-height:200px;overflow-y:auto;
+  }
+
+  /* Bulles : max-width plus large sur petit écran */
+  .wa-msg-bubble{max-width:82%}
 }
 
 /* ─── Filtres avancés ───────────────────────────────────────────────── */
@@ -4108,6 +4146,7 @@ function showPage(id,linkEl){
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
   if(linkEl) linkEl.classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
+  document.body.style.overflow = '';
   closeMobileMenu();
   if(id==='dashboard') { initDashboard(); loadDashPortfolio(); initDashMissions(); initPushNotifications(); }
   if(id==='messages') { initWA(); loadBlockedIds(); }
@@ -4537,6 +4576,19 @@ function previewInscPhoto(input){
 
 function closeMobileChat(){
   document.getElementById('waChatPanel')?.classList.remove('mobile-open');
+  // Remettre le scroll du body (bloqué pendant la conversation)
+  document.body.style.overflow = '';
+}
+
+// Clavier virtuel iOS : reajuste le panneau quand le clavier apparait
+if (window.visualViewport) {
+  const _chatPanel = () => document.getElementById('waChatPanel');
+  window.visualViewport.addEventListener('resize', () => {
+    const panel = _chatPanel();
+    if (!panel || !panel.classList.contains('mobile-open')) return;
+    const keyboardHeight = window.innerHeight - window.visualViewport.height;
+    panel.style.bottom = keyboardHeight > 50 ? keyboardHeight + 'px' : '';
+  });
 }
 
 function resetForm(){
@@ -5266,8 +5318,12 @@ async function selectWAContact(contactId){
   document.getElementById('waActiveChat').style.display='flex';
   document.getElementById('waActiveChat').style.flexDirection='column';
 
-  // Mobile
-  document.getElementById('waChatPanel')?.classList.add('mobile-open');
+  // Mobile : ouvre le panneau et bloque le scroll du body
+  const panel = document.getElementById('waChatPanel');
+  if (panel) {
+    panel.classList.add('mobile-open');
+    if (window.innerWidth <= 768) document.body.style.overflow = 'hidden';
+  }
 
   await loadWAMessages(contactId);
   api('/messages/read/'+waCurrentUserId+'/'+contactId,{method:'PUT'});
