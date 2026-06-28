@@ -600,6 +600,21 @@ async function findOrCreateGoogleUser({ email, prenom, nom, photo }) {
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
+async function getMonthlyStats(userId) {
+  const [rows] = await pool.execute(`
+    SELECT
+      DATE_FORMAT(created_at,'%Y-%m') AS month_key,
+      DATE_FORMAT(created_at,'%b')    AS label,
+      COALESCE(SUM(CASE WHEN status='completed' THEN ROUND(amount*0.93) ELSE 0 END),0) AS revenue,
+      COUNT(CASE WHEN status='completed' THEN 1 END) AS missions
+    FROM missions
+    WHERE talent_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+    GROUP BY DATE_FORMAT(created_at,'%Y-%m'), DATE_FORMAT(created_at,'%b')
+    ORDER BY month_key ASC
+  `, [userId]);
+  return rows;
+}
+
 async function getDashboardData(userId) {
   const user = await getTalentById(userId);
   if (!user) return null;
@@ -1460,7 +1475,7 @@ async function getAllTransactions() {
 module.exports = {
   init,
   getTalents, getTalentById, createUser, updateUser, findUserByEmail, deleteUser,
-  getDashboardData, getVilles,
+  getDashboardData, getMonthlyStats, getVilles,
   getContacts, getMessages, sendMessage, markAsRead, toggleReaction, updateLastSeen,
   createTransaction, getWallet, getTransactions, updateTransactionStatus,
   createWithdrawal, createDeposit, findTransactionByCampayRef,

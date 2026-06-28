@@ -290,8 +290,10 @@ app.get('/api/talents/:id', async (req, res) => {
 // ─── Tableau de bord ──────────────────────────────────────────────────────────
 app.get('/api/dashboard/:userId', async (req, res) => {
   try {
-    const data = await db.getDashboardData(parseInt(req.params.userId));
+    const uid = parseInt(req.params.userId);
+    const data = await db.getDashboardData(uid);
     if (!data) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    data.monthlyStats = await db.getMonthlyStats(uid);
     res.json(data);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

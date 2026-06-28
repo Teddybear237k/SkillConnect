@@ -22,6 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="manifest" href="/manifest.json"/>
 <meta name="theme-color" content="#1D9E75"/>
@@ -2556,19 +2557,19 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
     </div>
 
     <h1 class="hero-title">
-      Trouve un talent.<br>
-      <span class="accent">Gagne de l'argent.</span>
+      <span data-i18n="hero_title1">Trouve un talent.</span><br>
+      <span class="accent" data-i18n="hero_title2">Gagne de l'argent.</span>
     </h1>
 
-    <p class="hero-sub">
+    <p class="hero-sub" data-i18n="hero_sub">
       La plateforme gratuite qui connecte les jeunes Camerounais avec des clients locaux. Paiement par Mobile Money, profil créé en 5 minutes.
     </p>
 
     <div class="hero-search">
-      <input type="text" id="heroSearch" placeholder="Ex : cours de maths, graphiste, couture…" onkeydown="if(event.key==='Enter')searchTalents()"/>
+      <input type="text" id="heroSearch" placeholder="Ex : cours de maths, graphiste, couture…" data-i18n-placeholder="hero_search_placeholder" onkeydown="if(event.key==='Enter')searchTalents()"/>
       <button class="hero-search-btn" onclick="searchTalents()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        Chercher
+        <span data-i18n="hero_search_btn">Chercher</span>
       </button>
     </div>
 
@@ -2583,20 +2584,20 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
     <div class="hero-stats">
       <div class="hero-stat">
         <div class="hero-stat-num" data-count="2400">0</div>
-        <div class="hero-stat-label">Talents inscrits</div>
+        <div class="hero-stat-label" data-i18n="stat_talents">Talents inscrits</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-num" data-count="580">0</div>
-        <div class="hero-stat-label">Missions réalisées</div>
+        <div class="hero-stat-label" data-i18n="stat_missions">Missions réalisées</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-num" data-count="12">0</div>
-        <div class="hero-stat-label">Villes couvertes</div>
+        <div class="hero-stat-label" data-i18n="stat_cities">Villes couvertes</div>
       </div>
     </div>
 
     <div class="hero-scroll" onclick="scrollToHow()">
-      <span>Découvrir</span>
+      <span data-i18n="hero_discover">Découvrir</span>
       <div class="scroll-line"></div>
     </div>
   </section>
@@ -2706,11 +2707,11 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
       </div>
     </div>
     <div class="footer-bottom">
-      <div class="footer-copy">© 2026 SkillConnect Cameroun. Tous droits réservés.</div>
+      <div class="footer-copy" data-i18n="footer_copy">© 2026 SkillConnect Cameroun. Tous droits réservés.</div>
       <div class="footer-bottom-links">
-        <a onclick="openLegal('privacy')">Confidentialité</a>
-        <a onclick="openLegal('cgu')">CGU</a>
-        <a onclick="openLegal('cookies')">Cookies</a>
+        <a onclick="openLegal('privacy')" data-i18n="footer_privacy">Confidentialité</a>
+        <a onclick="openLegal('cgu')" data-i18n="footer_cgu">CGU</a>
+        <a onclick="openLegal('cookies')" data-i18n="footer_cookies">Cookies</a>
       </div>
     </div>
   </footer>
@@ -2732,11 +2733,11 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
 <!-- ════════════════════════ EXPLORER ════════════════════════ -->
 <div class="page" id="page-explorer" style="padding-top:80px">
   <section style="padding-top:2.5rem">
-    <div class="section-eyebrow fade-up">Explorer</div>
+    <div class="section-eyebrow fade-up" data-i18n="explore_eyebrow">Explorer</div>
     <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:2rem">
       <div>
-        <h2 class="section-title fade-up" style="margin-bottom:.25rem">Trouver un talent</h2>
-        <p class="section-sub fade-up">Parcourez nos <span id="talent-count">6</span> talents disponibles</p>
+        <h2 class="section-title fade-up" style="margin-bottom:.25rem" data-i18n="explore_title">Trouver un talent</h2>
+        <p class="section-sub fade-up" data-i18n="explore_sub">Parcourez nos <span id="talent-count">6</span> talents disponibles</p>
       </div>
       <div style="display:flex;gap:.5rem;align-items:center">
         <div style="position:relative">
@@ -3337,8 +3338,8 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
 <!-- ════════════════════════ DASHBOARD ════════════════════════ -->
 <div class="page" id="page-dashboard" style="padding-top:80px">
   <section style="padding-top:2.5rem">
-    <div class="section-eyebrow fade-up">Mon espace</div>
-    <h2 class="section-title fade-up" style="margin-bottom:2rem">Tableau de bord</h2>
+    <div class="section-eyebrow fade-up" data-i18n="dash_eyebrow">Mon espace</div>
+    <h2 class="section-title fade-up" style="margin-bottom:2rem" data-i18n="dash_title">Tableau de bord</h2>
 
     <!-- Bannière email non vérifié -->
     <div class="email-banner fade-up" id="emailVerifyBanner" style="display:none">
@@ -3385,9 +3386,9 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
         </button>
         <!-- Sélecteur de disponibilité -->
         <div class="avail-selector" id="availSelector">
-          <button class="avail-btn available active" onclick="setAvailability('available',this)"><span class="avail-dot avail-available"></span>Disponible</button>
-          <button class="avail-btn busy" onclick="setAvailability('busy',this)"><span class="avail-dot avail-busy"></span>Occupé</button>
-          <button class="avail-btn pause" onclick="setAvailability('pause',this)"><span class="avail-dot avail-pause"></span>En pause</button>
+          <button class="avail-btn available active" onclick="setAvailability('available',this)"><span class="avail-dot avail-available"></span><span data-i18n="dash_avail">Disponible</span></button>
+          <button class="avail-btn busy" onclick="setAvailability('busy',this)"><span class="avail-dot avail-busy"></span><span data-i18n="dash_busy">Occupé</span></button>
+          <button class="avail-btn pause" onclick="setAvailability('pause',this)"><span class="avail-dot avail-pause"></span><span data-i18n="dash_pause">En pause</span></button>
         </div>
       </div>
       <div class="dash-status" id="dashStatus">Disponible</div>
@@ -3395,24 +3396,24 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
 
     <div class="metrics-grid">
       <div class="metric-card fade-up">
-        <div class="metric-label">Revenus ce mois</div>
+        <div class="metric-label" data-i18n="dash_revenue">Revenus ce mois</div>
         <div class="metric-val green" id="metricRevenu">0 FCFA</div>
-        <div class="metric-trend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 7l-9.17 9.17L9 12.34 2 19.17"/><path d="M16 7h6v6"/></svg>+23% vs mois dernier</div>
+        <div class="metric-trend" id="metricRevenuTrend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 7l-9.17 9.17L9 12.34 2 19.17"/><path d="M16 7h6v6"/></svg><span id="metricRevenuTrendTxt">—</span></div>
       </div>
       <div class="metric-card fade-up">
-        <div class="metric-label">Missions réalisées</div>
+        <div class="metric-label" data-i18n="dash_missions_count">Missions réalisées</div>
         <div class="metric-val" id="metricMissions">0</div>
-        <div class="metric-trend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 7l-9.17 9.17L9 12.34 2 19.17"/><path d="M16 7h6v6"/></svg>+4 ce mois</div>
+        <div class="metric-trend" id="metricMissionsTrend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 7l-9.17 9.17L9 12.34 2 19.17"/><path d="M16 7h6v6"/></svg><span id="metricMissionsTrendTxt">—</span></div>
       </div>
       <div class="metric-card fade-up">
-        <div class="metric-label">Note moyenne</div>
+        <div class="metric-label" data-i18n="dash_rating">Note moyenne</div>
         <div class="metric-val" id="metricNote">0</div>
-        <div class="metric-trend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="var(--a400)" stroke="none"/></svg>38 avis</div>
+        <div class="metric-trend" id="metricNoteTrend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="var(--a400)" stroke="none"/></svg><span id="metricNoteTrendTxt">—</span></div>
       </div>
       <div class="metric-card fade-up">
-        <div class="metric-label">Vues du profil</div>
+        <div class="metric-label" data-i18n="dash_views">Vues du profil</div>
         <div class="metric-val" id="metricVues">0</div>
-        <div class="metric-trend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 7l-9.17 9.17L9 12.34 2 19.17"/><path d="M16 7h6v6"/></svg>+67 cette semaine</div>
+        <div class="metric-trend" id="metricVuesTrend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 7l-9.17 9.17L9 12.34 2 19.17"/><path d="M16 7h6v6"/></svg><span id="metricVuesTrendTxt">—</span></div>
       </div>
     </div>
 
@@ -3435,21 +3436,37 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
 
     <div class="dash-grid">
       <div class="dash-panel fade-up">
-        <div class="dash-panel-title">Compétences les plus demandées</div>
+        <div class="dash-panel-title" data-i18n="dash_skills">Compétences les plus demandées</div>
         <div id="dashBars"></div>
       </div>
       <div class="dash-panel fade-up">
-        <div class="dash-panel-title">Activité récente</div>
+        <div class="dash-panel-title" data-i18n="dash_activity">Activité récente</div>
         <div id="dashActivity"></div>
       </div>
     </div>
+
+    <!-- ═══ Graphe revenus & missions 6 mois ══════════════════════════ -->
+    <div class="dash-panel fade-up" id="dashChartPanel" style="margin-bottom:1.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
+        <div class="dash-panel-title" style="margin-bottom:0" data-i18n="dash_chart_title">Évolution sur 6 mois</div>
+        <div style="display:flex;gap:.5rem">
+          <button onclick="switchDashChart('revenue',this)" id="chartBtnRevenue" style="font-size:.75rem;padding:.25rem .7rem;border-radius:var(--r-full);border:1.5px solid var(--g500);background:var(--g500);color:#fff;cursor:pointer;font-weight:700;transition:.2s" data-i18n="dash_chart_revenue">Revenus</button>
+          <button onclick="switchDashChart('missions',this)" id="chartBtnMissions" style="font-size:.75rem;padding:.25rem .7rem;border-radius:var(--r-full);border:1.5px solid var(--hairline);background:none;color:var(--muted);cursor:pointer;font-weight:600;transition:.2s" data-i18n="dash_chart_missions">Missions</button>
+        </div>
+      </div>
+      <div style="position:relative;height:200px">
+        <canvas id="dashRevenueChart"></canvas>
+      </div>
+      <div id="dashChartEmpty" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem" data-i18n="dash_chart_empty">Pas encore de données — complétez votre première mission !</div>
+    </div>
+
     <!-- ═══ Mes Missions ════════════════════════════════════════════════ -->
     <div class="dash-panel fade-up" style="margin-bottom:1.5rem" id="dashMissionsPanel">
-      <div class="dash-panel-title" style="margin-bottom:.75rem">Mes missions</div>
+      <div class="dash-panel-title" style="margin-bottom:.75rem" data-i18n="dash_missions_panel">Mes missions</div>
       <div class="missions-tabs">
-        <button class="missions-tab active" onclick="switchMissionsTab('active',this)">En cours</button>
-        <button class="missions-tab" onclick="switchMissionsTab('client',this)">Comme client</button>
-        <button class="missions-tab" onclick="switchMissionsTab('done',this)">Terminées</button>
+        <button class="missions-tab active" onclick="switchMissionsTab('active',this)" data-i18n="dash_tab_active">En cours</button>
+        <button class="missions-tab" onclick="switchMissionsTab('client',this)" data-i18n="dash_tab_client">Comme client</button>
+        <button class="missions-tab" onclick="switchMissionsTab('done',this)" data-i18n="dash_tab_done">Terminées</button>
       </div>
       <div class="missions-grid" id="missionsGrid">
         <div style="color:var(--muted);font-size:.85rem;grid-column:1/-1;text-align:center;padding:1rem">Chargement…</div>
@@ -5452,11 +5469,15 @@ async function initDashboard(){
       [{label:u.skill||'Compétence principale',val:80,n:data.missions||0}];
     renderDashBars(bars);
 
-    const acts=data.recentActivity.length?data.recentActivity.map(a=>({
+    const acts=data.recentActivity&&data.recentActivity.length?data.recentActivity.map(a=>({
       text:`<strong>${a.prenom}</strong> vous a envoyé un message`,
       time:fmtTime(a.sent_at)
     })):ACTIVITIES;
     renderDashActivity(acts);
+
+    // Graphe mensuel
+    renderDashChart(data.monthlyStats || [], 'revenue');
+    updateMetricTrends(data.monthlyStats || []);
 
     // Email banner
     const banner = document.getElementById('emailVerifyBanner');
@@ -5490,6 +5511,124 @@ async function initDashboard(){
     renderDashActivity(ACTIVITIES);
   }
   triggerFadeUps();
+}
+
+// ═══ DASHBOARD CHART ═════════════════════════════════════════════════
+let _dashChartInstance = null;
+let _dashMonthlyStats = [];
+let _dashChartMode = 'revenue';
+
+function buildMonthlyData(stats, mode) {
+  // Generate last 6 months labels
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key: d.toISOString().slice(0, 7),
+      label: d.toLocaleString(currentLang === 'en' ? 'en-US' : 'fr-FR', { month: 'short' }),
+    });
+  }
+  const map = {};
+  stats.forEach(s => { map[s.month_key] = s; });
+  return {
+    labels: months.map(m => m.label),
+    values: months.map(m => {
+      const s = map[m.key];
+      return s ? (mode === 'revenue' ? parseInt(s.revenue) : parseInt(s.missions)) : 0;
+    }),
+  };
+}
+
+function renderDashChart(stats, mode) {
+  _dashMonthlyStats = stats || [];
+  _dashChartMode = mode || 'revenue';
+  const hasData = _dashMonthlyStats.some(s => parseInt(s.revenue) > 0 || parseInt(s.missions) > 0);
+  const canvas = document.getElementById('dashRevenueChart');
+  const empty = document.getElementById('dashChartEmpty');
+  if (!canvas) return;
+  if (!hasData) {
+    canvas.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  canvas.style.display = 'block';
+  if (empty) empty.style.display = 'none';
+
+  const { labels, values } = buildMonthlyData(_dashMonthlyStats, _dashChartMode);
+  const isDark = document.documentElement.classList.contains('dark');
+  const gridColor = isDark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.06)';
+  const textColor = isDark ? '#8892a4' : '#8892a4';
+  const lineColor = _dashChartMode === 'revenue' ? '#38a169' : '#4299e1';
+  const fillColor = _dashChartMode === 'revenue' ? 'rgba(56,161,105,.12)' : 'rgba(66,153,225,.12)';
+
+  if (_dashChartInstance) { _dashChartInstance.destroy(); _dashChartInstance = null; }
+
+  _dashChartInstance = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: lineColor,
+        backgroundColor: fillColor,
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: lineColor,
+        fill: true,
+        tension: 0.4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: {
+          label: ctx => _dashChartMode === 'revenue'
+            ? `${ctx.parsed.y.toLocaleString('fr-FR')} FCFA`
+            : `${ctx.parsed.y} mission${ctx.parsed.y > 1 ? 's' : ''}`,
+        }
+      }},
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+        y: {
+          grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 },
+            callback: v => _dashChartMode === 'revenue'
+              ? (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) + ' FCFA'
+              : v,
+          },
+          beginAtZero: true,
+        }
+      }
+    }
+  });
+}
+
+function switchDashChart(mode, btn) {
+  _dashChartMode = mode;
+  document.querySelectorAll('#chartBtnRevenue,#chartBtnMissions').forEach(b => {
+    b.style.background = 'none'; b.style.color = 'var(--muted)'; b.style.borderColor = 'var(--hairline)';
+  });
+  btn.style.background = 'var(--g500)'; btn.style.color = '#fff'; btn.style.borderColor = 'var(--g500)';
+  renderDashChart(_dashMonthlyStats, mode);
+}
+
+function updateMetricTrends(monthly) {
+  if (!monthly || monthly.length < 2) return;
+  const last = monthly[monthly.length - 1];
+  const prev = monthly[monthly.length - 2];
+
+  function pct(curr, prv) {
+    if (!prv || prv == 0) return curr > 0 ? '+100%' : '—';
+    const diff = Math.round(((curr - prv) / prv) * 100);
+    return (diff >= 0 ? '+' : '') + diff + '%';
+  }
+  const revPct = pct(last.revenue, prev.revenue);
+  const missPct = pct(last.missions, prev.missions);
+  const el = (id, txt) => { const e = document.getElementById(id); if (e) e.textContent = txt; };
+  el('metricRevenuTrendTxt', revPct + ' vs mois dernier');
+  el('metricMissionsTrendTxt', '+' + (last.missions||0) + ' ce mois');
 }
 
 function renderDashBars(bars){
@@ -6428,8 +6567,181 @@ const LEGAL_CONTENT = {
   }
 };
 
+const LEGAL_CONTENT_EN = {
+  privacy: {
+    title: 'Privacy Policy',
+    body: `
+      <span class="legal-badge">Updated: June 2026</span>
+      <div class="legal-section">
+        <h3>1. Who we are</h3>
+        <p>SkillConnect Cameroun is a platform connecting freelance talents and clients in Cameroon. We process your personal data to provide our services.</p>
+      </div>
+      <div class="legal-section">
+        <h3>2. Data we collect</h3>
+        <ul>
+          <li><strong>Identity data</strong>: first name, last name, profile photo</li>
+          <li><strong>Contact data</strong>: Mobile Money phone number, email address</li>
+          <li><strong>Location data</strong>: city (Cameroon)</li>
+          <li><strong>Financial data</strong>: transaction history, amounts, Mobile Money networks (MTN MoMo, Orange Money)</li>
+          <li><strong>Profile data</strong>: skills, rates, bio, received reviews</li>
+          <li><strong>Messages</strong>: conversations between users on the platform</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>3. How we use your data</h3>
+        <ul>
+          <li>Create and manage your SkillConnect account</li>
+          <li>Facilitate connections between talents and clients</li>
+          <li>Process Mobile Money payments via Monetbil (licensed partner)</li>
+          <li>Send you SMS notifications and payment confirmations</li>
+          <li>Improve our services and platform security</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>4. Data sharing</h3>
+        <p>We never sell your data. It may be shared with:</p>
+        <ul>
+          <li><strong>Monetbil</strong>: our Mobile Money payment processor for MTN MoMo and Orange Money transactions</li>
+          <li><strong>Africa's Talking</strong>: our SMS provider for notifications</li>
+          <li>Competent authorities, only when required by Cameroonian law</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>5. Your rights</h3>
+        <ul>
+          <li>Right of access to your personal data</li>
+          <li>Right to correction of inaccuracies</li>
+          <li>Right to erasure (account deletion)</li>
+          <li>Right to data portability</li>
+        </ul>
+        <p>To exercise these rights, contact us at: <strong>tddmodo@gmail.com</strong></p>
+      </div>
+      <div class="legal-section">
+        <h3>6. Security</h3>
+        <p>Passwords are encrypted (bcrypt). Authentication tokens are secured (JWT, 7-day expiry). We never have access to your Mobile Money PIN — payments are processed directly by Monetbil.</p>
+      </div>
+      <div class="legal-section">
+        <h3>7. Data retention</h3>
+        <p>Your data is retained for as long as your account is active. Upon account deletion, data is erased within 30 days, except for transaction records required by applicable law.</p>
+      </div>
+      <div class="legal-section">
+        <h3>8. Contact</h3>
+        <p>SkillConnect Cameroun — <strong>tddmodo@gmail.com</strong> — <strong>+237 697 956 903</strong></p>
+      </div>
+    `
+  },
+  cgu: {
+    title: 'Terms of Use',
+    body: `
+      <span class="legal-badge">Version 1.0 — June 2026</span>
+      <div class="legal-section">
+        <h3>1. Purpose</h3>
+        <p>These Terms of Use govern the use of the SkillConnect Cameroun platform, accessible to all users (freelance talents and clients).</p>
+      </div>
+      <div class="legal-section">
+        <h3>2. Access to the service</h3>
+        <p>To use SkillConnect you must:</p>
+        <ul>
+          <li>Be at least 18 years of age</li>
+          <li>Reside in Cameroon or carry out professional activities there</li>
+          <li>Have a valid Mobile Money phone number (MTN MoMo or Orange Money)</li>
+          <li>Provide accurate information during registration</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>3. Services offered</h3>
+        <ul>
+          <li>Create a talent profile and offer your skills</li>
+          <li>Search and contact local freelancers</li>
+          <li>Pay for missions via Mobile Money with a secure escrow system</li>
+          <li>Leave reviews and ratings after each mission</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>4. Escrow system</h3>
+        <ul>
+          <li>Funds are placed in escrow (locked) after client payment</li>
+          <li>The talent is credited only when the client validates the mission as complete</li>
+          <li>SkillConnect charges a commission of <strong>7%</strong> on each transaction</li>
+          <li>In case of dispute, contact us at tddmodo@gmail.com within 72 hours</li>
+        </ul>
+      </div>
+      <div class="legal-section">
+        <h3>5. Prohibited behaviour</h3>
+        <ul>
+          <li>Creating false profiles or providing misleading information</li>
+          <li>Conducting transactions outside the platform to avoid commissions</li>
+          <li>Harassing, threatening or insulting other users</li>
+          <li>Using the platform for illegal or fraudulent purposes</li>
+          <li>Publishing offensive, discriminatory or unlawful content</li>
+        </ul>
+        <p>Any violation results in suspension or permanent deletion of the account.</p>
+      </div>
+      <div class="legal-section">
+        <h3>6. Liability</h3>
+        <p>SkillConnect is an intermediary platform. We are not responsible for the quality of services between parties. We act solely as a trusted third party for payment security.</p>
+      </div>
+      <div class="legal-section">
+        <h3>7. Amendments</h3>
+        <p>We reserve the right to amend these Terms. Users will be notified by email or platform notification. Continued use constitutes acceptance of the new terms.</p>
+      </div>
+      <div class="legal-section">
+        <h3>8. Governing law</h3>
+        <p>These Terms are governed by Cameroonian law. Any dispute falls under the jurisdiction of the competent courts of Yaoundé, Cameroon.</p>
+      </div>
+      <div class="legal-section">
+        <h3>9. Contact</h3>
+        <p>SkillConnect Cameroun — <strong>tddmodo@gmail.com</strong> — <strong>+237 697 956 903</strong></p>
+      </div>
+    `
+  },
+  cookies: {
+    title: 'Cookie Policy',
+    body: `
+      <span class="legal-badge">Updated: June 2026</span>
+      <div class="legal-section">
+        <h3>What is a cookie?</h3>
+        <p>A cookie is a small file stored on your device by your browser. SkillConnect primarily uses your browser's <strong>local storage (localStorage)</strong>, which works similarly to cookies.</p>
+      </div>
+      <div class="legal-section">
+        <h3>What we store</h3>
+        <ul>
+          <li><strong>sc_user_id</strong> — your user identifier (to keep you logged in)</li>
+          <li><strong>sc_token</strong> — your JWT authentication token (valid 7 days)</li>
+          <li><strong>sc_user_name, sc_user_initials</strong> — your name and initials (display)</li>
+          <li><strong>sc_theme</strong> — your light/dark theme preference</li>
+          <li><strong>sc_lang</strong> — your language preference (FR/EN)</li>
+        </ul>
+        <p>This data stays on your device only and is never shared with third parties for advertising purposes.</p>
+      </div>
+      <div class="legal-section">
+        <h3>Third-party resources</h3>
+        <ul>
+          <li><strong>Google Fonts</strong> — for typography (Syne, DM Sans). Google may place performance cookies</li>
+          <li><strong>Monetbil</strong> — our payment provider manages its own cookies during transaction processing</li>
+        </ul>
+        <p>We use <strong>no advertising, tracking or analytics cookies</strong> (no Google Analytics, no Facebook Pixel).</p>
+      </div>
+      <div class="legal-section">
+        <h3>Managing and deleting</h3>
+        <ul>
+          <li><strong>By logging out</strong> from your dashboard — clears your session data</li>
+          <li><strong>Via your browser</strong>: Settings → Privacy → Clear browsing data</li>
+          <li><strong>Via developer tools</strong> (F12) → Application → Local Storage → Delete</li>
+        </ul>
+        <p>Deleting this data will log you out of the platform.</p>
+      </div>
+      <div class="legal-section">
+        <h3>Contact</h3>
+        <p>For any questions about our cookie policy: <strong>tddmodo@gmail.com</strong></p>
+      </div>
+    `
+  }
+};
+
 function openLegal(type) {
-  const content = LEGAL_CONTENT[type];
+  const lang = currentLang === 'en' && LEGAL_CONTENT_EN[type] ? 'en' : 'fr';
+  const content = lang === 'en' ? LEGAL_CONTENT_EN[type] : LEGAL_CONTENT[type];
   if (!content) return;
   document.getElementById('legalTitle').textContent = content.title;
   document.getElementById('legalBody').innerHTML = content.body;
@@ -7966,28 +8278,76 @@ function renderWAFileContent(msg) {
 // ═══ I18N ══════════════════════════════════════════════════════════════════════
 const TRANSLATIONS = {
   fr: {
+    // Nav
     nav_accueil: 'Accueil', nav_explorer: 'Explorer', nav_offres: 'Offres', nav_inscription: 'S\'inscrire',
     nav_paiement: 'Paiement', nav_dashboard: 'Tableau de bord', nav_messages: 'Messages',
     nav_admin: 'Admin', nav_login: 'Se connecter', nav_create: 'Créer un profil',
+    // Hero
+    hero_title1: 'Trouve un talent.', hero_title2: 'Gagne de l\'argent.',
+    hero_sub: 'La plateforme gratuite qui connecte les jeunes Camerounais avec des clients locaux. Paiement par Mobile Money, profil créé en 5 minutes.',
+    hero_search_placeholder: 'Ex : cours de maths, graphiste, couture…',
+    hero_search_btn: 'Chercher', hero_discover: 'Découvrir',
+    stat_talents: 'Talents inscrits', stat_missions: 'Missions réalisées', stat_cities: 'Villes couvertes',
+    // Explorer
+    explore_eyebrow: 'Explorer', explore_title: 'Trouver un talent',
+    explore_sub: 'Parcourez nos talents disponibles',
+    // Offres
     offres_eyebrow: 'Opportunités', offres_title: 'Offres de missions', offres_sub: 'Trouvez des missions ou publiez vos besoins',
+    // Dashboard
+    dash_eyebrow: 'Mon espace', dash_title: 'Tableau de bord',
+    dash_revenue: 'Revenus ce mois', dash_missions_count: 'Missions réalisées',
+    dash_rating: 'Note moyenne', dash_views: 'Vues du profil',
+    dash_avail: 'Disponible', dash_busy: 'Occupé', dash_pause: 'En pause',
+    dash_skills: 'Compétences les plus demandées', dash_activity: 'Activité récente',
+    dash_chart_title: 'Évolution sur 6 mois', dash_chart_revenue: 'Revenus', dash_chart_missions: 'Missions',
+    dash_chart_empty: 'Pas encore de données — complétez votre première mission !',
+    dash_missions_panel: 'Mes missions', dash_tab_active: 'En cours', dash_tab_client: 'Comme client', dash_tab_done: 'Terminées',
+    // Common
     contact: 'Contacter', pay: 'Payer directement',
     report_profile: 'Signaler ce profil', contract_pdf: 'Contrat PDF',
     reviews_title: 'Avis clients', no_reviews: 'Aucun avis pour l\'instant',
     reply: 'Répondre', your_reply: 'Votre réponse…', post_reply: 'Publier',
     cancel: 'Annuler', talent_reply: 'Réponse du talent',
     msg_placeholder: 'Tapez un message', attach_file: 'Joindre un fichier',
+    // Footer
+    footer_copy: '© 2026 SkillConnect Cameroun. Tous droits réservés.',
+    footer_privacy: 'Confidentialité', footer_cgu: 'CGU', footer_cookies: 'Cookies',
   },
   en: {
+    // Nav
     nav_accueil: 'Home', nav_explorer: 'Explore', nav_offres: 'Jobs', nav_inscription: 'Sign up',
     nav_paiement: 'Payment', nav_dashboard: 'Dashboard', nav_messages: 'Messages',
     nav_admin: 'Admin', nav_login: 'Log in', nav_create: 'Create profile',
+    // Hero
+    hero_title1: 'Find a talent.', hero_title2: 'Earn money.',
+    hero_sub: 'The free platform connecting young Cameroonians with local clients. Pay via Mobile Money, profile set up in 5 minutes.',
+    hero_search_placeholder: 'e.g. maths tutor, graphic designer, tailoring…',
+    hero_search_btn: 'Search', hero_discover: 'Discover',
+    stat_talents: 'Registered talents', stat_missions: 'Completed missions', stat_cities: 'Cities covered',
+    // Explorer
+    explore_eyebrow: 'Explore', explore_title: 'Find a talent',
+    explore_sub: 'Browse available talents',
+    // Offres
     offres_eyebrow: 'Opportunities', offres_title: 'Job offers', offres_sub: 'Find missions or post your needs',
+    // Dashboard
+    dash_eyebrow: 'My space', dash_title: 'Dashboard',
+    dash_revenue: 'Revenue this month', dash_missions_count: 'Completed missions',
+    dash_rating: 'Average rating', dash_views: 'Profile views',
+    dash_avail: 'Available', dash_busy: 'Busy', dash_pause: 'On pause',
+    dash_skills: 'Most requested skills', dash_activity: 'Recent activity',
+    dash_chart_title: '6-month trend', dash_chart_revenue: 'Revenue', dash_chart_missions: 'Missions',
+    dash_chart_empty: 'No data yet — complete your first mission!',
+    dash_missions_panel: 'My missions', dash_tab_active: 'In progress', dash_tab_client: 'As client', dash_tab_done: 'Completed',
+    // Common
     contact: 'Contact', pay: 'Pay directly',
     report_profile: 'Report profile', contract_pdf: 'PDF Contract',
     reviews_title: 'Client reviews', no_reviews: 'No reviews yet',
     reply: 'Reply', your_reply: 'Your reply…', post_reply: 'Post',
     cancel: 'Cancel', talent_reply: 'Talent\'s reply',
     msg_placeholder: 'Type a message', attach_file: 'Attach a file',
+    // Footer
+    footer_copy: '© 2026 SkillConnect Cameroun. All rights reserved.',
+    footer_privacy: 'Privacy policy', footer_cgu: 'Terms of use', footer_cookies: 'Cookies',
   },
 };
 let currentLang = localStorage.getItem('sc_lang') || 'fr';

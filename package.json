@@ -9,7 +9,8 @@
     "backup": "node scripts/backup.js"
   },
   "dependencies": {
-    "africastalking": "^0.6.2",
+    "africastalking": "^0.8.0",
+    "axios": "^1.18.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -18,7 +19,7 @@
     "google-auth-library": "^10.7.0",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.22.5",
-    "nodemailer": "^8.0.10",
+    "nodemailer": "^9.0.1",
     "socket.io": "^4.8.3",
     "web-push": "^3.6.7"
   },
