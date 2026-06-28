@@ -4203,6 +4203,19 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
     <div id="adminDashSection" style="display:none">
       <div class="admin-stats-grid" id="adminStatsGrid"></div>
 
+      <!-- Diagnostic email -->
+      <div style="background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);padding:1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.9rem;color:var(--ink);margin-bottom:.2rem">Diagnostic SMTP</div>
+          <div style="font-size:.82rem;color:var(--muted)">Envoie un email de test sur le serveur de production pour vérifier que SMTP fonctionne.</div>
+          <div id="emailTestResult" style="margin-top:.4rem;font-size:.82rem;font-weight:600"></div>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center;flex-shrink:0">
+          <input id="emailTestDest" type="email" placeholder="Adresse de destination" value="" style="padding:.4rem .75rem;border:1.5px solid var(--hairline);border-radius:var(--r-sm);font-size:.83rem;background:var(--surface);color:var(--ink);outline:none;width:220px"/>
+          <button onclick="adminTestEmail()" style="padding:.45rem 1rem;border-radius:var(--r-full);border:none;background:var(--g500);color:#fff;font-size:.83rem;font-weight:700;cursor:pointer;white-space:nowrap">Envoyer test</button>
+        </div>
+      </div>
+
       <!-- En attente de validation -->
       <div id="adminPendingWrap" style="display:none;margin-bottom:2rem">
         <div class="admin-section-title" style="color:#e53e3e">
@@ -8000,6 +8013,27 @@ async function validateUser(userId) {
 async function toggleUser(userId) {
   await adminApi('/admin/users/' + userId + '/toggle', 'PUT');
   loadAdminData();
+}
+
+async function adminTestEmail() {
+  const dest = document.getElementById('emailTestDest').value.trim();
+  const result = document.getElementById('emailTestResult');
+  result.style.color = 'var(--muted)';
+  result.textContent = 'Envoi en cours…';
+  const adminPass = localStorage.getItem('sc_admin_pass') || prompt('Mot de passe admin :');
+  const res = await fetch('/api/admin/test-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-pass': adminPass },
+    body: JSON.stringify({ to: dest || undefined }),
+  });
+  const data = await res.json();
+  if (data.ok) {
+    result.style.color = '#38a169';
+    result.textContent = `✅ Email envoyé à ${data.to} (ID: ${data.messageId})`;
+  } else {
+    result.style.color = '#e53e3e';
+    result.textContent = `❌ Erreur : ${data.error}`;
+  }
 }
 
 async function adminResolveDispute(disputeId) {

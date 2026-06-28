@@ -1188,6 +1188,27 @@ app.get('/api/admin/bans', authenticateAdmin, async (req, res) => {
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/api/admin/test-email', authenticateAdmin, async (req, res) => {
+  const to = req.body?.to || process.env.SMTP_USER;
+  if (!mailer) return res.status(503).json({
+    ok: false,
+    error: 'mailer est null — SMTP_USER/SMTP_PASS non configurés sur ce serveur.'
+  });
+  try {
+    const info = await mailer.sendMail({
+      from: `"SkillConnect" <${process.env.SMTP_USER}>`,
+      to,
+      subject: '✅ Test email SkillConnect',
+      html: `<p>Cet email confirme que l'envoi SMTP fonctionne sur le serveur de production.<br>
+             Expéditeur : ${process.env.SMTP_USER}<br>
+             Heure : ${new Date().toLocaleString('fr-FR')}</p>`,
+    });
+    res.json({ ok: true, messageId: info.messageId, to });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // ─── Statut en ligne ─────────────────────────────────────────────────────────
 app.get('/api/online-users', (req, res) => {
   res.json(Object.keys(userSockets).map(id => parseInt(id)));
