@@ -104,12 +104,17 @@ io.on('connection', (socket) => {
       const userId = String(payload.userId);
       userSockets[userId] = socket.id;
       socket.userId = userId;
+      io.emit('user_online', { userId: parseInt(userId) });
     } catch {
       // Token invalide — socket non authentifié, aucun événement sensible ne sera émis
     }
   });
   socket.on('disconnect', () => {
-    if (socket.userId) delete userSockets[socket.userId];
+    if (socket.userId) {
+      db.updateLastSeen(parseInt(socket.userId)).catch(() => {});
+      io.emit('user_offline', { userId: parseInt(socket.userId) });
+      delete userSockets[socket.userId];
+    }
   });
   socket.on('typing', ({ to }) => {
     const sid = userSockets[String(to)];
@@ -351,7 +356,8 @@ app.post('/api/messages', authenticateToken, messageLimiter, async (req, res) =>
     if (await db.isBlocked(parseInt(receiverId), parseInt(senderId)))
       return res.status(403).json({ error: 'Vous ne pouvez pas contacter cet utilisateur.' });
 
-    const msg    = await db.sendMessage(parseInt(senderId), parseInt(receiverId), text || '', fileData || null, fileName || null, fileType || null);
+    const { replyToId } = req.body;
+    const msg    = await db.sendMessage(parseInt(senderId), parseInt(receiverId), text || '', fileData || null, fileName || null, fileType || null, replyToId ? parseInt(replyToId) : null);
     const sender = await db.getTalentById(parseInt(senderId));
 
     if (sender) {
@@ -407,11 +413,28 @@ app.put('/api/messages/read/:userId/:contactId', authenticateToken, async (req, 
     return res.status(403).json({ error: 'Accès refusé.' });
   try {
     await db.markAsRead(parseInt(req.params.userId), parseInt(req.params.contactId));
-    // Notifier l'expéditeur que ses messages ont été lus
-    emitToUser(parseInt(req.params.contactId), 'messages_read', {
-      by: parseInt(req.params.userId),
-    });
+    emitToUser(parseInt(req.params.contactId), 'messages_read', { by: parseInt(req.params.userId) });
     res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Réactions sur un message
+app.post('/api/messages/:id/react', authenticateToken, async (req, res) => {
+  try {
+    const { emoji, contactId } = req.body;
+    if (!emoji) return res.status(400).json({ error: 'emoji requis' });
+    const result = await db.toggleReaction(parseInt(req.params.id), req.user.userId, emoji);
+    const payload = { messageId: parseInt(req.params.id), ...result, userId: req.user.userId };
+    emitToUser(req.user.userId, 'reaction_update', payload);
+    if (contactId) emitToUser(parseInt(contactId), 'reaction_update', payload);
+    res.json({ success: true, ...result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/users/:id/last-seen', authenticateToken, async (req, res) => {
+  try {
+    const user = await db.getTalentById(parseInt(req.params.id));
+    res.json({ last_seen: user?.last_seen || null, online: !!userSockets[String(req.params.id)] });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

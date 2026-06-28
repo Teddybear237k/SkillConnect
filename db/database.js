@@ -326,6 +326,20 @@ async function init() {
 
   // Migrations non-destructives
   try { await pool.execute('ALTER TABLE job_posts ADD COLUMN deadline_days INT DEFAULT NULL'); } catch(e) {}
+  try { await pool.execute('ALTER TABLE messages ADD COLUMN reply_to_id INT NULL DEFAULT NULL'); } catch(e) {}
+  try { await pool.execute('ALTER TABLE users ADD COLUMN last_seen DATETIME NULL'); } catch(e) {}
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS message_reactions (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      message_id INT NOT NULL,
+      user_id    INT NOT NULL,
+      emoji      VARCHAR(10) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_reaction (message_id, user_id),
+      INDEX idx_msg (message_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
 
   const [[{ cnt }]] = await pool.execute('SELECT COUNT(*) as cnt FROM users');
   if (cnt === 0) await seedData();
@@ -643,7 +657,7 @@ async function getContacts(userId) {
     if (!other) continue;
 
     const [lastRows] = await pool.execute(
-      `SELECT * FROM messages
+      `SELECT sender_id, text, file_type, sent_at FROM messages
        WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
        ORDER BY sent_at DESC LIMIT 1`,
       [userId, otherId, otherId, userId]
@@ -654,13 +668,16 @@ async function getContacts(userId) {
       [otherId, userId]
     );
 
+    const last = lastRows[0];
     contacts.push({
       id: other.id, prenom: other.prenom, nom: other.nom,
       initials: other.initials, bg_color: other.bg_color, text_color: other.text_color,
       photo: other.photo || null, skill: other.skill, ville: other.ville,
       availability: other.availability || 'available',
-      last_message: lastRows[0]?.text || '',
-      last_time:    lastRows[0]?.sent_at || null,
+      last_seen: other.last_seen || null,
+      last_message:   last?.file_type ? (last.file_type.startsWith('image/') ? '📷 Photo' : '📎 Fichier') : (last?.text || ''),
+      last_sender_id: last?.sender_id || null,
+      last_time:      last?.sent_at   || null,
       unread,
     });
   }
@@ -670,26 +687,74 @@ async function getContacts(userId) {
 
 async function getMessages(userId, contactId) {
   const [rows] = await pool.execute(
-    `SELECT m.*, u.initials AS sender_initials, u.bg_color AS sender_bg,
+    `SELECT m.*,
+            u.initials AS sender_initials, u.bg_color AS sender_bg,
             u.text_color AS sender_col, u.prenom AS sender_prenom,
-            u.nom AS sender_nom, u.photo AS sender_photo
+            u.nom AS sender_nom, u.photo AS sender_photo,
+            r.text AS reply_text, r.file_type AS reply_file_type,
+            ru.prenom AS reply_prenom, ru.id AS reply_sender_id
      FROM messages m
-     LEFT JOIN users u ON u.id = m.sender_id
+     LEFT JOIN users u  ON u.id = m.sender_id
+     LEFT JOIN messages r  ON r.id = m.reply_to_id
+     LEFT JOIN users ru ON ru.id = r.sender_id
      WHERE (m.sender_id = ? AND m.receiver_id = ?)
         OR (m.sender_id = ? AND m.receiver_id = ?)
      ORDER BY m.sent_at ASC`,
     [userId, contactId, contactId, userId]
   );
+  // Attach reactions to each message
+  if (rows.length) {
+    const ids = rows.map(r => r.id);
+    const [reacts] = await pool.execute(
+      `SELECT mr.message_id, mr.emoji, mr.user_id FROM message_reactions mr WHERE mr.message_id IN (${ids.map(()=>'?').join(',')})`,
+      ids
+    );
+    const reactMap = {};
+    for (const r of reacts) {
+      if (!reactMap[r.message_id]) reactMap[r.message_id] = [];
+      reactMap[r.message_id].push({ emoji: r.emoji, user_id: r.user_id });
+    }
+    for (const row of rows) row.reactions = reactMap[row.id] || [];
+  }
   return rows;
 }
 
-async function sendMessage(senderId, receiverId, text, fileData = null, fileName = null, fileType = null) {
+async function sendMessage(senderId, receiverId, text, fileData = null, fileName = null, fileType = null, replyToId = null) {
   const now = fmtISO();
   const [result] = await pool.execute(
-    'INSERT INTO messages (sender_id,receiver_id,text,`read`,sent_at,file_data,file_name,file_type) VALUES (?,?,?,0,?,?,?,?)',
-    [senderId, receiverId, text || '', now, fileData || null, fileName || null, fileType || null]
+    'INSERT INTO messages (sender_id,receiver_id,text,`read`,sent_at,file_data,file_name,file_type,reply_to_id) VALUES (?,?,?,0,?,?,?,?,?)',
+    [senderId, receiverId, text || '', now, fileData || null, fileName || null, fileType || null, replyToId || null]
   );
-  return { id: result.insertId, sender_id: senderId, receiver_id: receiverId, text: text || '', read: 0, sent_at: now, file_data: fileData, file_name: fileName, file_type: fileType };
+  let reply_text = null, reply_prenom = null, reply_sender_id = null, reply_file_type = null;
+  if (replyToId) {
+    const [[replied]] = await pool.execute(
+      'SELECT m.text, m.file_type, u.prenom, u.id AS sender_id FROM messages m LEFT JOIN users u ON u.id=m.sender_id WHERE m.id=?',
+      [replyToId]
+    );
+    if (replied) { reply_text = replied.text; reply_prenom = replied.prenom; reply_sender_id = replied.sender_id; reply_file_type = replied.file_type; }
+  }
+  return { id: result.insertId, sender_id: senderId, receiver_id: receiverId, text: text || '', read: 0, sent_at: now, file_data: fileData, file_name: fileName, file_type: fileType, reply_to_id: replyToId, reply_text, reply_prenom, reply_sender_id, reply_file_type, reactions: [] };
+}
+
+async function toggleReaction(messageId, userId, emoji) {
+  const [[existing]] = await pool.execute(
+    'SELECT id, emoji FROM message_reactions WHERE message_id=? AND user_id=?',
+    [messageId, userId]
+  );
+  if (existing) {
+    if (existing.emoji === emoji) {
+      await pool.execute('DELETE FROM message_reactions WHERE message_id=? AND user_id=?', [messageId, userId]);
+      return { action: 'removed', emoji };
+    }
+    await pool.execute('UPDATE message_reactions SET emoji=? WHERE message_id=? AND user_id=?', [emoji, messageId, userId]);
+    return { action: 'changed', emoji };
+  }
+  await pool.execute('INSERT INTO message_reactions (message_id,user_id,emoji) VALUES (?,?,?)', [messageId, userId, emoji]);
+  return { action: 'added', emoji };
+}
+
+async function updateLastSeen(userId) {
+  await pool.execute('UPDATE users SET last_seen=? WHERE id=?', [fmtISO(), userId]);
 }
 
 async function markAsRead(userId, contactId) {
@@ -1395,7 +1460,7 @@ module.exports = {
   init,
   getTalents, getTalentById, createUser, updateUser, findUserByEmail, deleteUser,
   getDashboardData, getVilles,
-  getContacts, getMessages, sendMessage, markAsRead,
+  getContacts, getMessages, sendMessage, markAsRead, toggleReaction, updateLastSeen,
   createTransaction, getWallet, getTransactions, updateTransactionStatus,
   createWithdrawal, createDeposit, findTransactionByCampayRef,
   createReview, getReviews,
