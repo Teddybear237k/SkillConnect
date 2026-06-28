@@ -2720,7 +2720,7 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
     <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:2rem">
       <div>
         <h2 class="section-title fade-up" style="margin-bottom:.25rem" data-i18n="explore_title">Trouver un talent</h2>
-        <p class="section-sub fade-up" data-i18n="explore_sub">Parcourez nos <span id="talent-count">6</span> talents disponibles</p>
+        <p class="section-sub fade-up"><span data-i18n="explore_sub_pre">Parcourez nos</span> <span id="talent-count">6</span> <span data-i18n="explore_sub_post">talents disponibles</span></p>
       </div>
       <div style="display:flex;gap:.5rem;align-items:center">
         <div style="position:relative">
@@ -8322,7 +8322,7 @@ const TRANSLATIONS = {
     stat_talents: 'Talents inscrits', stat_missions: 'Missions réalisées', stat_cities: 'Villes couvertes',
     // Explorer
     explore_eyebrow: 'Explorer', explore_title: 'Trouver un talent',
-    explore_sub: 'Parcourez nos talents disponibles',
+    explore_sub_pre: 'Parcourez nos', explore_sub_post: 'talents disponibles',
     // Offres
     offres_eyebrow: 'Opportunités', offres_title: 'Offres de missions', offres_sub: 'Trouvez des missions ou publiez vos besoins',
     // Dashboard
@@ -8358,7 +8358,7 @@ const TRANSLATIONS = {
     stat_talents: 'Registered talents', stat_missions: 'Completed missions', stat_cities: 'Cities covered',
     // Explorer
     explore_eyebrow: 'Explore', explore_title: 'Find a talent',
-    explore_sub: 'Browse available talents',
+    explore_sub_pre: 'Browse our', explore_sub_post: 'available talents',
     // Offres
     offres_eyebrow: 'Opportunities', offres_title: 'Job offers', offres_sub: 'Find missions or post your needs',
     // Dashboard
@@ -8404,7 +8404,7 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
     const val = t(key);
-    if (val !== key) el.textContent = val;
+    if (val !== key && el.children.length === 0) el.textContent = val;
   });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
