@@ -365,6 +365,7 @@ app.post('/api/messages', authenticateToken, messageLimiter, async (req, res) =>
         userId: parseInt(receiverId),
         type: 'message',
         message: `Nouveau message de ${sender.prenom} ${sender.nom}`,
+        relatedId: parseInt(senderId),
       });
       emitToUser(receiverId, 'new_notification', notif);
       // Push si l'utilisateur n'est pas connecté au socket
@@ -536,6 +537,7 @@ app.put('/api/transactions/:id/validate', authenticateToken, async (req, res) =>
       userId: tx.receiver_id,
       type: 'payment',
       message: `Mission validée ! ${net.toLocaleString('fr-FR')} FCFA ont été libérés sur votre compte.`,
+      relatedId: tx.id,
     });
     emitToUser(tx.receiver_id, 'new_notification', notif);
 
@@ -680,6 +682,7 @@ app.get('/api/transactions/:id/payment-status', authenticateToken, async (req, r
         userId: req.user.userId,
         type: 'payment',
         message: `Dépôt de ${Number(result.amount || tx.amount).toLocaleString('fr-FR')} FCFA confirmé !`,
+        relatedId: tx.id,
       });
       emitToUser(req.user.userId, 'new_notification', notif);
     } else if ((result.status === 3 || result.status === '3') && tx.status === 'pending') {
@@ -714,6 +717,7 @@ app.post('/api/monetbil/webhook', async (req, res) => {
           userId,
           type: 'payment',
           message: `Paiement de ${Number(amount || tx.amount).toLocaleString('fr-FR')} FCFA confirmé via Mobile Money !`,
+          relatedId: tx.id,
         });
         emitToUser(userId, 'new_notification', notif);
         emitToUser(userId, 'payment_confirmed', { txId: tx.id, amount: tx.amount });
@@ -1041,6 +1045,7 @@ app.put('/api/admin/users/:id/toggle', authenticateAdmin, async (req, res) => {
         userId: parseInt(req.params.id),
         type: 'review',
         message: 'Votre profil a été validé par l\'administrateur ! 🎉 Vous apparaissez maintenant dans les résultats.',
+        relatedId: parseInt(req.params.id),
       });
       emitToUser(parseInt(req.params.id), 'new_notification', notif);
       if (user.email) sendEmail(
@@ -1086,6 +1091,7 @@ app.post('/api/disputes', authenticateToken, async (req, res) => {
       userId: tx.sender_id,
       type: 'payment',
       message: `Un litige a été ouvert pour "${tx.description}". Connectez-vous pour en savoir plus.`,
+      relatedId: tx.id,
     });
     emitToUser(tx.sender_id, 'new_notification', notif);
     res.json({ success: true, dispute });
@@ -1210,6 +1216,7 @@ app.put('/api/transactions/:id/deliver', authenticateToken, async (req, res) => 
       userId: tx.sender_id,
       type: 'payment',
       message: `${receiver?.prenom || 'Le talent'} a livré la mission "${tx.description}". Validez pour libérer les fonds.`,
+      relatedId: tx.id,
     });
     emitToUser(tx.sender_id, 'new_notification', notif);
     if (sender?.email) sendEmail(sender.email,
@@ -1268,6 +1275,7 @@ app.post('/api/jobs/:id/apply', authenticateToken, async (req, res) => {
       userId: job.client_id,
       type: 'message',
       message: `${talent?.prenom||'Un talent'} a postulé à votre offre "${job.title}"`,
+      relatedId: parseInt(req.params.id),
     });
     emitToUser(job.client_id, 'new_notification', notif);
     // Email au client
@@ -1333,6 +1341,7 @@ app.put('/api/jobs/:id/applications/:appId', authenticateToken, async (req, res)
         message: status === 'accepted'
           ? `Votre candidature pour "${job.title}" a été acceptée ! 🎉`
           : `Votre candidature pour "${job.title}" n'a pas été retenue.`,
+        relatedId: parseInt(req.params.id),
       });
       emitToUser(app_.talent_id, 'new_notification', notif);
     }

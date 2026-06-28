@@ -6742,7 +6742,7 @@ function renderNotifList(notifs){
   if(!list) return;
   if(!notifs.length){ list.innerHTML='<div class="notif-empty">Aucune notification</div>'; return; }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" onclick="clickNotif(${n.id})">
+    <div class="notif-item ${n.read?'':'unread'}" onclick="clickNotif(${n.id},'${n.type}',${n.related_id||'null'})">
       <div class="notif-icon ${n.type}">${n.type==='message'?'💬':n.type==='payment'?'💰':'⭐'}</div>
       <div style="flex:1;min-width:0">
         <div class="notif-msg">${escHtml(n.message)}</div>
@@ -6801,9 +6801,19 @@ async function markAllNotifRead(){
   });
 }
 
-async function clickNotif(id){
+async function clickNotif(id, type, relatedId){
   await api('/notifications/'+id+'/read', {method:'PUT'});
+  // Marquer visuellement comme lu
+  document.querySelector(`.notif-item[onclick*="clickNotif(${id},"]`)?.classList.remove('unread');
   toggleNotifDropdown();
+
+  // Navigation selon le type
+  if (type === 'message' && relatedId) {
+    showPage('messages', document.querySelectorAll('.nav-link')[6]);
+    setTimeout(() => selectWAContact(parseInt(relatedId)), 500);
+  } else if (type === 'payment' || type === 'review' || type === 'system') {
+    showPage('dashboard', document.querySelectorAll('.nav-link')[5]);
+  }
 }
 
 // Fermer le dropdown au clic extérieur

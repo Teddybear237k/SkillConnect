@@ -328,6 +328,7 @@ async function init() {
   try { await pool.execute('ALTER TABLE job_posts ADD COLUMN deadline_days INT DEFAULT NULL'); } catch(e) {}
   try { await pool.execute('ALTER TABLE messages ADD COLUMN reply_to_id INT NULL DEFAULT NULL'); } catch(e) {}
   try { await pool.execute('ALTER TABLE users ADD COLUMN last_seen DATETIME NULL'); } catch(e) {}
+  try { await pool.execute('ALTER TABLE notifications ADD COLUMN related_id INT NULL DEFAULT NULL'); } catch(e) {}
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS message_reactions (
@@ -831,13 +832,13 @@ async function replyToReview(reviewId, talentId, reply) {
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
-async function createNotification({ userId, type, message }) {
+async function createNotification({ userId, type, message, relatedId = null }) {
   const now = fmtISO();
   const [result] = await pool.execute(
-    'INSERT INTO notifications (user_id,type,message,`read`,created_at) VALUES (?,?,?,0,?)',
-    [parseInt(userId), type, message, now]
+    'INSERT INTO notifications (user_id,type,message,`read`,created_at,related_id) VALUES (?,?,?,0,?,?)',
+    [parseInt(userId), type, message, now, relatedId ? parseInt(relatedId) : null]
   );
-  return { id: result.insertId, user_id: parseInt(userId), type, message, read: 0, created_at: now };
+  return { id: result.insertId, user_id: parseInt(userId), type, message, read: 0, created_at: now, related_id: relatedId };
 }
 
 async function getNotifications(userId) {
