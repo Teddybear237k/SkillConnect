@@ -75,7 +75,7 @@ async function init() {
       availability   VARCHAR(20)  DEFAULT 'available',
       photo          LONGTEXT,
       password_hash  VARCHAR(200),
-      email_verified TINYINT      DEFAULT 1,
+      email_verified TINYINT      DEFAULT 0,
       created_at     DATETIME     DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uq_email (email)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -178,13 +178,16 @@ async function init() {
   `);
 
   // Migrations — colonnes ajoutées après la création initiale
-  try { await pool.query('ALTER TABLE users ADD COLUMN email_verified TINYINT DEFAULT 1'); } catch (_) {}
+  try { await pool.query('ALTER TABLE users ADD COLUMN email_verified TINYINT DEFAULT 0'); } catch (_) {}
   try { await pool.query('ALTER TABLE users ADD COLUMN skills TEXT'); } catch (_) {}
   try { await pool.query('ALTER TABLE reviews ADD COLUMN reply TEXT'); } catch (_) {}
   try { await pool.query('ALTER TABLE reviews ADD COLUMN reply_at DATETIME'); } catch (_) {}
   try { await pool.query('ALTER TABLE messages ADD COLUMN file_data LONGTEXT'); } catch (_) {}
   try { await pool.query('ALTER TABLE messages ADD COLUMN file_name VARCHAR(200)'); } catch (_) {}
   try { await pool.query('ALTER TABLE messages ADD COLUMN file_type VARCHAR(100)'); } catch (_) {}
+  // Les utilisateurs inscrits via email sans vérification doivent avoir email_verified=0
+  // (la colonne avait DEFAULT 1 au moment de sa création — correction rétroactive)
+  try { await pool.query("ALTER TABLE users ALTER COLUMN email_verified SET DEFAULT 0"); } catch (_) {}
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS email_verify_tokens (

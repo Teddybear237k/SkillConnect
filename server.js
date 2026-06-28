@@ -210,9 +210,10 @@ app.post('/api/register', authLimiter, async (req, res) => {
       const verifyToken = crypto.randomBytes(32).toString('hex');
       await db.createVerifyToken(user.id, verifyToken);
       const verifyUrl = `${appUrl}/?verify_token=${verifyToken}`;
-      sendEmail(user.email, 'Vérifiez votre email — SkillConnect',
+      await sendEmail(user.email, 'Vérifiez votre email — SkillConnect',
         `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${user.prenom},</p><p>Bienvenue ! Cliquez ci-dessous pour vérifier votre adresse email.</p><a href="${verifyUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">Vérifier mon email</a><p style="color:#888;font-size:.85rem">Si vous n'avez pas créé de compte, ignorez cet email.</p></div>`
       );
+      console.log(`📧 Email vérification envoyé → ${user.email}`);
     }
 
     res.json({ success: true, user, token });
