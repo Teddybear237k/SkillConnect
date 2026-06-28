@@ -30,6 +30,7 @@ const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: '*' } });
 
+app.set('trust proxy', 1); // Railway est derrière un reverse proxy
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 // Fichiers statiques — HTML et SW jamais en cache, assets long cache
@@ -906,28 +907,30 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
   }
 });
 
-// ─── Email (Resend en priorité, fallback nodemailer) ─────────────────────────
+// ─── Email (Brevo SMTP → Resend → désactivé) ─────────────────────────────────
 let resendClient = null;
 let mailer = null;
 
-if (process.env.RESEND_API_KEY) {
-  resendClient = new Resend(process.env.RESEND_API_KEY);
-  console.log('✅ Email activé via Resend');
-} else if (process.env.SMTP_USER && process.env.SMTP_USER !== 'votre@gmail.com') {
+if (process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_KEY) {
+  // Brevo (ex-Sendinblue) : pas de domaine requis, 300 emails/jour gratuit
   try {
     mailer = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT) || 587,
+      host: 'smtp-relay.brevo.com',
+      port: 587,
       secure: false,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      auth: { user: process.env.BREVO_SMTP_USER, pass: process.env.BREVO_SMTP_KEY },
     });
-    console.log('✅ Email activé via SMTP (nodemailer)');
-  } catch (e) { console.log('⚠️  SMTP non disponible :', e.message); }
+    console.log('✅ Email activé via Brevo SMTP');
+  } catch (e) { console.log('⚠️  Brevo SMTP erreur :', e.message); }
+} else if (process.env.RESEND_API_KEY) {
+  // Resend — nécessite un domaine vérifié sur resend.com/domains
+  resendClient = new Resend(process.env.RESEND_API_KEY);
+  console.log('✅ Email activé via Resend');
 } else {
-  console.log('ℹ️  Email désactivé — configurez RESEND_API_KEY dans les variables Railway');
+  console.log('ℹ️  Email désactivé — configurez BREVO_SMTP_USER + BREVO_SMTP_KEY dans Railway');
 }
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'SkillConnect <noreply@skillconnect.cm>';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'SkillConnect <no-reply@skillconnect.app>';
 
 async function sendEmail(to, subject, html) {
   if (!to) return;
