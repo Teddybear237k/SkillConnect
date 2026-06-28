@@ -641,6 +641,45 @@ async function getDashboardData(userId) {
   );
 
   const views = await getProfileViews(userId, 30);
+
+  // Activité récente : dernières notifications + messages reçus + missions récentes
+  const [notifRows] = await pool.execute(
+    `SELECT type, message, created_at FROM notifications
+     WHERE user_id = ? ORDER BY created_at DESC LIMIT 5`,
+    [userId]
+  );
+  const [msgRows] = await pool.execute(
+    `SELECT m.text, m.sent_at, u.prenom, u.nom
+     FROM messages m
+     JOIN users u ON u.id = m.sender_id
+     WHERE m.receiver_id = ?
+     ORDER BY m.sent_at DESC LIMIT 3`,
+    [userId]
+  );
+  const [missionRows] = await pool.execute(
+    `SELECT title, status, created_at, amount FROM missions
+     WHERE talent_id = ? ORDER BY created_at DESC LIMIT 3`,
+    [userId]
+  );
+
+  // Fusionner et trier par date
+  const recentActivity = [
+    ...notifRows.map(n => ({ kind: 'notif', type: n.type, text: n.message, date: n.created_at })),
+    ...msgRows.map(r => ({ kind: 'message', text: `${r.prenom} ${r.nom} vous a envoyé un message`, date: r.sent_at })),
+    ...missionRows.map(m => ({
+      kind: 'mission',
+      type: m.status,
+      text: m.status === 'completed'
+        ? `Mission "<strong>${m.title}</strong>" terminée — ${Math.round(m.amount * 0.93).toLocaleString('fr-FR')} FCFA encaissés`
+        : m.status === 'delivered'
+        ? `Vous avez livré la mission "<strong>${m.title}</strong>"`
+        : `Nouvelle mission : <strong>${m.title}</strong>`,
+      date: m.created_at,
+    })),
+  ]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 7);
+
   const { password_hash: _ph, ...safeUser } = user;
   safeUser.has_password = !!_ph;
   return {
@@ -653,6 +692,7 @@ async function getDashboardData(userId) {
     unread,
     unreadNotifs,
     skillStats,
+    recentActivity,
   };
 }
 

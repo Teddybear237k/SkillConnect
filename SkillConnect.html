@@ -5469,10 +5469,9 @@ async function initDashboard(){
       [{label:u.skill||'Compétence principale',val:80,n:data.missions||0}];
     renderDashBars(bars);
 
-    const acts=data.recentActivity&&data.recentActivity.length?data.recentActivity.map(a=>({
-      text:`<strong>${a.prenom}</strong> vous a envoyé un message`,
-      time:fmtTime(a.sent_at)
-    })):ACTIVITIES;
+    const acts = data.recentActivity && data.recentActivity.length
+      ? data.recentActivity.map(a => ({ text: a.text, time: timeAgo(a.date), kind: a.kind, type: a.type }))
+      : ACTIVITIES;
     renderDashActivity(acts);
 
     // Graphe mensuel
@@ -5641,9 +5640,24 @@ function renderDashBars(bars){
   setTimeout(()=>document.querySelectorAll('.bar-fill').forEach(el=>el.style.width=el.dataset.w),300);
 }
 function renderDashActivity(acts){
-  document.getElementById('dashActivity').innerHTML=acts.map(a=>`
+  if (!acts || !acts.length) {
+    document.getElementById('dashActivity').innerHTML = `<div style="color:var(--muted);font-size:.84rem;text-align:center;padding:1rem">Aucune activité récente</div>`;
+    return;
+  }
+  const icon = a => {
+    if (a.kind === 'message') return '💬';
+    if (a.kind === 'mission') {
+      if (a.type === 'completed') return '✅';
+      if (a.type === 'delivered') return '📦';
+      return '🚀';
+    }
+    if (a.type === 'payment') return '💰';
+    if (a.type === 'review') return '⭐';
+    return '🔔';
+  };
+  document.getElementById('dashActivity').innerHTML = acts.map(a => `
     <div class="activity-item">
-      <div class="activity-dot"></div>
+      <div class="activity-dot" style="font-size:.9rem;background:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center">${icon(a)}</div>
       <div class="activity-text">${a.text}</div>
       <div class="activity-time">${a.time}</div>
     </div>`).join('');
@@ -6176,6 +6190,18 @@ function fmtTime(dt){
   if(isToday)return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   const yest=new Date(now);yest.setDate(yest.getDate()-1);
   if(d.toDateString()===yest.toDateString())return'Hier';
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+}
+function timeAgo(dt){
+  if(!dt)return'';
+  const d=new Date(dt);
+  if(isNaN(d))return'';
+  const diff=Math.floor((Date.now()-d.getTime())/1000);
+  if(diff<60)return'À l\'instant';
+  if(diff<3600)return'Il y a '+Math.floor(diff/60)+' min';
+  if(diff<86400)return'Il y a '+Math.floor(diff/3600)+'h';
+  if(diff<172800)return'Hier';
+  if(diff<604800)return'Il y a '+Math.floor(diff/86400)+' j';
   return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
 }
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
