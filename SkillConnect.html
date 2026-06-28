@@ -5481,6 +5481,60 @@ function toast(msg){
   el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3200);
 }
 
+let _msgNotifTimer = null;
+function showMsgNotif(senderId, senderName, preview) {
+  let notif = document.getElementById('msgNotifBanner');
+  if (!notif) {
+    notif = document.createElement('div');
+    notif.id = 'msgNotifBanner';
+    notif.style.cssText = [
+      'position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(120%)',
+      'background:var(--card);border:1.5px solid var(--hairline);border-radius:var(--r-xl)',
+      'box-shadow:0 8px 32px rgba(0,0,0,.18);padding:.75rem 1.1rem',
+      'display:flex;align-items:center;gap:.75rem;z-index:9000;cursor:pointer',
+      'max-width:340px;width:90%;transition:transform .3s cubic-bezier(.25,.1,.25,1)',
+    ].join(';');
+    notif.innerHTML = `
+      <div id="msgNotifAvatar" style="width:38px;height:38px;border-radius:50%;background:var(--g100);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:var(--g700)">?</div>
+      <div style="min-width:0">
+        <div id="msgNotifName" style="font-weight:700;font-size:.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+        <div id="msgNotifPreview" style="font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px;flex-shrink:0;color:var(--g500)"><path d="M9 18l6-6-6-6"/></svg>
+    `;
+    document.body.appendChild(notif);
+  }
+  document.getElementById('msgNotifName').textContent = senderName;
+  document.getElementById('msgNotifPreview').textContent = preview;
+  document.getElementById('msgNotifAvatar').textContent = senderName[0]?.toUpperCase() || '?';
+  notif.onclick = () => {
+    notif.style.transform = 'translateX(-50%) translateY(120%)';
+    showPage('messages', document.querySelectorAll('.nav-link')[6]);
+    setTimeout(() => selectWAContact(parseInt(senderId)), 400);
+  };
+  notif.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(_msgNotifTimer);
+  _msgNotifTimer = setTimeout(() => {
+    notif.style.transform = 'translateX(-50%) translateY(120%)';
+  }, 5000);
+}
+
+// Ouvrir directement une conversation via ?contact=ID dans l'URL
+(function handleContactParam() {
+  const params = new URLSearchParams(window.location.search);
+  const contactId = params.get('contact');
+  if (!contactId) return;
+  window.history.replaceState({}, '', '/');
+  const tryOpen = (attempts = 0) => {
+    const uid = localStorage.getItem('sc_user_id');
+    if (!uid) return;
+    showPage('messages', document.querySelectorAll('.nav-link')[6]);
+    setTimeout(() => selectWAContact(parseInt(contactId)), 600);
+  };
+  if (document.readyState === 'complete') tryOpen();
+  else window.addEventListener('load', () => tryOpen());
+})();
+
 // ═══ SPIN ════════════════════════════════════════════════════════════
 const styleEl=document.createElement('style');
 styleEl.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
@@ -5853,6 +5907,11 @@ function initSocket(){
       if(waActiveContactId && String(msg.sender_id) === String(waActiveContactId)){
         appendWAMessage(msg);
         if(myUid) api('/messages/read/'+myUid+'/'+waActiveContactId, {method:'PUT'});
+      } else {
+        // Notification cliquable si on n'est pas dans la conversation
+        const name = msg.sender_prenom || 'Nouveau message';
+        const preview = msg.text ? msg.text.slice(0, 60) : '📎 Fichier joint';
+        showMsgNotif(msg.sender_id, name, preview);
       }
       loadWAContacts();
     });

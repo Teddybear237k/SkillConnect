@@ -362,9 +362,12 @@ app.post('/api/messages', authenticateToken, messageLimiter, async (req, res) =>
       });
       emitToUser(receiverId, 'new_notification', notif);
       // Push si l'utilisateur n'est pas connecté au socket
-      if (!userSockets[String(receiverId)]) {
-        pushToUser(receiverId, `Message de ${sender.prenom}`, text ? text.slice(0, 80) : 'Fichier joint');
-      }
+      pushToUser(
+        receiverId,
+        `${sender.prenom} ${sender.nom || ''}`.trim(),
+        text ? text.slice(0, 100) : '📎 Fichier joint',
+        `${process.env.APP_URL || ''}/?contact=${senderId}`
+      );
     }
 
     emitToUser(receiverId, 'new_message', {
