@@ -51,6 +51,7 @@
   --shadow-lg:0 12px 40px rgba(0,0,0,.12),0 4px 12px rgba(0,0,0,.06);
   --shadow-xl:0 24px 64px rgba(0,0,0,.14),0 8px 24px rgba(0,0,0,.08);
   --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:24px; --r-full:999px;
+  --surface-2:#ffffff; --border:var(--hairline); --text:var(--ink);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -60,6 +61,7 @@ html.dark {
   --surface:#0F1117; --card:#171B26;
   --ink:#F0F2F8; --ink2:#D8DCE8; --ink3:#B8BECF;
   --muted:#8892A4; --subtle:#606778; --hairline:#232836;
+  --surface-2:#1E2533; --border:#2A3244; --text:#F0F2F8;
   --shadow-sm:0 1px 3px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.35);
   --shadow-md:0 4px 16px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.35);
   --shadow-lg:0 12px 40px rgba(0,0,0,.65),0 4px 12px rgba(0,0,0,.45);
@@ -2184,6 +2186,92 @@ html.dark .cat-chip.active{background:var(--g600);color:#fff;border-color:var(--
 .wa-file-preview-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.79rem;color:var(--ink)}
 .wa-file-preview-clear{background:transparent;border:none;cursor:pointer;color:var(--muted);font-size:1rem;line-height:1;padding:.1rem .3rem}
 .wa-file-preview-clear:hover{color:#e53e3e}
+
+/* ─── Menu options conversation ───────────────────────────────── */
+.chat-menu{
+  position:absolute;right:0;top:calc(100% + 6px);
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--r-md);box-shadow:var(--shadow-lg);
+  min-width:210px;z-index:500;overflow:hidden;
+  animation:fadeIn .12s ease;
+}
+.chat-menu-item{
+  display:flex;align-items:center;gap:.65rem;
+  width:100%;padding:.7rem 1rem;
+  background:none;border:none;cursor:pointer;
+  font-size:.875rem;color:var(--ink);text-align:left;
+  transition:background .12s;font-family:var(--font-body);
+}
+.chat-menu-item:hover{background:var(--surface)}
+.chat-menu-item svg{width:16px;height:16px;flex-shrink:0;stroke:currentColor}
+.chat-menu-item.danger{color:#e53e3e}
+.chat-menu-item.warn{color:#d97706}
+.chat-menu-sep{height:1px;background:var(--border);margin:.2rem 0}
+
+/* ─── Modal médias partagés ───────────────────────────────────── */
+.media-modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.6);z-index:9000;
+  align-items:center;justify-content:center;
+  padding:1rem;
+}
+.media-modal-overlay.open{display:flex}
+.media-modal{
+  background:var(--surface-2);border-radius:var(--r-xl);
+  width:100%;max-width:520px;max-height:80vh;
+  display:flex;flex-direction:column;
+  box-shadow:var(--shadow-xl);overflow:hidden;
+}
+.media-modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.25rem;border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.media-modal-head h3{margin:0;font-size:1rem;font-weight:700;color:var(--ink)}
+.media-modal-close{
+  width:32px;height:32px;border-radius:50%;border:none;
+  background:var(--surface);color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;font-size:1.1rem;
+}
+.media-modal-close:hover{background:var(--hairline);color:var(--ink)}
+.media-modal-tabs{
+  display:flex;gap:0;border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.media-tab{
+  flex:1;padding:.65rem;border:none;background:none;
+  font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .15s;
+  font-family:var(--font-body);
+}
+.media-tab.active{color:var(--g500);border-bottom-color:var(--g500)}
+.media-tab:hover:not(.active){color:var(--ink);background:var(--surface)}
+.media-modal-body{flex:1;overflow-y:auto;padding:1rem}
+.media-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;
+}
+.media-grid-img{
+  aspect-ratio:1;border-radius:var(--r-sm);object-fit:cover;
+  cursor:pointer;width:100%;transition:opacity .15s;
+}
+.media-grid-img:hover{opacity:.85}
+.media-file-list{display:flex;flex-direction:column;gap:.5rem}
+.media-file-row{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.6rem .75rem;border-radius:var(--r-md);
+  background:var(--surface);border:1px solid var(--border);
+  cursor:pointer;transition:background .12s;
+}
+.media-file-row:hover{background:var(--hairline)}
+.media-file-row .wa-file-icon{width:36px;height:36px;border-radius:var(--r-sm)}
+.media-file-row-info{flex:1;min-width:0}
+.media-file-row-name{font-size:.82rem;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.media-file-row-sub{font-size:.72rem;color:var(--muted)}
+.media-empty{
+  text-align:center;padding:3rem 1rem;color:var(--muted);font-size:.875rem;
+}
+.media-empty svg{width:40px;height:40px;stroke:var(--hairline);margin-bottom:.75rem;display:block;margin-inline:auto}
 html.dark .wa-file-msg{background:rgba(255,255,255,.09)}
 html.dark .wa-file-msg:hover{background:rgba(255,255,255,.14)}
 /* ─── Page Profil Individuelle ─── */
@@ -2265,14 +2353,29 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
 </div>
 
 <!-- Modal de confirmation générique -->
-<div id="confirmModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:var(--surface-2,#fff);border-radius:var(--r-xl);padding:1.75rem;max-width:380px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2)">
-    <h3 id="confirmModalTitle" style="margin:0 0 .5rem;font-size:1.05rem;font-weight:700;color:var(--text)"></h3>
+<div id="confirmModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--surface-2);border-radius:var(--r-xl);padding:1.75rem;max-width:380px;width:100%;box-shadow:var(--shadow-xl)">
+    <h3 id="confirmModalTitle" style="margin:0 0 .5rem;font-size:1.05rem;font-weight:700;color:var(--ink)"></h3>
     <p id="confirmModalBody" style="margin:0 0 1.5rem;font-size:.88rem;color:var(--muted);line-height:1.5"></p>
     <div style="display:flex;gap:.75rem;justify-content:flex-end">
-      <button id="confirmModalCancel" style="padding:.5rem 1.25rem;border-radius:var(--r-full);border:1.5px solid var(--border);background:none;cursor:pointer;font-size:.88rem;color:var(--muted);font-weight:600">Annuler</button>
-      <button id="confirmModalOk" style="padding:.5rem 1.25rem;border-radius:var(--r-full);border:none;background:#e53e3e;color:#fff;cursor:pointer;font-size:.88rem;font-weight:700">Confirmer</button>
+      <button id="confirmModalCancel" style="padding:.5rem 1.25rem;border-radius:var(--r-full);border:1.5px solid var(--border);background:none;cursor:pointer;font-size:.88rem;color:var(--muted);font-weight:600;font-family:var(--font-body)">Annuler</button>
+      <button id="confirmModalOk" style="padding:.5rem 1.25rem;border-radius:var(--r-full);border:none;background:#e53e3e;color:#fff;cursor:pointer;font-size:.88rem;font-weight:700;font-family:var(--font-body)">Confirmer</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal médias partagés -->
+<div class="media-modal-overlay" id="mediaModalOverlay" onclick="if(event.target===this)closeMediaModal()">
+  <div class="media-modal">
+    <div class="media-modal-head">
+      <h3>Médias partagés</h3>
+      <button class="media-modal-close" onclick="closeMediaModal()">✕</button>
+    </div>
+    <div class="media-modal-tabs">
+      <button class="media-tab active" onclick="switchMediaTab('images',this)">Photos</button>
+      <button class="media-tab" onclick="switchMediaTab('files',this)">Fichiers</button>
+    </div>
+    <div class="media-modal-body" id="mediaModalBody"></div>
   </div>
 </div>
 
@@ -3327,10 +3430,32 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
               <button class="wa-icon-btn" title="Plus d'options" aria-label="Plus d'options" onclick="toggleChatMenu(event)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
               </button>
-              <div id="chatOptionsMenu" style="display:none;position:absolute;right:0;top:110%;background:var(--surface-2,#fff);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:200px;z-index:300;overflow:hidden">
-                <button onclick="blockChatContact()" style="width:100%;text-align:left;padding:.65rem 1rem;background:none;border:none;cursor:pointer;font-size:.88rem;color:var(--text);border-bottom:1px solid var(--border)" id="blockContactBtn">Bloquer ce contact</button>
-                <button onclick="reportChatContact()" style="width:100%;text-align:left;padding:.65rem 1rem;background:none;border:none;cursor:pointer;font-size:.88rem;color:#e07c00;border-bottom:1px solid var(--border)">🚩 Signaler ce contact</button>
-                <button onclick="deleteChatConversation()" style="width:100%;text-align:left;padding:.65rem 1rem;background:none;border:none;cursor:pointer;font-size:.88rem;color:#e53e3e">Supprimer la conversation</button>
+              <div class="chat-menu" id="chatOptionsMenu" style="display:none">
+                <button class="chat-menu-item" onclick="viewContactProfile()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  Voir le profil
+                </button>
+                <button class="chat-menu-item" onclick="openPayFromMessage();closeChatMenu()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                  Réserver / Payer
+                </button>
+                <button class="chat-menu-item" onclick="showSharedMedia()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                  Médias partagés
+                </button>
+                <div class="chat-menu-sep"></div>
+                <button class="chat-menu-item" onclick="blockChatContact()" id="blockContactBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>
+                  Bloquer ce contact
+                </button>
+                <button class="chat-menu-item warn" onclick="reportChatContact()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                  Signaler ce contact
+                </button>
+                <button class="chat-menu-item danger" onclick="deleteChatConversation()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  Supprimer la conversation
+                </button>
               </div>
             </div>
           </div>
@@ -8532,7 +8657,12 @@ function toggleChatMenu(e) {
     // Mettre à jour le libellé bloquer/débloquer
     const blocked = _chatBlockedIds.has(waActiveContactId);
     const btn = document.getElementById('blockContactBtn');
-    if (btn) btn.textContent = blocked ? 'Débloquer ce contact' : 'Bloquer ce contact';
+    if (btn) {
+      const label = blocked ? 'Débloquer ce contact' : 'Bloquer ce contact';
+      const lastText = btn.lastChild;
+      if (lastText && lastText.nodeType === Node.TEXT_NODE) lastText.textContent = ' ' + label;
+      else btn.appendChild(document.createTextNode(' ' + label));
+    }
   }
   if (!isOpen) {
     setTimeout(() => document.addEventListener('click', closeChatMenu, { once: true }), 10);
@@ -8542,6 +8672,71 @@ function toggleChatMenu(e) {
 function closeChatMenu() {
   const menu = document.getElementById('chatOptionsMenu');
   if (menu) menu.style.display = 'none';
+}
+
+// ─── Voir le profil du contact ─────────────────────────────────
+function viewContactProfile() {
+  closeChatMenu();
+  if (!waActiveContactId) return;
+  showTalentProfile(waActiveContactId);
+}
+
+// ─── Médias partagés ───────────────────────────────────────────
+let _sharedMessages = [];
+let _currentMediaTab = 'images';
+
+async function showSharedMedia() {
+  closeChatMenu();
+  if (!waActiveContactId || !waCurrentUserId) return;
+  const overlay = document.getElementById('mediaModalOverlay');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  const msgs = await api('/messages/' + waCurrentUserId + '/' + waActiveContactId);
+  _sharedMessages = (msgs || []).filter(m => m.file_data);
+  _currentMediaTab = 'images';
+  document.querySelectorAll('.media-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+  renderMediaTab('images');
+}
+
+function closeMediaModal() {
+  document.getElementById('mediaModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function switchMediaTab(tab, btn) {
+  _currentMediaTab = tab;
+  document.querySelectorAll('.media-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderMediaTab(tab);
+}
+
+function renderMediaTab(tab) {
+  const body = document.getElementById('mediaModalBody');
+  const items = _sharedMessages.filter(m =>
+    tab === 'images' ? (m.file_type || '').startsWith('image/') : !(m.file_type || '').startsWith('image/')
+  );
+  if (!items.length) {
+    body.innerHTML = `<div class="media-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <p>${tab === 'images' ? 'Aucune photo partagée' : 'Aucun fichier partagé'}</p>
+    </div>`;
+    return;
+  }
+  if (tab === 'images') {
+    body.innerHTML = `<div class="media-grid">${items.map(m =>
+      `<img src="${escHtml(m.file_data)}" alt="${escHtml(m.file_name||'')}" class="media-grid-img" onclick="openPortfolioImage(this.src,this.alt)">`
+    ).join('')}</div>`;
+  } else {
+    body.innerHTML = `<div class="media-file-list">${items.map(m => `
+      <div class="media-file-row" data-fname="${escHtml(m.file_name||'fichier')}" data-fdata="${escHtml(m.file_data)}" onclick="downloadWAFile(this.dataset.fname,this.dataset.fdata)">
+        <div class="wa-file-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="media-file-row-info">
+          <div class="media-file-row-name">${escHtml(m.file_name||'Fichier')}</div>
+          <div class="media-file-row-sub">Télécharger</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--muted)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>`).join('')}</div>`;
+  }
 }
 
 async function blockChatContact() {
