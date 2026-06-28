@@ -1186,6 +1186,14 @@ app.post('/api/admin/users/:id/ban', authenticateAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.delete('/api/admin/users/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const ok = await db.deleteUser(parseInt(req.params.id));
+    if (!ok) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.delete('/api/admin/users/:id/ban', authenticateAdmin, async (req, res) => {
   try {
     await db.unbanUser(req.params.id);

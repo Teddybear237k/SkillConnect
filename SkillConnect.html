@@ -4219,7 +4219,7 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
       <div class="admin-section-title">Utilisateurs actifs</div>
       <div style="overflow-x:auto">
         <table class="admin-table">
-          <thead><tr><th>ID</th><th>Nom</th><th>Email</th><th>Ville</th><th>Compétence</th><th>Note</th><th>Inscrit le</th><th>Statut</th></tr></thead>
+          <thead><tr><th>ID</th><th>Nom</th><th>Email</th><th>Ville</th><th>Compétence</th><th>Note</th><th>Inscrit le</th><th>Statut</th><th>Actions</th></tr></thead>
           <tbody id="adminUsersBody"></tbody>
         </table>
       </div>
@@ -7864,6 +7864,9 @@ async function loadAdminData() {
           <td>
             <button type="button" class="btn-toggle-valid active" onclick="toggleUser(${u.id})">Actif</button>
           </td>
+          <td>
+            <button type="button" onclick="adminDeleteUser(${u.id},'${escHtml(u.prenom)} ${escHtml(u.nom)}')" style="background:#e53e3e;color:#fff;border:none;border-radius:6px;padding:.25rem .6rem;font-size:.75rem;cursor:pointer;font-weight:600">Supprimer</button>
+          </td>
         </tr>`).join('');
     }
   }
@@ -8071,6 +8074,13 @@ async function adminUnbanUser(userId) {
   if (!confirm('Débannir cet utilisateur ?')) return;
   const ok = await adminApi('/admin/users/' + userId + '/ban', 'DELETE');
   if (ok?.success) { toast('Compte réactivé'); loadAdminData(); }
+}
+
+async function adminDeleteUser(userId, name) {
+  if (!confirm(`Supprimer définitivement le compte de ${name} (ID ${userId}) ?\n\nCette action est irréversible.`)) return;
+  const ok = await adminApi('/admin/users/' + userId, 'DELETE');
+  if (ok?.success) { toast('Compte supprimé'); loadAdminData(); }
+  else toast('Erreur : ' + (ok?.error || 'inconnue'), true);
 }
 
 function adminApi(path, method, body) {
