@@ -1723,6 +1723,19 @@ footer{
   width:18px;height:18px;display:flex;align-items:center;justify-content:center;
   font-size:.65rem;font-weight:700;
 }
+.nav-msg-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:#e53e3e;color:#fff;
+  border-radius:var(--r-full);
+  min-width:17px;height:17px;
+  font-size:.62rem;font-weight:700;
+  padding:0 4px;
+  margin-left:5px;
+  vertical-align:middle;
+  line-height:1;
+  animation:badgePop .2s var(--ease-spring);
+}
+@keyframes badgePop{from{transform:scale(0)}to{transform:scale(1)}}
 
 /* Chat panel */
 .wa-chat-panel{flex:1;display:flex;flex-direction:column;background:#efeae2;min-width:0;min-height:0}
@@ -2389,7 +2402,7 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
     <div class="nav-link" onclick="showPage('inscription',this)" data-i18n="nav_inscription">S'inscrire</div>
     <div class="nav-link" onclick="showPage('paiement',this)" data-i18n="nav_paiement">Paiement</div>
     <div class="nav-link" onclick="showPage('dashboard',this)" data-i18n="nav_dashboard">Tableau de bord</div>
-    <div class="nav-link" onclick="showPage('messages',this)" data-i18n="nav_messages">Messages</div>
+    <div class="nav-link" onclick="showPage('messages',this)" data-i18n="nav_messages" id="navMessagesLink">Messages<span class="nav-msg-badge" id="navMsgBadge" style="display:none"></span></div>
     <div class="nav-link" id="navAdminLink" onclick="showPage('admin',this)" style="display:none;color:var(--a500)" data-i18n="nav_admin">Admin</div>
     <button class="nav-login" id="navLoginBtn" onclick="openLoginModal()" data-i18n="nav_login">Se connecter</button>
     <button class="nav-cta" id="navCreateBtn" onclick="showPage('inscription',document.querySelectorAll('.nav-link')[2])" data-i18n="nav_create">Créer un profil</button>
@@ -5401,6 +5414,22 @@ async function initWA(){
   await loadWAContacts();
 }
 
+function updateNavMsgBadge() {
+  const total = waContacts.reduce((sum, c) => sum + (c.unread || 0), 0);
+  const badge = document.getElementById('navMsgBadge');
+  if (!badge) return;
+  if (total > 0) {
+    badge.textContent = total > 99 ? '99+' : total;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+  // Titre de l'onglet navigateur
+  document.title = total > 0
+    ? `(${total}) SkillConnect Cameroun`
+    : 'SkillConnect Cameroun — Trouve un talent. Gagne de l\'argent.';
+}
+
 async function loadWAContacts(filter=''){
   const data=await api('/contacts/'+waCurrentUserId);
   if(data){waContacts=data}
@@ -5408,7 +5437,9 @@ async function loadWAContacts(filter=''){
   if(!container)return;
   const list=filter?waContacts.filter(c=>(c.prenom+' '+c.nom).toLowerCase().includes(filter.toLowerCase())||c.skill.toLowerCase().includes(filter.toLowerCase())):waContacts;
   if(!list.length){
-    container.innerHTML=`<div style="text-align:center;padding:2rem;color:var(--muted);font-size:.875rem">Aucune conversation</div>`;return;
+    container.innerHTML=`<div style="text-align:center;padding:2rem;color:var(--muted);font-size:.875rem">Aucune conversation</div>`;
+    updateNavMsgBadge();
+    return;
   }
   container.innerHTML=list.map(c=>`
     <div class="wa-contact-item${waActiveContactId===c.id?' active':''}" id="waContact-${c.id}" onclick="selectWAContact(${c.id})">
@@ -5422,6 +5453,7 @@ async function loadWAContacts(filter=''){
         ${c.unread>0?`<div class="wa-unread-badge">${c.unread}</div>`:''}
       </div>
     </div>`).join('');
+  updateNavMsgBadge();
 }
 
 function filterContacts(val){loadWAContacts(val)}
@@ -5453,9 +5485,12 @@ async function selectWAContact(contactId){
   await loadWAMessages(contactId);
   api('/messages/read/'+waCurrentUserId+'/'+contactId,{method:'PUT'});
 
-  // Remove unread badge
+  // Remove unread badge + update nav
   const badge=document.querySelector('#waContact-'+contactId+' .wa-unread-badge');
   if(badge)badge.remove();
+  const contact = waContacts.find(c => c.id === contactId);
+  if (contact) contact.unread = 0;
+  updateNavMsgBadge();
 
   document.getElementById('waInput')?.focus();
 }
@@ -6089,6 +6124,9 @@ function initSocket(){
         appendWAMessage(msg);
         if(myUid) api('/messages/read/'+myUid+'/'+waActiveContactId, {method:'PUT'});
       } else {
+        // Incrémenter le compteur local immédiatement sans attendre loadWAContacts
+        const sender = waContacts.find(c => String(c.id) === String(msg.sender_id));
+        if (sender) { sender.unread = (sender.unread || 0) + 1; updateNavMsgBadge(); }
         // Notification cliquable si on n'est pas dans la conversation
         const name = msg.sender_prenom || 'Nouveau message';
         const preview = msg.text ? msg.text.slice(0, 60) : '📎 Fichier joint';
