@@ -930,7 +930,9 @@ if (process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_KEY) {
   console.log('ℹ️  Email désactivé — configurez BREVO_SMTP_USER + BREVO_SMTP_KEY dans Railway');
 }
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'SkillConnect <no-reply@skillconnect.app>';
+// Si EMAIL_FROM n'est pas défini, utiliser l'adresse Brevo (déjà vérifiée chez eux)
+const EMAIL_FROM = process.env.EMAIL_FROM ||
+  (process.env.BREVO_SMTP_USER ? `SkillConnect <${process.env.BREVO_SMTP_USER}>` : 'SkillConnect <no-reply@skillconnect.app>');
 
 async function sendEmail(to, subject, html) {
   if (!to) return;
