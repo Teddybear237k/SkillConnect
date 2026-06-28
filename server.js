@@ -765,6 +765,23 @@ app.put('/api/reviews/:id/reply', authenticateToken, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
+app.get('/api/reviews/featured', async (req, res) => {
+  try {
+    const [rows] = await db.pool.execute(`
+      SELECT r.rating, r.comment, r.created_at,
+             reviewer.prenom AS reviewer_prenom, reviewer.nom AS reviewer_nom, reviewer.ville AS reviewer_ville,
+             talent.prenom AS talent_prenom, talent.skill AS talent_skill
+      FROM reviews r
+      JOIN users reviewer ON reviewer.id = r.reviewer_id
+      JOIN users talent   ON talent.id   = r.talent_id
+      WHERE r.rating >= 4 AND LENGTH(r.comment) > 30
+      ORDER BY r.rating DESC, r.created_at DESC
+      LIMIT 8
+    `);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/reviews/:talentId', async (req, res) => {
   try { res.json(await db.getReviews(parseInt(req.params.talentId))); }
   catch (e) { res.status(500).json({ error: e.message }); }

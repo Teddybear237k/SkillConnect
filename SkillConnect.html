@@ -6162,17 +6162,42 @@ document.addEventListener('click', ()=>{
 });
 
 // ═══ TESTIMONIALS ════════════════════════════════════════════════════
-function initTestimonials(){
-  const doubled=[...TESTIMONIALS,...TESTIMONIALS];
-  document.getElementById('testiTrack').innerHTML=doubled.map(t=>`
+function renderTestimonials(list) {
+  const stars = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#f6ad55;stroke:none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+  const doubled = [...list, ...list];
+  document.getElementById('testiTrack').innerHTML = doubled.map(t => `
     <div class="testi-card">
-      <div class="testi-stars">${[1,2,3,4,5].map(()=>'<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>').join('')}</div>
-      <p class="testi-text">"${t.text}"</p>
+      <div class="testi-stars">${stars.repeat(t.rating || 5)}</div>
+      <p class="testi-text">"${escHtml(t.text)}"</p>
       <div class="testi-author">
         <div class="testi-av">${t.av}</div>
-        <div><div class="testi-name">${t.name}</div><div class="testi-role">${t.role}</div></div>
+        <div>
+          <div class="testi-name">${escHtml(t.name)}</div>
+          <div class="testi-role">${escHtml(t.role)}</div>
+        </div>
       </div>
     </div>`).join('');
+}
+
+async function initTestimonials() {
+  // Tenter de charger les vrais avis
+  try {
+    const rows = await api('/reviews/featured');
+    if (rows && rows.length >= 3) {
+      const real = rows.map(r => ({
+        rating: r.rating,
+        text: r.comment,
+        name: r.reviewer_prenom + ' ' + (r.reviewer_nom ? r.reviewer_nom[0] + '.' : ''),
+        role: r.reviewer_ville || 'Cameroun',
+        av: (r.reviewer_prenom[0] + (r.reviewer_nom?.[0] || '')).toUpperCase(),
+      }));
+      renderTestimonials(real);
+      return;
+    }
+  } catch (_) {}
+  // Fallback : masquer la section si pas encore d'avis réels
+  const section = document.querySelector('.testimonials-section');
+  if (section) section.style.display = 'none';
 }
 
 // ═══ UTILS ═══════════════════════════════════════════════════════════

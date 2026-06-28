@@ -1513,6 +1513,7 @@ async function getAllTransactions() {
 }
 
 module.exports = {
+  pool,
   init,
   getTalents, getTalentById, createUser, updateUser, findUserByEmail, deleteUser,
   getDashboardData, getMonthlyStats, getVilles,
