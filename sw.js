@@ -1,4 +1,4 @@
-const CACHE = 'skillconnect-v3';
+const CACHE = 'skillconnect-v4';
 const STATIC = [
   '/manifest.json',
   '/icon-192.svg',

@@ -29,11 +29,10 @@ const io     = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-// Fichiers statiques avec cache long, sauf le HTML principal
+// Fichiers statiques — HTML et SW jamais en cache, assets long cache
 app.use(express.static(__dirname, {
   setHeaders(res, filePath) {
-    if (filePath.endsWith('.html')) {
-      // HTML : jamais en cache → le navigateur vérifie toujours la version serveur
+    if (filePath.endsWith('.html') || filePath.endsWith('sw.js')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
