@@ -15,6 +15,8 @@ const webPush      = require('web-push');
 const db           = require('./db/database');
 const monetbil     = require('./monetbil');
 
+const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 8080}`;
+
 // VAPID push notifications
 if (process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE) {
   webPush.setVapidDetails(
@@ -207,14 +209,10 @@ app.post('/api/register', authLimiter, async (req, res) => {
     if (user.email) {
       const verifyToken = crypto.randomBytes(32).toString('hex');
       await db.createVerifyToken(user.id, verifyToken);
-      const verifyUrl = `${process.env.APP_URL || 'http://localhost:3000'}/?verify_token=${verifyToken}`;
-      if (mailer) {
-        sendEmail(user.email, 'Vérifiez votre email — SkillConnect',
-          `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${user.prenom},</p><p>Bienvenue ! Cliquez sur le bouton ci-dessous pour vérifier votre adresse email.</p><a href="${verifyUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">Vérifier mon email</a><p style="color:#888;font-size:.85rem">Si vous n'avez pas créé de compte, ignorez cet email.</p></div>`
-        );
-      } else {
-        console.log(`📧 Verify email URL pour ${user.email} : ${verifyUrl}`);
-      }
+      const verifyUrl = `${appUrl}/?verify_token=${verifyToken}`;
+      sendEmail(user.email, 'Vérifiez votre email — SkillConnect',
+        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${user.prenom},</p><p>Bienvenue ! Cliquez ci-dessous pour vérifier votre adresse email.</p><a href="${verifyUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">Vérifier mon email</a><p style="color:#888;font-size:.85rem">Si vous n'avez pas créé de compte, ignorez cet email.</p></div>`
+      );
     }
 
     res.json({ success: true, user, token });
@@ -456,7 +454,7 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
     if (monetbil.isConfigured() && sender?.phone) {
       let mbResult;
       try {
-        const appUrl = process.env.APP_URL || 'http://localhost:3000';
+        // appUrl défini globalement en haut du fichier
         mbResult = await monetbil.initPayment({
           amount:    parseInt(req.body.amount),
           phone:     sender.phone,
@@ -630,7 +628,7 @@ app.post('/api/deposit', authenticateToken, async (req, res) => {
     if (monetbil.isConfigured()) {
       let mbResult;
       try {
-        const appUrl = process.env.APP_URL || 'http://localhost:3000';
+        // appUrl défini globalement en haut du fichier
         mbResult = await monetbil.initPayment({
           amount, phone: req.body.phone,
           itemRef:   `sc-deposit-${Date.now()}`,
@@ -946,15 +944,10 @@ app.post('/api/auth/resend-verify', authenticateToken, async (req, res) => {
 
     const verifyToken = crypto.randomBytes(32).toString('hex');
     await db.createVerifyToken(user.id, verifyToken);
-    const verifyUrl = `${process.env.APP_URL || 'http://localhost:3000'}/?verify_token=${verifyToken}`;
-
-    if (mailer) {
-      await sendEmail(user.email, 'Vérifiez votre email — SkillConnect',
-        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${user.prenom},</p><p>Cliquez ci-dessous pour vérifier votre adresse email.</p><a href="${verifyUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">Vérifier mon email</a></div>`
-      );
-    } else {
-      console.log(`📧 Verify URL pour ${user.email} : ${verifyUrl}`);
-    }
+    const verifyUrl = `${appUrl}/?verify_token=${verifyToken}`;
+    await sendEmail(user.email, 'Vérifiez votre email — SkillConnect',
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${user.prenom},</p><p>Cliquez ci-dessous pour vérifier votre adresse email.</p><a href="${verifyUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">Vérifier mon email</a></div>`
+    );
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -972,30 +965,18 @@ app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
     const expiresStr = expires.toISOString().slice(0, 19).replace('T', ' ');
     await db.createResetToken(user.id, token, expiresStr);
 
-    const resetUrl = `${process.env.APP_URL || 'http://localhost:3000'}/?reset_token=${token}`;
-
-    if (mailer) {
-      console.log(`📧 Envoi reset password → ${email}`);
-      await mailer.sendMail({
-        from: `"SkillConnect" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: 'Réinitialisation de votre mot de passe SkillConnect',
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
-            <h2 style="color:#1D9E75">SkillConnect</h2>
-            <p>Bonjour ${user.prenom},</p>
-            <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous :</p>
-            <a href="${resetUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">
-              Réinitialiser mon mot de passe
-            </a>
-            <p style="color:#888;font-size:.85rem">Ce lien expire dans 1 heure. Si vous n'avez pas demandé cela, ignorez cet email.</p>
-          </div>`,
-      });
-      console.log(`✅ Email reset envoyé → ${email}`);
-    } else {
-      console.log(`🔑 Reset token pour ${email} : ${token}`);
-      console.log(`   URL : ${resetUrl}`);
-    }
+    const resetUrl = `${appUrl}/?reset_token=${token}`;
+    await sendEmail(email, 'Réinitialisation de votre mot de passe SkillConnect',
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+        <h2 style="color:#1D9E75">SkillConnect</h2>
+        <p>Bonjour ${user.prenom},</p>
+        <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez ci-dessous :</p>
+        <a href="${resetUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0">
+          Réinitialiser mon mot de passe
+        </a>
+        <p style="color:#888;font-size:.85rem">Ce lien expire dans 1 heure. Si vous n'avez pas demandé cela, ignorez cet email.</p>
+      </div>`
+    );
 
     res.json({ success: true });
   } catch (e) {
