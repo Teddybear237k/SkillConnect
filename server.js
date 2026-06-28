@@ -1334,17 +1334,33 @@ app.put('/api/jobs/:id/applications/:appId', authenticateToken, async (req, res)
     const app_ = apps.find(a => a.id === parseInt(req.params.appId));
     if (!app_) return res.status(404).json({ error: 'Candidature non trouvée pour cette offre.' });
     await db.updateApplicationStatus(req.params.appId, status);
-    {
-      const notif = await db.createNotification({
-        userId: app_.talent_id,
-        type: 'message',
-        message: status === 'accepted'
-          ? `Votre candidature pour "${job.title}" a été acceptée ! 🎉`
-          : `Votre candidature pour "${job.title}" n'a pas été retenue.`,
-        relatedId: parseInt(req.params.id),
-      });
-      emitToUser(app_.talent_id, 'new_notification', notif);
+
+    // Quand une candidature est acceptée : fermer l'offre + rejeter les autres candidatures
+    if (status === 'accepted') {
+      await db.closeJobPost(req.params.id, req.user.userId);
+      // Notifier les autres candidats du refus
+      const otherApps = apps.filter(a => a.id !== parseInt(req.params.appId) && a.status === 'pending');
+      for (const other of otherApps) {
+        await db.updateApplicationStatus(other.id, 'rejected');
+        const n = await db.createNotification({
+          userId: other.talent_id,
+          type: 'message',
+          message: `Votre candidature pour "${job.title}" n'a pas été retenue.`,
+          relatedId: parseInt(req.params.id),
+        });
+        emitToUser(other.talent_id, 'new_notification', n);
+      }
     }
+
+    const notif = await db.createNotification({
+      userId: app_.talent_id,
+      type: 'message',
+      message: status === 'accepted'
+        ? `Votre candidature pour "${job.title}" a été acceptée ! 🎉`
+        : `Votre candidature pour "${job.title}" n'a pas été retenue.`,
+      relatedId: parseInt(req.params.id),
+    });
+    emitToUser(app_.talent_id, 'new_notification', notif);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

@@ -8544,14 +8544,16 @@ async function openJobModal(jobId) {
 async function respondToApplicant(jobId, appId, status, talentId, talentName, budget) {
   const res = await api('/jobs/' + jobId + '/applications/' + appId, 'PUT', { status });
   if (res?.success) {
-    toast(status === 'accepted' ? 'Candidature acceptée !' : 'Candidature refusée.');
+    toast(status === 'accepted' ? 'Candidature acceptée ! L\'offre est maintenant clôturée.' : 'Candidature refusée.');
     if (status === 'accepted' && talentId) {
       showMissionCreationBanner(talentId, talentName, budget);
     }
-    openJobModal(jobId);
-    if (_offresTab === 'mine') loadMyJobs();
+    // Fermer le modal et recharger les deux listes
+    closeJobModal();
+    loadMyJobs();
+    loadJobs(1); // retirer l'offre de la liste publique
   } else {
-    toast(res?.error || 'Erreur', 'error');
+    toast(res?.error || 'Erreur');
   }
 }
 
