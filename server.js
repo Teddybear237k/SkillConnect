@@ -8,6 +8,7 @@ const bcrypt       = require('bcryptjs');
 const jwt          = require('jsonwebtoken');
 const rateLimit    = require('express-rate-limit');
 const nodemailer   = require('nodemailer');
+const { Resend }   = require('resend');
 const crypto       = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const webPush      = require('web-push');
@@ -889,27 +890,40 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
   }
 });
 
-// ─── Mot de passe oublié ──────────────────────────────────────────────────────
+// ─── Email (Resend en priorité, fallback nodemailer) ─────────────────────────
+let resendClient = null;
 let mailer = null;
-try {
-  if (process.env.SMTP_USER && process.env.SMTP_USER !== 'votre@gmail.com') {
+
+if (process.env.RESEND_API_KEY) {
+  resendClient = new Resend(process.env.RESEND_API_KEY);
+  console.log('✅ Email activé via Resend');
+} else if (process.env.SMTP_USER && process.env.SMTP_USER !== 'votre@gmail.com') {
+  try {
     mailer = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT) || 587,
       secure: false,
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
-    console.log('✅ Email (nodemailer) activé');
-  } else {
-    console.log('ℹ️  Email désactivé (configurez SMTP_USER/SMTP_PASS dans .env)');
-  }
-} catch (e) { console.log('⚠️  Email non disponible :', e.message); }
+    console.log('✅ Email activé via SMTP (nodemailer)');
+  } catch (e) { console.log('⚠️  SMTP non disponible :', e.message); }
+} else {
+  console.log('ℹ️  Email désactivé — configurez RESEND_API_KEY dans les variables Railway');
+}
+
+const EMAIL_FROM = process.env.EMAIL_FROM || 'SkillConnect <noreply@skillconnect.cm>';
 
 async function sendEmail(to, subject, html) {
-  if (!mailer || !to) return;
+  if (!to) return;
   try {
-    await mailer.sendMail({ from: `"SkillConnect" <${process.env.SMTP_USER}>`, to, subject, html });
-    console.log('📧 Email →', to);
+    if (resendClient) {
+      const { error } = await resendClient.emails.send({ from: EMAIL_FROM, to, subject, html });
+      if (error) throw new Error(error.message);
+      console.log('📧 Email (Resend) →', to);
+    } else if (mailer) {
+      await mailer.sendMail({ from: EMAIL_FROM, to, subject, html });
+      console.log('📧 Email (SMTP) →', to);
+    }
   } catch (e) { console.error('Email erreur :', e.message); }
 }
 
@@ -1189,21 +1203,19 @@ app.get('/api/admin/bans', authenticateAdmin, async (req, res) => {
 });
 
 app.post('/api/admin/test-email', authenticateAdmin, async (req, res) => {
-  const to = req.body?.to || process.env.SMTP_USER;
-  if (!mailer) return res.status(503).json({
+  const to = req.body?.to || process.env.SMTP_USER || 'tddmodo@gmail.com';
+  if (!resendClient && !mailer) return res.status(503).json({
     ok: false,
-    error: 'mailer est null — SMTP_USER/SMTP_PASS non configurés sur ce serveur.'
+    error: 'Email non configuré — ajoutez RESEND_API_KEY dans les variables Railway.'
   });
   try {
-    const info = await mailer.sendMail({
-      from: `"SkillConnect" <${process.env.SMTP_USER}>`,
-      to,
-      subject: '✅ Test email SkillConnect',
-      html: `<p>Cet email confirme que l'envoi SMTP fonctionne sur le serveur de production.<br>
-             Expéditeur : ${process.env.SMTP_USER}<br>
-             Heure : ${new Date().toLocaleString('fr-FR')}</p>`,
-    });
-    res.json({ ok: true, messageId: info.messageId, to });
+    const provider = resendClient ? 'Resend' : 'SMTP';
+    await sendEmail(to, '✅ Test email SkillConnect', `
+      <p>Cet email confirme que l'envoi fonctionne sur le serveur de production.</p>
+      <p>Fournisseur : <strong>${provider}</strong><br>
+      Heure : ${new Date().toLocaleString('fr-FR')}</p>
+    `);
+    res.json({ ok: true, to, provider });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
