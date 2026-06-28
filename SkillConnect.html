@@ -8020,19 +8020,13 @@ async function adminTestEmail() {
   const result = document.getElementById('emailTestResult');
   result.style.color = 'var(--muted)';
   result.textContent = 'Envoi en cours…';
-  const adminPass = localStorage.getItem('sc_admin_pass') || prompt('Mot de passe admin :');
-  const res = await fetch('/api/admin/test-email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-pass': adminPass },
-    body: JSON.stringify({ to: dest || undefined }),
-  });
-  const data = await res.json();
+  const data = await adminApi('/admin/test-email', 'POST', { to: dest || undefined });
   if (data.ok) {
     result.style.color = '#38a169';
     result.textContent = `✅ Email envoyé à ${data.to} (ID: ${data.messageId})`;
   } else {
     result.style.color = '#e53e3e';
-    result.textContent = `❌ Erreur : ${data.error}`;
+    result.textContent = `❌ ${data.error}`;
   }
 }
 
