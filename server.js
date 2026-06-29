@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express      = require('express');
+const helmet       = require('helmet');
 const http         = require('http');
 const { Server }   = require('socket.io');
 const path         = require('path');
@@ -17,6 +18,10 @@ const monetbil     = require('./monetbil');
 
 const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 8080}`;
 
+function escHtmlSrv(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // VAPID push notifications
 if (process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE) {
   webPush.setVapidDetails(
@@ -28,10 +33,14 @@ if (process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE) {
 
 const app    = express();
 const server = http.createServer(app);
-const io     = new Server(server, { cors: { origin: '*' } });
+const io     = new Server(server, { cors: { origin: appUrl } });
 
 app.set('trust proxy', 1); // Railway est derrière un reverse proxy
-app.use(cors());
+// CSP désactivée : SkillConnect.html est une SPA monofichier avec scripts/styles
+// inline + CDN (Chart.js, Google Sign-In, jsPDF) — une CSP par défaut casserait tout.
+// Les autres protections (X-Frame-Options, noSniff, HSTS...) restent actives.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+app.use(cors({ origin: appUrl, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 // Fichiers statiques — HTML et SW jamais en cache, assets long cache
 app.use(express.static(__dirname, {
@@ -394,7 +403,7 @@ app.post('/api/messages', authenticateToken, messageLimiter, async (req, res) =>
       const receiverUser = await db.getTalentById(parseInt(receiverId));
       if (receiverUser?.email) sendEmailSafe(receiverUser.email,
         `Nouveau message de ${sender?.prenom||'un utilisateur'} — SkillConnect`,
-        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${receiverUser.prenom},</p><p>Vous avez reçu un message de <strong>${sender?.prenom||''} ${sender?.nom||''}</strong> :</p><blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${String(text).slice(0,200)}</blockquote><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">Répondre</a></div>`
+        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${escHtmlSrv(receiverUser.prenom)},</p><p>Vous avez reçu un message de <strong>${escHtmlSrv(sender?.prenom||'')} ${escHtmlSrv(sender?.nom||'')}</strong> :</p><blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${escHtmlSrv(String(text).slice(0,200))}</blockquote><a href="${appUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">Répondre</a></div>`
       );
     }
 
@@ -805,7 +814,7 @@ app.post('/api/reviews', authenticateToken, async (req, res) => {
     const reviewer   = await db.getTalentById(req.user.userId);
     if (talentUser?.email) sendEmailSafe(talentUser.email,
       `Nouvel avis ${req.body.rating}⭐ reçu — SkillConnect`,
-      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${talentUser.prenom},</p><p><strong>${reviewer?.prenom||'Un utilisateur'}</strong> vous a laissé un avis <strong>${req.body.rating} étoile${req.body.rating>1?'s':''}</strong> ⭐</p>${req.body.comment?`<blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${req.body.comment}</blockquote>`:''}</div>`
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${escHtmlSrv(talentUser.prenom)},</p><p><strong>${escHtmlSrv(reviewer?.prenom||'Un utilisateur')}</strong> vous a laissé un avis <strong>${escHtmlSrv(req.body.rating)} étoile${req.body.rating>1?'s':''}</strong> ⭐</p>${req.body.comment?`<blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${escHtmlSrv(req.body.comment)}</blockquote>`:''}</div>`
     );
     res.json({ success: true, review });
   } catch (e) { res.status(400).json({ error: e.message }); }
@@ -1044,7 +1053,10 @@ app.post('/api/admin/auth', authLimiter, (req, res) => {
   const { password } = req.body;
   const adminPass = process.env.ADMIN_PASSWORD;
   if (!adminPass) return res.status(503).json({ error: 'Accès admin non configuré.' });
-  if (password !== adminPass) return res.status(401).json({ error: 'Mot de passe admin incorrect.' });
+  const a = Buffer.from(String(password || ''));
+  const b = Buffer.from(adminPass);
+  const match = a.length === b.length && crypto.timingSafeEqual(a, b);
+  if (!match) return res.status(401).json({ error: 'Mot de passe admin incorrect.' });
   const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
   res.json({ success: true, token });
 });
@@ -1334,11 +1346,11 @@ app.post('/api/jobs/:id/apply', authenticateToken, async (req, res) => {
       `Nouvelle candidature — "${job.title}"`,
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
         <h2 style="color:#1D9E75">SkillConnect</h2>
-        <p>Bonjour ${client.prenom},</p>
-        <p><strong>${talent?.prenom||'Un talent'} ${talent?.nom||''}</strong> a postulé à votre offre <strong>"${job.title}"</strong>.</p>
-        ${req.body.message ? `<blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${req.body.message}</blockquote>` : ''}
+        <p>Bonjour ${escHtmlSrv(client.prenom)},</p>
+        <p><strong>${escHtmlSrv(talent?.prenom||'Un talent')} ${escHtmlSrv(talent?.nom||'')}</strong> a postulé à votre offre <strong>"${escHtmlSrv(job.title)}"</strong>.</p>
+        ${req.body.message ? `<blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${escHtmlSrv(req.body.message)}</blockquote>` : ''}
         <p>Connectez-vous pour consulter sa candidature et y répondre.</p>
-        <a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Voir la candidature</a>
+        <a href="${appUrl}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Voir la candidature</a>
       </div>`
     );
     res.json({ success: true, application });
