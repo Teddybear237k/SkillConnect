@@ -7845,7 +7845,7 @@ async function loadAdminData() {
           <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR') : '—'}</td>
           <td>
             <button type="button" class="btn-validate" onclick="validateUser(${u.id})">✅ Valider</button>
-            <button type="button" class="btn-toggle-valid inactive" style="margin-left:.3rem" onclick="toggleUser(${u.id})">Suspendre</button>
+            <button type="button" onclick="adminDeleteUser(${u.id},'${escHtml(u.prenom)} ${escHtml(u.nom)}')" style="margin-left:.3rem;background:#e53e3e;color:#fff;border:none;border-radius:6px;padding:.25rem .6rem;font-size:.75rem;cursor:pointer;font-weight:600">Supprimer</button>
           </td>
         </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted)">Aucun profil en attente</td></tr>';
     }
@@ -7862,7 +7862,7 @@ async function loadAdminData() {
           <td>⭐ ${u.rating}</td>
           <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR') : '—'}</td>
           <td>
-            <button type="button" class="btn-toggle-valid active" onclick="toggleUser(${u.id})">Actif</button>
+            <button type="button" class="btn-toggle-valid active" onclick="toggleUser(${u.id})" title="Masquer ce profil des listes publiques">Suspendre</button>
           </td>
           <td>
             <button type="button" onclick="adminDeleteUser(${u.id},'${escHtml(u.prenom)} ${escHtml(u.nom)}')" style="background:#e53e3e;color:#fff;border:none;border-radius:6px;padding:.25rem .6rem;font-size:.75rem;cursor:pointer;font-weight:600">Supprimer</button>
