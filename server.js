@@ -392,7 +392,7 @@ app.post('/api/messages', authenticateToken, messageLimiter, async (req, res) =>
     // Email si le destinataire n'est pas connecté via socket
     if (!userSockets[String(receiverId)]) {
       const receiverUser = await db.getTalentById(parseInt(receiverId));
-      if (receiverUser?.email) sendEmail(receiverUser.email,
+      if (receiverUser?.email) sendEmailSafe(receiverUser.email,
         `Nouveau message de ${sender?.prenom||'un utilisateur'} — SkillConnect`,
         `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${receiverUser.prenom},</p><p>Vous avez reçu un message de <strong>${sender?.prenom||''} ${sender?.nom||''}</strong> :</p><blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${String(text).slice(0,200)}</blockquote><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">Répondre</a></div>`
       );
@@ -477,7 +477,7 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
         type: 'payment',
         message: `Paiement de ${net.toLocaleString('fr-FR')} FCFA attendu pour "${tx.description}"`,
       });
-      if (receiver?.email) sendEmail(
+      if (receiver?.email) sendEmailSafe(
         receiver.email,
         `Nouvelle réservation — SkillConnect`,
         `<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;border-radius:12px;border:1px solid #e5e7eb">
@@ -512,7 +512,7 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
     });
     if (sender?.phone)   sendSMS(sender.phone,   `SkillConnect : Paiement de ${tx.amount.toLocaleString('fr-FR')} FCFA envoyé. Fonds en séquestre.`);
     if (receiver?.phone) sendSMS(receiver.phone,  `SkillConnect : Vous allez recevoir ${net.toLocaleString('fr-FR')} FCFA. Libéré après validation.`);
-    if (receiver?.email) sendEmail(receiver.email,
+    if (receiver?.email) sendEmailSafe(receiver.email,
       `Nouveau paiement reçu — SkillConnect`,
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${receiver.prenom},</p><p><strong>${sender?.prenom||'Un client'}</strong> vous a envoyé <strong>${net.toLocaleString('fr-FR')} FCFA</strong> pour &quot;${tx.description}&quot;.</p><p>Ces fonds sont en <strong>séquestre sécurisé</strong> et seront libérés une fois la mission validée.</p><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;margin-top:1rem">Voir sur SkillConnect</a></div>`
     );
@@ -547,7 +547,7 @@ app.put('/api/transactions/:id/validate', authenticateToken, async (req, res) =>
     if (receiver?.phone) {
       sendSMS(receiver.phone, `SkillConnect : Mission validée ! ${net.toLocaleString('fr-FR')} FCFA crédités sur votre compte.`);
     }
-    if (receiver?.email) sendEmail(receiver.email,
+    if (receiver?.email) sendEmailSafe(receiver.email,
       `Mission validée — ${net.toLocaleString('fr-FR')} FCFA libérés`,
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${receiver.prenom},</p><p>Votre mission &quot;${tx.description}&quot; a été validée par le client. <strong>${net.toLocaleString('fr-FR')} FCFA</strong> ont été libérés sur votre compte SkillConnect.</p></div>`
     );
@@ -727,7 +727,7 @@ app.post('/api/monetbil/webhook', async (req, res) => {
         const talent = await db.getTalentById(tx.receiver_id);
         const client = await db.getTalentById(tx.sender_id);
         const net    = Number(tx.amount) - Number(tx.commission || 0);
-        if (talent?.email) sendEmail(
+        if (talent?.email) sendEmailSafe(
           talent.email,
           `Paiement confirmé — SkillConnect`,
           `<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;border-radius:12px;border:1px solid #e5e7eb">
@@ -803,7 +803,7 @@ app.post('/api/reviews', authenticateToken, async (req, res) => {
     });
     const talentUser = await db.getTalentById(parseInt(req.body.talentId));
     const reviewer   = await db.getTalentById(req.user.userId);
-    if (talentUser?.email) sendEmail(talentUser.email,
+    if (talentUser?.email) sendEmailSafe(talentUser.email,
       `Nouvel avis ${req.body.rating}⭐ reçu — SkillConnect`,
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${talentUser.prenom},</p><p><strong>${reviewer?.prenom||'Un utilisateur'}</strong> vous a laissé un avis <strong>${req.body.rating} étoile${req.body.rating>1?'s':''}</strong> ⭐</p>${req.body.comment?`<blockquote style="border-left:3px solid #1D9E75;padding:.5rem 1rem;color:#555;margin:1rem 0">${req.body.comment}</blockquote>`:''}</div>`
     );
@@ -936,16 +936,18 @@ const EMAIL_FROM = process.env.EMAIL_FROM ||
 
 async function sendEmail(to, subject, html) {
   if (!to) return;
-  try {
-    if (resendClient) {
-      const { error } = await resendClient.emails.send({ from: EMAIL_FROM, to, subject, html });
-      if (error) throw new Error(error.message);
-      console.log('📧 Email (Resend) →', to);
-    } else if (mailer) {
-      await mailer.sendMail({ from: EMAIL_FROM, to, subject, html });
-      console.log('📧 Email (SMTP) →', to);
-    }
-  } catch (e) { console.error('Email erreur :', e.message); }
+  if (resendClient) {
+    const { error } = await resendClient.emails.send({ from: EMAIL_FROM, to, subject, html });
+    if (error) throw new Error(error.message);
+    console.log('📧 Email (Resend) →', to);
+  } else if (mailer) {
+    await mailer.sendMail({ from: EMAIL_FROM, to, subject, html });
+    console.log('📧 Email (SMTP) →', to);
+  }
+}
+// Wrapper silencieux pour les emails de notification (non bloquants)
+function sendEmailSafe(to, subject, html) {
+  sendEmail(to, subject, html).catch(e => console.error('Email erreur (non bloquant):', e.message));
 }
 
 // ─── Vérification email ───────────────────────────────────────────────────────
@@ -1068,7 +1070,7 @@ app.put('/api/admin/users/:id/toggle', authenticateAdmin, async (req, res) => {
         relatedId: parseInt(req.params.id),
       });
       emitToUser(parseInt(req.params.id), 'new_notification', notif);
-      if (user.email) sendEmail(
+      if (user.email) sendEmailSafe(
         user.email,
         'Profil validé — SkillConnect',
         `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
@@ -1171,7 +1173,7 @@ app.post('/api/admin/users/:id/ban', authenticateAdmin, async (req, res) => {
       : null;
     await db.banUser(req.params.id, banType || 'temp', banUntil, reason, '');
     const user = await db.getTalentById(parseInt(req.params.id));
-    if (user?.email) sendEmail(user.email, 'Compte suspendu — SkillConnect',
+    if (user?.email) sendEmailSafe(user.email, 'Compte suspendu — SkillConnect',
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
         <h2 style="color:#e53e3e">SkillConnect — Suspension de compte</h2>
         <p>Bonjour ${user.prenom},</p>
@@ -1198,7 +1200,7 @@ app.delete('/api/admin/users/:id/ban', authenticateAdmin, async (req, res) => {
   try {
     await db.unbanUser(req.params.id);
     const user = await db.getTalentById(parseInt(req.params.id));
-    if (user?.email) sendEmail(user.email, 'Compte réactivé — SkillConnect',
+    if (user?.email) sendEmailSafe(user.email, 'Compte réactivé — SkillConnect',
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
         <h2 style="color:#1D9E75">SkillConnect</h2>
         <p>Bonjour ${user.prenom},</p>
@@ -1266,7 +1268,7 @@ app.put('/api/transactions/:id/deliver', authenticateToken, async (req, res) => 
       relatedId: tx.id,
     });
     emitToUser(tx.sender_id, 'new_notification', notif);
-    if (sender?.email) sendEmail(sender.email,
+    if (sender?.email) sendEmailSafe(sender.email,
       `Mission livrée — validez pour libérer les fonds`,
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${sender.prenom},</p><p><strong>${receiver?.prenom||'Le talent'}</strong> vient de marquer la mission <strong>"${tx.description}"</strong> comme livrée.</p><p>Connectez-vous pour valider et libérer les fonds.</p><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">Valider la mission</a></div>`
     );
@@ -1327,7 +1329,7 @@ app.post('/api/jobs/:id/apply', authenticateToken, async (req, res) => {
     emitToUser(job.client_id, 'new_notification', notif);
     // Email au client
     const client = await db.getTalentById(job.client_id);
-    if (client?.email) sendEmail(
+    if (client?.email) sendEmailSafe(
       client.email,
       `Nouvelle candidature — "${job.title}"`,
       `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
