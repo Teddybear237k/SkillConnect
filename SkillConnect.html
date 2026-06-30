@@ -4781,6 +4781,11 @@ function showPage(id,linkEl){
   window.scrollTo({top:0,behavior:'smooth'});
   document.body.style.overflow = '';
   closeMobileMenu();
+  // Mettre à jour l'URL sans recharger la page
+  const pageParam = id === 'accueil' ? '' : '?page=' + id;
+  if (window.location.search !== pageParam || (id==='accueil' && window.location.search)) {
+    history.pushState({ page: id }, '', pageParam || '/');
+  }
   if(id==='dashboard') { initDashboard(); loadDashPortfolio(); initDashMissions(); initPushNotifications(); }
   if(id==='messages') { initWA(); loadBlockedIds(); }
   if(id==='explorer') { loadOnlineUsers().then(renderTalents); loadVilles(); }
@@ -4796,6 +4801,36 @@ function showPage(id,linkEl){
   if(id==='paiement') initPayPage();
   triggerFadeUps();
 }
+
+// Retour navigateur (bouton précédent/suivant)
+window.addEventListener('popstate', e => {
+  const id = e.state?.page || new URLSearchParams(window.location.search).get('page') || 'accueil';
+  const link = document.querySelector(`.nav-link[onclick*="'${id}'"]`) || null;
+  // Déclencher sans repush de l'historique
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg = document.getElementById('page-'+id);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  if (link) link.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='dashboard') { initDashboard(); loadDashPortfolio(); }
+  if(id==='explorer') { loadOnlineUsers().then(renderTalents); loadVilles(); }
+  if(id==='messages') initWA();
+  if(id==='paiement') initPayPage();
+  triggerFadeUps();
+});
+
+// Restaurer la section depuis l'URL au chargement initial
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const page = params.get('page');
+  if (page && document.getElementById('page-'+page)) {
+    const link = document.querySelector(`.nav-link[onclick*="'${page}'"]`) || null;
+    showPage(page, link);
+  }
+  const profil = params.get('profil');
+  if (profil) { showPage('profil', null); loadTalentProfile(profil); }
+})();
 
 // ═══ FADE-UP ═════════════════════════════════════════════════════════
 const fadeObs = new IntersectionObserver(entries=>{
@@ -7566,10 +7601,10 @@ let _epPhotoBase64 = null;
 
 function openEditProfile(){
   const uid = localStorage.getItem('sc_user_id');
-  if(!uid) return;
+  if(!uid || uid.startsWith('local_')) { toast('Connectez-vous pour modifier votre profil.'); return; }
   api('/dashboard/'+uid).then(data=>{
     const u = data?.user;
-    if(!u) return;
+    if(!u) { toast('Impossible de charger votre profil. Réessayez.', 'error'); return; }
     document.getElementById('epPrenom').value   = u.prenom  || '';
     document.getElementById('epNom').value      = u.nom     || '';
     document.getElementById('epVille').value    = u.ville   || '';
@@ -7611,7 +7646,7 @@ function openEditProfile(){
     document.getElementById('epConfirmPw').value='';
     document.getElementById('editProfileOverlay').style.display='flex';
     document.body.style.overflow='hidden';
-  });
+  }).catch(err => { console.error('openEditProfile error:', err); toast('Erreur lors du chargement du profil.', 'error'); });
 }
 
 function epPreviewPhoto(input){
@@ -8184,10 +8219,11 @@ async function deletePortfolioItem(id) {
 
 // ═══ PAGE PROFIL INDIVIDUELLE ════════════════════════════════════════════════
 function showTalentProfile(id) {
-  const url = new URL(window.location);
-  url.searchParams.set('profil', id);
-  history.pushState({}, '', url);
-  showPage('profil', null);
+  history.pushState({ page: 'profil', profil: id }, '', '?page=profil&profil=' + id);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-profil')?.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  window.scrollTo({top:0,behavior:'smooth'});
   loadTalentProfile(id);
 }
 
