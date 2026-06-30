@@ -1066,12 +1066,9 @@ section{padding:5rem 2.5rem;max-width:1200px;margin:0 auto}
 .metric-card::before{
   content:'';position:absolute;top:0;left:0;right:0;height:3px;
   background:linear-gradient(90deg,var(--g500),var(--g400));
-  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease-out-expo);
 }
-.metric-card.mc-green::before{background:linear-gradient(90deg,var(--g600),var(--g400))}
-.metric-card.mc-blue::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
-.metric-card.mc-amber::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
-.metric-card.mc-purple::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
+.metric-card:hover::before{transform:scaleX(1)}
 .metric-label{font-size:.8rem;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.5rem}
 .metric-val{font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--ink);letter-spacing:-.03em}
 .metric-val.green{color:var(--g500)}
@@ -3626,25 +3623,25 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
     </div>
 
     <div class="metrics-grid">
-      <div class="metric-card mc-green fade-up">
+      <div class="metric-card fade-up">
         <div class="metric-label" data-i18n="dash_revenue">Revenus ce mois</div>
         <div class="metric-val green" id="metricRevenu">0 FCFA</div>
-        <div class="metric-trend" id="metricRevenuTrend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 7l-9.17 9.17L9 12.34 2 19.17"/><path d="M16 7h6v6"/></svg><span id="metricRevenuTrendTxt">—</span></div>
+        <div class="metric-trend" id="metricRevenuTrend" style="display:none"><span id="metricRevenuTrendTxt"></span></div>
       </div>
-      <div class="metric-card mc-blue fade-up">
+      <div class="metric-card fade-up">
         <div class="metric-label" data-i18n="dash_missions_count">Missions réalisées</div>
         <div class="metric-val" id="metricMissions">0</div>
-        <div class="metric-trend" id="metricMissionsTrend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 7l-9.17 9.17L9 12.34 2 19.17"/><path d="M16 7h6v6"/></svg><span id="metricMissionsTrendTxt">—</span></div>
+        <div class="metric-trend" id="metricMissionsTrend" style="display:none"><span id="metricMissionsTrendTxt"></span></div>
       </div>
-      <div class="metric-card mc-amber fade-up">
+      <div class="metric-card fade-up">
         <div class="metric-label" data-i18n="dash_rating">Note moyenne</div>
         <div class="metric-val" id="metricNote">0</div>
-        <div class="metric-trend" id="metricNoteTrend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="var(--a400)" stroke="none"/></svg><span id="metricNoteTrendTxt">—</span></div>
+        <div class="metric-trend" id="metricNoteTrend" style="display:none"><span id="metricNoteTrendTxt"></span></div>
       </div>
-      <div class="metric-card mc-purple fade-up">
+      <div class="metric-card fade-up">
         <div class="metric-label" data-i18n="dash_views">Vues du profil</div>
         <div class="metric-val" id="metricVues">0</div>
-        <div class="metric-trend" id="metricVuesTrend"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 7l-9.17 9.17L9 12.34 2 19.17"/><path d="M16 7h6v6"/></svg><span id="metricVuesTrendTxt">—</span></div>
+        <div class="metric-trend" id="metricVuesTrend" style="display:none"><span id="metricVuesTrendTxt"></span></div>
       </div>
     </div>
 
@@ -6119,9 +6116,15 @@ function updateMetricTrends(monthly) {
   }
   const revPct = pct(last.revenue, prev.revenue);
   const missPct = pct(last.missions, prev.missions);
-  const el = (id, txt) => { const e = document.getElementById(id); if (e) e.textContent = txt; };
-  el('metricRevenuTrendTxt', revPct + ' vs mois dernier');
-  el('metricMissionsTrendTxt', '+' + (last.missions||0) + ' ce mois');
+  function showTrend(wrapId, txtId, txt) {
+    const wrap = document.getElementById(wrapId);
+    const span = document.getElementById(txtId);
+    if (!wrap || !span || txt === '—') return;
+    span.textContent = txt;
+    wrap.style.display = 'flex';
+  }
+  showTrend('metricRevenuTrend', 'metricRevenuTrendTxt', revPct + ' vs mois dernier');
+  showTrend('metricMissionsTrend', 'metricMissionsTrendTxt', '+' + (last.missions||0) + ' ce mois');
 }
 
 function renderDashBars(bars){
