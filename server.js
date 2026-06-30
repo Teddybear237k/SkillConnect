@@ -348,16 +348,18 @@ app.get('/api/messages/:userId/:contactId', authenticateToken, async (req, res) 
   if (req.user.userId !== parseInt(req.params.userId))
     return res.status(403).json({ error: 'Accès refusé.' });
   try {
-    res.json(await db.getMessages(parseInt(req.params.userId), parseInt(req.params.contactId)));
+    const limit  = parseInt(req.query.limit)  || 40;
+    const offset = parseInt(req.query.offset) || 0;
+    res.json(await db.getMessages(parseInt(req.params.userId), parseInt(req.params.contactId), { limit, offset }));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/messages', authenticateToken, messageLimiter, async (req, res) => {
   try {
-    const { senderId, receiverId, text, fileData, fileName, fileType } = req.body;
+    const { senderId, receiverId, text, fileData, fileName, fileType, msgType, meta } = req.body;
     const err = validateFields(req.body, ['senderId', 'receiverId']);
     if (err) return res.status(400).json({ error: err });
-    if (!text && !fileData) return res.status(400).json({ error: 'Message ou fichier requis.' });
+    if (!text && !fileData && msgType !== 'devis') return res.status(400).json({ error: 'Message ou fichier requis.' });
     if (req.user.userId !== parseInt(senderId))
       return res.status(403).json({ error: 'Accès refusé.' });
     if (fileData && fileData.length > 7_000_000)
@@ -368,7 +370,7 @@ app.post('/api/messages', authenticateToken, messageLimiter, async (req, res) =>
       return res.status(403).json({ error: 'Vous ne pouvez pas contacter cet utilisateur.' });
 
     const { replyToId } = req.body;
-    const msg    = await db.sendMessage(parseInt(senderId), parseInt(receiverId), text || '', fileData || null, fileName || null, fileType || null, replyToId ? parseInt(replyToId) : null);
+    const msg    = await db.sendMessage(parseInt(senderId), parseInt(receiverId), text || '', fileData || null, fileName || null, fileType || null, replyToId ? parseInt(replyToId) : null, msgType || 'text', meta || null);
     const sender = await db.getTalentById(parseInt(senderId));
 
     if (sender) {
@@ -418,6 +420,31 @@ app.post('/api/messages', authenticateToken, messageLimiter, async (req, res) =>
 
     res.json({ success: true, message: msg });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Accepter un devis (crée la transaction en séquestre) ────────────────────
+app.post('/api/messages/:id/accept-devis', authenticateToken, async (req, res) => {
+  try {
+    const [[msg]] = await db.pool.execute('SELECT * FROM messages WHERE id = ?', [parseInt(req.params.id)]);
+    if (!msg) return res.status(404).json({ error: 'Message non trouvé.' });
+    if (msg.msg_type !== 'devis') return res.status(400).json({ error: 'Ce message n\'est pas un devis.' });
+    if (req.user.userId !== msg.receiver_id) return res.status(403).json({ error: 'Seul le destinataire peut accepter un devis.' });
+    const meta = typeof msg.meta === 'string' ? JSON.parse(msg.meta) : msg.meta;
+    if (!meta?.amount) return res.status(400).json({ error: 'Données du devis invalides.' });
+    // Marquer le devis comme accepté
+    await db.pool.execute('UPDATE messages SET meta = ? WHERE id = ?', [
+      JSON.stringify({ ...meta, status: 'accepted' }), msg.id
+    ]);
+    // Notifier le talent
+    const notif = await db.createNotification({
+      userId: msg.sender_id,
+      type: 'payment',
+      message: `Votre devis de ${parseInt(meta.amount).toLocaleString('fr-FR')} FCFA a été accepté !`,
+    });
+    emitToUser(msg.sender_id, 'new_notification', notif);
+    emitToUser(msg.sender_id, 'devis_accepted', { messageId: msg.id, amount: meta.amount, description: meta.description, clientId: req.user.userId });
+    res.json({ success: true, amount: meta.amount, description: meta.description, talentId: msg.sender_id });
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.put('/api/messages/read/:userId/:contactId', authenticateToken, async (req, res) => {
@@ -1110,6 +1137,40 @@ app.get('/api/admin/transactions', authenticateAdmin, async (req, res) => {
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── Retraits en attente (admin) ─────────────────────────────────────────────
+app.get('/api/admin/withdrawals', authenticateAdmin, async (req, res) => {
+  try {
+    const [rows] = await db.pool.execute(
+      `SELECT t.*, u.prenom, u.nom, u.email, u.phone as user_phone
+       FROM transactions t
+       LEFT JOIN users u ON u.id = t.sender_id
+       WHERE t.type = 'withdrawal' AND t.status = 'pending'
+       ORDER BY t.created_at ASC`
+    );
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/withdrawals/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { action } = req.body; // 'completed' | 'cancelled'
+    if (!['completed','cancelled'].includes(action))
+      return res.status(400).json({ error: 'Action invalide.' });
+    const [[tx]] = await db.pool.execute('SELECT * FROM transactions WHERE id = ? AND type = ?', [parseInt(req.params.id), 'withdrawal']);
+    if (!tx) return res.status(404).json({ error: 'Retrait non trouvé.' });
+    await db.pool.execute('UPDATE transactions SET status = ?, completed_at = ? WHERE id = ?', [action, action === 'completed' ? new Date().toISOString().slice(0,19).replace('T',' ') : null, tx.id]);
+    const user = await db.getTalentById(tx.sender_id);
+    const msg  = action === 'completed'
+      ? `Votre retrait de ${tx.amount.toLocaleString('fr-FR')} FCFA a été traité avec succès !`
+      : `Votre retrait de ${tx.amount.toLocaleString('fr-FR')} FCFA a été annulé. Contactez le support.`;
+    const notif = await db.createNotification({ userId: tx.sender_id, type: 'payment', message: msg });
+    emitToUser(tx.sender_id, 'new_notification', notif);
+    if (user?.email) sendEmailSafe(user.email, `Retrait ${action === 'completed' ? 'traité' : 'annulé'} — SkillConnect`,
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${escHtmlSrv(user.prenom)},</p><p>${escHtmlSrv(msg)}</p></div>`);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── Litiges ──────────────────────────────────────────────────────────────────
 app.post('/api/disputes', authenticateToken, async (req, res) => {
   try {
@@ -1561,11 +1622,50 @@ app.get('/sitemap.xml', async (req, res) => {
 // ─── Démarrage ────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 
+// ─── Auto-validation séquestre après 7 jours ─────────────────────────────────
+async function autoValidateStaleEscrow() {
+  try {
+    const [stale] = await db.pool.execute(
+      `SELECT * FROM transactions WHERE status = 'escrow' AND created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)`
+    );
+    for (const tx of stale) {
+      await db.pool.execute(
+        'UPDATE transactions SET status = ?, completed_at = ? WHERE id = ?',
+        ['completed', new Date().toISOString().slice(0,19).replace('T',' '), tx.id]
+      );
+      const net = tx.net_amount || tx.amount - tx.commission;
+      const receiver = await db.getTalentById(tx.receiver_id);
+      const sender   = await db.getTalentById(tx.sender_id);
+      const notifR = await db.createNotification({
+        userId: tx.receiver_id, type: 'payment',
+        message: `Mission "${tx.description}" auto-validée — ${net.toLocaleString('fr-FR')} FCFA libérés (7 jours écoulés).`,
+        relatedId: tx.id,
+      });
+      const notifS = await db.createNotification({
+        userId: tx.sender_id, type: 'payment',
+        message: `Mission "${tx.description}" auto-validée après 7 jours sans action de votre part.`,
+        relatedId: tx.id,
+      });
+      emitToUser(tx.receiver_id, 'new_notification', notifR);
+      emitToUser(tx.sender_id,   'new_notification', notifS);
+      if (receiver?.email) sendEmailSafe(receiver.email, `Mission auto-validée — ${net.toLocaleString('fr-FR')} FCFA libérés`,
+        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${escHtmlSrv(receiver.prenom)},</p><p>La mission <strong>${escHtmlSrv(tx.description)}</strong> a été automatiquement validée après 7 jours. <strong>${net.toLocaleString('fr-FR')} FCFA</strong> ont été libérés sur votre compte.</p></div>`);
+      console.log(`⏰ Auto-validation tx#${tx.id} "${tx.description}" → completed`);
+    }
+    if (stale.length) console.log(`⏰ ${stale.length} transaction(s) auto-validée(s)`);
+  } catch (e) {
+    console.error('Auto-validation erreur:', e.message);
+  }
+}
+
 db.init()
   .then(() => {
     server.listen(PORT, () => {
       console.log(`\n🚀 SkillConnect démarré → http://localhost:${PORT}\n`);
     });
+    // Lancer l'auto-validation au démarrage puis toutes les heures
+    autoValidateStaleEscrow();
+    setInterval(autoValidateStaleEscrow, 60 * 60 * 1000);
   })
   .catch(err => {
     console.error('❌ Erreur connexion MySQL :', err.message);

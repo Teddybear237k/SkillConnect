@@ -330,6 +330,8 @@ async function init() {
   // Migrations non-destructives
   try { await pool.execute('ALTER TABLE job_posts ADD COLUMN deadline_days INT DEFAULT NULL'); } catch(e) {}
   try { await pool.execute('ALTER TABLE messages ADD COLUMN reply_to_id INT NULL DEFAULT NULL'); } catch(e) {}
+  try { await pool.execute("ALTER TABLE messages ADD COLUMN msg_type VARCHAR(30) DEFAULT 'text'"); } catch(e) {}
+  try { await pool.execute('ALTER TABLE messages ADD COLUMN meta TEXT NULL'); } catch(e) {}
   try { await pool.execute('ALTER TABLE users ADD COLUMN last_seen DATETIME NULL'); } catch(e) {}
   try { await pool.execute('ALTER TABLE notifications ADD COLUMN related_id INT NULL DEFAULT NULL'); } catch(e) {}
 
@@ -801,7 +803,14 @@ async function getContacts(userId) {
   return contacts.sort((a, b) => new Date(b.last_time || 0) - new Date(a.last_time || 0));
 }
 
-async function getMessages(userId, contactId) {
+async function getMessages(userId, contactId, { limit = 40, offset = 0 } = {}) {
+  const lim = Math.min(100, parseInt(limit) || 40);
+  const off = Math.max(0,  parseInt(offset) || 0);
+  const [[{ total }]] = await pool.execute(
+    `SELECT COUNT(*) as total FROM messages
+     WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)`,
+    [userId, contactId, contactId, userId]
+  );
   const [rows] = await pool.execute(
     `SELECT m.*,
             u.initials AS sender_initials, u.bg_color AS sender_bg,
@@ -815,9 +824,11 @@ async function getMessages(userId, contactId) {
      LEFT JOIN users ru ON ru.id = r.sender_id
      WHERE (m.sender_id = ? AND m.receiver_id = ?)
         OR (m.sender_id = ? AND m.receiver_id = ?)
-     ORDER BY m.sent_at ASC`,
+     ORDER BY m.sent_at DESC
+     LIMIT ${lim} OFFSET ${off}`,
     [userId, contactId, contactId, userId]
   );
+  rows.reverse();
   // Attach reactions to each message
   if (rows.length) {
     const ids = rows.map(r => r.id);
@@ -832,14 +843,14 @@ async function getMessages(userId, contactId) {
     }
     for (const row of rows) row.reactions = reactMap[row.id] || [];
   }
-  return rows;
+  return { messages: rows, total: Number(total), hasMore: off + lim < Number(total) };
 }
 
-async function sendMessage(senderId, receiverId, text, fileData = null, fileName = null, fileType = null, replyToId = null) {
+async function sendMessage(senderId, receiverId, text, fileData = null, fileName = null, fileType = null, replyToId = null, msgType = 'text', meta = null) {
   const now = fmtISO();
   const [result] = await pool.execute(
-    'INSERT INTO messages (sender_id,receiver_id,text,`read`,sent_at,file_data,file_name,file_type,reply_to_id) VALUES (?,?,?,0,?,?,?,?,?)',
-    [senderId, receiverId, text || '', now, fileData || null, fileName || null, fileType || null, replyToId || null]
+    'INSERT INTO messages (sender_id,receiver_id,text,`read`,sent_at,file_data,file_name,file_type,reply_to_id,msg_type,meta) VALUES (?,?,?,0,?,?,?,?,?,?,?)',
+    [senderId, receiverId, text || '', now, fileData || null, fileName || null, fileType || null, replyToId || null, msgType || 'text', meta ? JSON.stringify(meta) : null]
   );
   let reply_text = null, reply_prenom = null, reply_sender_id = null, reply_file_type = null;
   if (replyToId) {
@@ -849,7 +860,7 @@ async function sendMessage(senderId, receiverId, text, fileData = null, fileName
     );
     if (replied) { reply_text = replied.text; reply_prenom = replied.prenom; reply_sender_id = replied.sender_id; reply_file_type = replied.file_type; }
   }
-  return { id: result.insertId, sender_id: senderId, receiver_id: receiverId, text: text || '', read: 0, sent_at: now, file_data: fileData, file_name: fileName, file_type: fileType, reply_to_id: replyToId, reply_text, reply_prenom, reply_sender_id, reply_file_type, reactions: [] };
+  return { id: result.insertId, sender_id: senderId, receiver_id: receiverId, text: text || '', read: 0, sent_at: now, file_data: fileData, file_name: fileName, file_type: fileType, reply_to_id: replyToId, msg_type: msgType || 'text', meta, reply_text, reply_prenom, reply_sender_id, reply_file_type, reactions: [] };
 }
 
 async function toggleReaction(messageId, userId, emoji) {

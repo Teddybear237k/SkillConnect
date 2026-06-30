@@ -3813,6 +3813,9 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
           </div>
           <input class="wa-input-main" id="waInput" placeholder="Tapez un message" data-i18n-placeholder="msg_placeholder" oninput="emitTyping()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWAMsg()}"/>
           <input type="file" id="waFileInput" style="display:none" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" onchange="onWAFileSelect(this)">
+          <button class="wa-attach-btn" title="Envoyer un devis" onclick="openDevisModal()" style="color:#1D9E75" id="waBtnDevis">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:22px;height:22px"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><path d="M14 15h4"/></svg>
+          </button>
           <button class="wa-attach-btn" title="Joindre un fichier" data-i18n-title="attach_file" onclick="openFileAttach()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px;height:24px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
@@ -4112,6 +4115,33 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
   </div>
 </div>
 
+<!-- DEVIS MODAL -->
+<div class="modal-overlay" id="devisOverlay" onclick="if(event.target===this)closeDevisModal()" style="display:none">
+  <div class="modal" id="devisModal" style="max-width:400px">
+    <div class="modal-header" style="border-bottom:1px solid var(--hairline);padding-bottom:1rem;margin-bottom:1.5rem">
+      <div>
+        <div class="modal-name">💼 Envoyer un devis</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:.2rem">Le client devra l'accepter avant de payer</div>
+      </div>
+      <button class="modal-close" onclick="closeDevisModal()">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      <div>
+        <label style="font-size:.82rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.4rem">Description de la mission *</label>
+        <input type="text" id="devisDesc" class="form-input" placeholder="Ex: Création logo, Cours de maths…" maxlength="150">
+      </div>
+      <div>
+        <label style="font-size:.82rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.4rem">Montant (FCFA) *</label>
+        <input type="number" id="devisAmount" class="form-input" placeholder="Ex: 25000" min="500" step="500" oninput="updateDevisPreview()">
+      </div>
+      <div id="devisPreview" style="display:none;background:var(--g50);border-radius:var(--r-md);padding:.75rem;font-size:.82rem;color:var(--muted)">
+        Net reçu : <strong id="devisNetVal" style="color:var(--g500)">—</strong> (après commission 7%)
+      </div>
+      <button class="form-submit" onclick="sendDevis()" style="margin:0">Envoyer le devis</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGIN MODAL -->
 <div class="modal-overlay" id="loginOverlay" onclick="closeLoginModal(event)">
   <div class="modal login-modal" id="loginModal">
@@ -4395,6 +4425,20 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
         <div style="display:flex;gap:.5rem;align-items:center;flex-shrink:0">
           <input id="emailTestDest" type="email" placeholder="Adresse de destination" value="" style="padding:.4rem .75rem;border:1.5px solid var(--hairline);border-radius:var(--r-sm);font-size:.83rem;background:var(--surface);color:var(--ink);outline:none;width:220px"/>
           <button onclick="adminTestEmail()" style="padding:.45rem 1rem;border-radius:var(--r-full);border:none;background:var(--g500);color:#fff;font-size:.83rem;font-weight:700;cursor:pointer;white-space:nowrap">Envoyer test</button>
+        </div>
+      </div>
+
+      <!-- Retraits en attente -->
+      <div id="adminWithdrawWrap" style="display:none;margin-bottom:2rem">
+        <div class="admin-section-title" style="color:#d97706">
+          💸 Retraits en attente de traitement
+          <span class="admin-pending-badge" id="adminWithdrawCount" style="background:#d97706">0</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>ID</th><th>Utilisateur</th><th>Montant</th><th>Réseau</th><th>Téléphone</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody id="adminWithdrawBody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1rem">Chargement…</td></tr></tbody>
+          </table>
         </div>
       </div>
 
@@ -5248,13 +5292,11 @@ async function loadPayTalents(){
   const sel = document.getElementById('payTalentSel');
   if(!sel) return;
 
-  // Charger uniquement les contacts (= talents déjà réservés)
-  const contacts = userId ? (await api('/contacts/' + userId) || []) : [];
-  // contacts est un tableau d'utilisateurs avec qui on a échangé des messages
-  const reserved = contacts.filter(c => c.id !== userId);
+  // Charger tous les talents actifs (pas seulement les contacts déjà messagés)
+  const result = await api('/talents?limit=200');
+  const talents = (result?.talents || []).filter(t => t.id !== userId);
 
-  if(!reserved.length){
-    // Aucune réservation — afficher l'état vide
+  if(!talents.length){
     if(formCard) formCard.style.display = 'none';
     if(emptyState) emptyState.style.display = 'flex';
     return;
@@ -5264,7 +5306,7 @@ async function loadPayTalents(){
   if(emptyState) emptyState.style.display = 'none';
 
   sel.innerHTML = '<option value="">— Choisir un talent —</option>' +
-    reserved.map(c=>`<option value="${c.id}">${c.prenom} ${c.nom} – ${c.skill||c.cat||'Talent'}</option>`).join('');
+    talents.map(t=>`<option value="${t.id}">${escHtml(t.prenom)} ${escHtml(t.nom)} – ${escHtml(t.skill||t.cat||'Talent')}</option>`).join('');
 
   if(payCurrentTalentId){
     sel.value = payCurrentTalentId;
@@ -6058,16 +6100,44 @@ async function selectWAContact(contactId){
   document.getElementById('waInput')?.focus();
 }
 
-async function loadWAMessages(contactId){
-  const msgs=await api('/messages/'+waCurrentUserId+'/'+contactId);
-  const container=document.getElementById('waMessages');if(!container)return;
+let _waMessagesOffset = 0;
+let _waMessagesHasMore = false;
+let _waMessagesTotal = 0;
 
-  if(!msgs||!msgs.length){
-    container.innerHTML=`<div style="text-align:center;padding:2rem;color:rgba(0,0,0,.35);font-size:.825rem">Début de la conversation</div>`;return;
+async function loadWAMessages(contactId, append = false){
+  const offset = append ? _waMessagesOffset : 0;
+  const data = await api('/messages/'+waCurrentUserId+'/'+contactId+'?limit=40&offset='+offset);
+  const container = document.getElementById('waMessages'); if(!container) return;
+
+  const msgs = data?.messages || data || [];
+  _waMessagesHasMore = data?.hasMore || false;
+  _waMessagesTotal   = data?.total   || msgs.length;
+
+  if (!append) {
+    if(!msgs.length){
+      container.innerHTML=`<div style="text-align:center;padding:2rem;color:rgba(0,0,0,.35);font-size:.825rem">Début de la conversation</div>`;
+      _waMessagesOffset = 0;
+      return;
+    }
+    container.innerHTML = '';
+    _waMessagesOffset = 40;
+  } else {
+    document.getElementById('waLoadMoreBtn')?.remove();
+    _waMessagesOffset += msgs.length;
   }
 
-  container.innerHTML = '';
+  // Bouton "charger plus" en haut
+  if (_waMessagesHasMore) {
+    const btn = document.createElement('div');
+    btn.id = 'waLoadMoreBtn';
+    btn.style.cssText = 'text-align:center;padding:.6rem;';
+    btn.innerHTML = `<button onclick="loadMoreWAMessages()" style="background:none;border:1px solid var(--hairline);border-radius:var(--r-full);padding:.3rem 1rem;font-size:.78rem;color:var(--muted);cursor:pointer;font-weight:600">⬆ Charger les messages précédents</button>`;
+    container.insertBefore(btn, container.firstChild);
+  }
+
+  const scrollBottom = container.scrollHeight - container.scrollTop;
   let lastDate = '';
+  const fragment = document.createDocumentFragment();
   msgs.forEach(m => {
     const dt = new Date(m.sent_at);
     const dateStr = dt.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
@@ -6075,13 +6145,25 @@ async function loadWAMessages(contactId){
       const sep = document.createElement('div');
       sep.className = 'wa-date-sep';
       sep.innerHTML = `<span>${dateStr}</span>`;
-      container.appendChild(sep);
+      fragment.appendChild(sep);
       lastDate = dateStr;
     }
-    container.appendChild(buildMsgEl(m));
+    fragment.appendChild(buildMsgEl(m));
   });
-  requestAnimationFrame(()=>{ container.scrollTop=container.scrollHeight; });
+
+  if (append) {
+    container.insertBefore(fragment, container.childNodes[_waMessagesHasMore ? 1 : 0]);
+    container.scrollTop = container.scrollHeight - scrollBottom;
+  } else {
+    container.appendChild(fragment);
+    requestAnimationFrame(()=>{ container.scrollTop=container.scrollHeight; });
+  }
   addTranslateButtons();
+}
+
+async function loadMoreWAMessages() {
+  if (!waActiveContactId || !_waMessagesHasMore) return;
+  await loadWAMessages(waActiveContactId, true);
 }
 
 function renderReplyQuote(m) {
@@ -6106,6 +6188,35 @@ function renderReactions(m, isMe) {
   return `<div class="wa-reactions" style="justify-content:${isMe?'flex-end':'flex-start'}">${chips}</div>`;
 }
 
+function buildDevisBubble(m, isMe) {
+  let meta = {};
+  try { meta = typeof m.meta === 'string' ? JSON.parse(m.meta) : (m.meta || {}); } catch(_) {}
+  const amount = parseInt(meta.amount || 0);
+  const desc   = meta.description || '';
+  const status = meta.status || 'pending';
+  const comm   = Math.round(amount * 0.07);
+  const net    = amount - comm;
+  const canAccept = !isMe && status === 'pending';
+  const statusBadge = status === 'accepted'
+    ? `<span style="display:inline-block;background:#d1fae5;color:#065f46;border-radius:999px;padding:.15rem .6rem;font-size:.72rem;font-weight:700">✓ Accepté</span>`
+    : status === 'declined'
+    ? `<span style="display:inline-block;background:#fee2e2;color:#991b1b;border-radius:999px;padding:.15rem .6rem;font-size:.72rem;font-weight:700">✗ Refusé</span>`
+    : '';
+  return `
+    <div style="background:${isMe?'rgba(29,158,117,.12)':'rgba(255,255,255,.95)'};border:1.5px solid ${isMe?'rgba(29,158,117,.3)':'rgba(29,158,117,.2)'};border-radius:12px;padding:.85rem 1rem;min-width:220px;max-width:280px">
+      <div style="font-size:.7rem;font-weight:700;color:#1D9E75;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.5rem">💼 Devis</div>
+      ${desc ? `<div style="font-size:.85rem;font-weight:600;color:var(--ink);margin-bottom:.5rem">${escHtml(desc)}</div>` : ''}
+      <div style="font-size:1.3rem;font-weight:800;color:#1D9E75;font-family:var(--font-display)">${amount.toLocaleString('fr-FR')} FCFA</div>
+      <div style="font-size:.72rem;color:var(--muted);margin:.25rem 0 .6rem">Net reçu : ${net.toLocaleString('fr-FR')} FCFA (comm. 7%)</div>
+      ${statusBadge}
+      ${canAccept ? `
+        <div style="display:flex;gap:.5rem;margin-top:.65rem">
+          <button onclick="acceptDevis(${m.id})" style="flex:1;background:#1D9E75;color:#fff;border:none;border-radius:8px;padding:.45rem .7rem;font-size:.8rem;font-weight:700;cursor:pointer">✓ Accepter</button>
+          <button onclick="declineDevis(${m.id})" style="flex:1;background:none;border:1.5px solid var(--hairline);border-radius:8px;padding:.45rem .7rem;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--muted)">✗ Refuser</button>
+        </div>` : ''}
+    </div>`;
+}
+
 function buildMsgEl(m) {
   const isMe = m.sender_id === waCurrentUserId;
   const dt = new Date(m.sent_at || m.created_at || Date.now());
@@ -6114,10 +6225,11 @@ function buildMsgEl(m) {
   const el = document.createElement('div');
   el.className = 'wa-msg' + (isMe ? ' me' : '');
   el.dataset.msgId = m.id;
+  const isDevis = m.msg_type === 'devis';
   el.innerHTML = `
-    <div class="wa-msg-bubble ${isMe?'me':'them'}">
+    <div class="wa-msg-bubble ${isMe?'me':'them'}${isDevis?' devis-bubble':''}">
       ${renderReplyQuote(m)}
-      ${renderWAFileContent(m)}
+      ${isDevis ? buildDevisBubble(m, isMe) : renderWAFileContent(m)}
       <div class="wa-msg-footer">
         <span class="wa-msg-time">${time}</span>
         ${isMe ? `<span class="${tickCls}">✓✓</span>` : ''}
@@ -6273,6 +6385,72 @@ function fmtLastSeen(dateStr) {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `il y a ${hrs}h`;
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+}
+
+// ─── Devis ──────────────────────────────────────────────────
+function openDevisModal() {
+  if (!waActiveContactId) { toast('Sélectionnez une conversation d\'abord.'); return; }
+  const myId = parseInt(localStorage.getItem('sc_user_id'));
+  if (!myId) { openLoginModal(); return; }
+  document.getElementById('devisDesc').value = '';
+  document.getElementById('devisAmount').value = '';
+  document.getElementById('devisPreview').style.display = 'none';
+  document.getElementById('devisOverlay').style.display = 'flex';
+}
+function closeDevisModal() { document.getElementById('devisOverlay').style.display = 'none'; }
+function updateDevisPreview() {
+  const amt = parseInt(document.getElementById('devisAmount').value) || 0;
+  const prev = document.getElementById('devisPreview');
+  if (amt >= 500) {
+    const net = amt - Math.round(amt * 0.07);
+    document.getElementById('devisNetVal').textContent = net.toLocaleString('fr-FR') + ' FCFA';
+    prev.style.display = 'block';
+  } else {
+    prev.style.display = 'none';
+  }
+}
+async function sendDevis() {
+  const desc   = document.getElementById('devisDesc').value.trim();
+  const amount = parseInt(document.getElementById('devisAmount').value);
+  if (!desc)          { toast('Ajoutez une description de mission.'); return; }
+  if (!amount || amount < 500) { toast('Montant minimum : 500 FCFA'); return; }
+  const myId = parseInt(localStorage.getItem('sc_user_id'));
+  const result = await api('/messages', {
+    method: 'POST',
+    body: { senderId: myId, receiverId: waActiveContactId, text: `Devis : ${desc} — ${amount.toLocaleString('fr-FR')} FCFA`, msgType: 'devis', meta: { amount, description: desc, status: 'pending' } }
+  });
+  if (result?.success) {
+    closeDevisModal();
+    toast('Devis envoyé !');
+    appendWAMessage({ ...result.message, msg_type: 'devis', meta: { amount, description: desc, status: 'pending' } });
+    loadWAContacts();
+  } else { toast(result?.error || 'Erreur envoi devis', 'error'); }
+}
+async function acceptDevis(msgId) {
+  const result = await api('/messages/' + msgId + '/accept-devis', { method: 'POST', body: {} });
+  if (result?.success) {
+    toast('Devis accepté ! Vous pouvez maintenant procéder au paiement.');
+    // Recharger les messages pour afficher le statut mis à jour
+    if (waActiveContactId) loadWAMessages(waActiveContactId);
+    // Pré-remplir le formulaire de paiement et naviguer
+    payCurrentTalentId = result.talentId;
+    setTimeout(() => {
+      showPage('paiement', document.querySelectorAll('.nav-link')[3]);
+      setTimeout(() => {
+        document.getElementById('payTalentSel').value = result.talentId;
+        document.getElementById('payAmount').value = result.amount;
+        document.getElementById('payDesc').value = result.description || '';
+        updatePayBreakdown();
+        updatePhonePreview();
+        toast('Formulaire de paiement pré-rempli avec le devis.', 'success');
+      }, 500);
+    }, 800);
+  } else { toast(result?.error || 'Erreur', 'error'); }
+}
+async function declineDevis(msgId) {
+  if (!confirm('Refuser ce devis ?')) return;
+  await api('/messages/' + msgId + '/accept-devis', { method: 'POST', body: { action: 'declined' } });
+  if (waActiveContactId) loadWAMessages(waActiveContactId);
 }
 
 // ─── Message vocal ────────────────────────────────────────────
@@ -8238,6 +8416,29 @@ async function loadAdminData() {
     }
   }
 
+  // Retraits en attente
+  const withdrawals = await adminApi('/admin/withdrawals');
+  const wb = document.getElementById('adminWithdrawBody');
+  const ww = document.getElementById('adminWithdrawWrap');
+  const wc = document.getElementById('adminWithdrawCount');
+  if (wb && ww) {
+    ww.style.display = withdrawals?.length ? '' : 'none';
+    if (wc) wc.textContent = withdrawals?.length || 0;
+    wb.innerHTML = (withdrawals || []).map(w => `
+      <tr>
+        <td>${w.id}</td>
+        <td><strong>${escHtml(w.prenom||'')} ${escHtml(w.nom||'')}</strong><br><span style="font-size:.75rem;color:var(--muted)">${escHtml(w.email||'')}</span></td>
+        <td><strong style="color:#1D9E75">${(w.amount||0).toLocaleString('fr-FR')} FCFA</strong></td>
+        <td>${escHtml(w.network||'—')}</td>
+        <td>${escHtml(w.phone||w.user_phone||'—')}</td>
+        <td>${w.created_at ? new Date(w.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+        <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+          <button class="btn-validate" onclick="adminProcessWithdrawal(${w.id},'completed')">✅ Traité</button>
+          <button style="background:#e53e3e;color:#fff;border:none;border-radius:6px;padding:.25rem .6rem;font-size:.75rem;cursor:pointer;font-weight:600" onclick="adminProcessWithdrawal(${w.id},'cancelled')">✗ Annuler</button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1rem">Aucun retrait en attente</td></tr>';
+  }
+
   // Bans table
   const bansData = await api('/admin/bans', { method:'GET', headers:{ Authorization:'Bearer '+adminToken } });
   const bb = document.getElementById('adminBansBody');
@@ -8380,6 +8581,14 @@ async function adminDeleteUser(userId, name) {
   if (!confirm(`Supprimer définitivement le compte de ${name} (ID ${userId}) ?\n\nCette action est irréversible.`)) return;
   const ok = await adminApi('/admin/users/' + userId, 'DELETE');
   if (ok?.success) { toast('Compte supprimé'); loadAdminData(); }
+  else toast('Erreur : ' + (ok?.error || 'inconnue'), true);
+}
+
+async function adminProcessWithdrawal(id, action) {
+  const label = action === 'completed' ? 'marquer comme traité' : 'annuler';
+  if (!confirm(`Voulez-vous ${label} ce retrait ?`)) return;
+  const ok = await adminApi('/admin/withdrawals/' + id, 'PUT', { action });
+  if (ok?.success) { toast(action === 'completed' ? 'Retrait marqué comme traité' : 'Retrait annulé'); loadAdminData(); }
   else toast('Erreur : ' + (ok?.error || 'inconnue'), true);
 }
 
