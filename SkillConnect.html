@@ -6842,6 +6842,9 @@ function initSocket(){
 
     socket.on('new_notification', (notif) => {
       appendNotif(notif);
+      if ((notif.type === 'review' || notif.type === 'payment') && document.getElementById('page-dashboard')?.classList.contains('active')) {
+        initDashboard();
+      }
     });
 
     socket.on('reaction_update', ({ messageId }) => {
