@@ -799,7 +799,7 @@ app.get('/api/reviews/:talentId', async (req, res) => {
 
 app.post('/api/reviews', authenticateToken, async (req, res) => {
   try {
-    const err = validateFields(req.body, ['talentId', 'rating', 'comment']);
+    const err = validateFields(req.body, ['talentId', 'rating']);
     if (err) return res.status(400).json({ error: err });
     if (req.body.rating < 1 || req.body.rating > 5)
       return res.status(400).json({ error: 'La note doit être entre 1 et 5.' });

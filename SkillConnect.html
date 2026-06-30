@@ -7714,7 +7714,7 @@ async function loadProfilReviews(talentId) {
 let _profilReviewRating = 0;
 async function submitProfilReview(talentId) {
   const starsEl = document.getElementById('profilReviewStars');
-  const rating = starsEl ? [...starsEl.querySelectorAll('.star')].filter(s => s.classList.contains('active')).length : 0;
+  const rating = starsEl ? [...starsEl.querySelectorAll('.star')].filter(s => s.classList.contains('filled')).length : 0;
   if (!rating) { toast('Sélectionnez une note'); return; }
   const comment = document.getElementById('profilReviewComment')?.value?.trim() || '';
   const res = await api('/reviews', 'POST', { talentId, rating, comment });
