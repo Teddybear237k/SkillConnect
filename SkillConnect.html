@@ -287,6 +287,12 @@ html.dark ::-webkit-scrollbar-track { background: #0F1117; }
   box-shadow:var(--shadow-xl);z-index:200;overflow:hidden;
   animation:dropdown-in .2s var(--ease-spring);
 }
+@media(max-width:480px){
+  .notif-dropdown{
+    position:fixed;top:64px;left:12px;right:12px;width:auto;
+    border-radius:var(--r-xl);
+  }
+}
 @keyframes dropdown-in{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:none}}
 .notif-header{
   display:flex;align-items:center;justify-content:space-between;
