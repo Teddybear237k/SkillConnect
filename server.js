@@ -1236,17 +1236,20 @@ app.get('/api/admin/bans', authenticateAdmin, async (req, res) => {
 });
 
 app.post('/api/admin/test-email', authenticateAdmin, async (req, res) => {
-  const to = req.body?.to || process.env.SMTP_USER || 'tddmodo@gmail.com';
-  if (!resendClient && !mailer) return res.status(503).json({
+  const to = req.body?.to || 'tddmodo@gmail.com';
+  const provider = process.env.BREVO_API_KEY ? 'Brevo API' : process.env.RESEND_API_KEY ? 'Resend API' : null;
+  if (!provider) return res.status(503).json({
     ok: false,
-    error: 'Email non configuré — ajoutez RESEND_API_KEY dans les variables Railway.'
+    error: 'Email non configuré — ajoutez BREVO_API_KEY dans les variables Railway.'
   });
   try {
-    const provider = resendClient ? 'Resend' : 'SMTP';
     await sendEmail(to, '✅ Test email SkillConnect', `
-      <p>Cet email confirme que l'envoi fonctionne sur le serveur de production.</p>
-      <p>Fournisseur : <strong>${provider}</strong><br>
-      Heure : ${new Date().toLocaleString('fr-FR')}</p>
+      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">
+        <h2 style="color:#1D9E75">SkillConnect</h2>
+        <p>Cet email confirme que l'envoi fonctionne sur le serveur de production.</p>
+        <p>Fournisseur : <strong>${provider}</strong><br>
+        Heure : ${new Date().toLocaleString('fr-FR')}</p>
+      </div>
     `);
     res.json({ ok: true, to, provider });
   } catch (e) {
