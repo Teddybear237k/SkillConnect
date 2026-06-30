@@ -608,13 +608,14 @@ async function findOrCreateGoogleUser({ email, prenom, nom, photo }) {
 async function getMonthlyStats(userId) {
   const [rows] = await pool.execute(`
     SELECT
-      DATE_FORMAT(created_at,'%Y-%m') AS month_key,
-      DATE_FORMAT(created_at,'%b')    AS label,
-      COALESCE(SUM(CASE WHEN status='completed' THEN ROUND(amount*0.93) ELSE 0 END),0) AS revenue,
-      COUNT(CASE WHEN status='completed' THEN 1 END) AS missions
-    FROM missions
-    WHERE talent_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-    GROUP BY DATE_FORMAT(created_at,'%Y-%m'), DATE_FORMAT(created_at,'%b')
+      DATE_FORMAT(completed_at,'%Y-%m') AS month_key,
+      COALESCE(SUM(net_amount), 0)      AS revenue,
+      COUNT(*)                           AS missions
+    FROM transactions
+    WHERE receiver_id = ?
+      AND status = 'completed'
+      AND completed_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+    GROUP BY DATE_FORMAT(completed_at,'%Y-%m')
     ORDER BY month_key ASC
   `, [userId]);
   return rows;
