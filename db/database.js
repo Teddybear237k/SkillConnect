@@ -726,11 +726,11 @@ async function getDashboardData(userId) {
   let ranking = null;
   if (user.skill) {
     const [[{ totalPeers }]] = await pool.execute(
-      'SELECT COUNT(*) as totalPeers FROM users WHERE skill = ? AND id != ? AND is_active = 1',
+      'SELECT COUNT(*) as totalPeers FROM users WHERE skill = ? AND id != ? AND validated = 1',
       [user.skill, userId]
     );
     const [[{ betterCount }]] = await pool.execute(
-      'SELECT COUNT(*) as betterCount FROM users WHERE skill = ? AND id != ? AND is_active = 1 AND rating > ?',
+      'SELECT COUNT(*) as betterCount FROM users WHERE skill = ? AND id != ? AND validated = 1 AND rating > ?',
       [user.skill, userId, user.rating || 0]
     );
     ranking = { position: betterCount + 1, total: Number(totalPeers) + 1, skill: user.skill };
