@@ -5863,9 +5863,7 @@ async function initDashboard(){
       [{label:u.skill||'Compétence principale',val:80,n:data.missions||0}];
     renderDashBars(bars);
 
-    const acts = data.recentActivity && data.recentActivity.length
-      ? data.recentActivity.map(a => ({ text: a.text, time: timeAgo(a.date), kind: a.kind, type: a.type }))
-      : ACTIVITIES;
+    const acts = (data.recentActivity || []).map(a => ({ text: a.text, time: timeAgo(a.date), kind: a.kind, type: a.type }));
     renderDashActivity(acts);
 
     // Graphe mensuel
@@ -5911,7 +5909,7 @@ async function initDashboard(){
       animCount(document.getElementById('metricVues'),0);
     },200);
     renderDashBars([{label:localStorage.getItem('sc_user_skill')||'Compétence principale',val:0,n:0}]);
-    renderDashActivity(ACTIVITIES);
+    renderDashActivity([]);
   }
   triggerFadeUps();
 }

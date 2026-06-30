@@ -662,9 +662,18 @@ async function getDashboardData(userId) {
      ORDER BY m.sent_at DESC LIMIT 3`,
     [userId]
   );
+  // Paiements reçus (source fiable : transactions complétées)
+  const [txActivityRows] = await pool.execute(
+    `SELECT net_amount, description, completed_at FROM transactions
+     WHERE receiver_id = ? AND status = 'completed' AND completed_at IS NOT NULL
+     ORDER BY completed_at DESC LIMIT 4`,
+    [userId]
+  );
+  // Missions en cours (pending/delivered)
   const [missionRows] = await pool.execute(
-    `SELECT title, status, created_at, amount FROM missions
-     WHERE talent_id = ? ORDER BY created_at DESC LIMIT 3`,
+    `SELECT title, status, created_at FROM missions
+     WHERE talent_id = ? AND status IN ('pending','delivered','active')
+     ORDER BY created_at DESC LIMIT 3`,
     [userId]
   );
 
@@ -672,12 +681,16 @@ async function getDashboardData(userId) {
   const recentActivity = [
     ...notifRows.map(n => ({ kind: 'notif', type: n.type, text: n.message, date: n.created_at })),
     ...msgRows.map(r => ({ kind: 'message', text: `${r.prenom} ${r.nom} vous a envoyé un message`, date: r.sent_at })),
+    ...txActivityRows.map(t => ({
+      kind: 'mission',
+      type: 'completed',
+      text: `Paiement reçu : <strong>${(t.net_amount || 0).toLocaleString('fr-FR')} FCFA</strong>${t.description ? ` — ${t.description}` : ''}`,
+      date: t.completed_at,
+    })),
     ...missionRows.map(m => ({
       kind: 'mission',
       type: m.status,
-      text: m.status === 'completed'
-        ? `Mission "<strong>${m.title}</strong>" terminée — ${Math.round(m.amount * 0.93).toLocaleString('fr-FR')} FCFA encaissés`
-        : m.status === 'delivered'
+      text: m.status === 'delivered'
         ? `Vous avez livré la mission "<strong>${m.title}</strong>"`
         : `Nouvelle mission : <strong>${m.title}</strong>`,
       date: m.created_at,
