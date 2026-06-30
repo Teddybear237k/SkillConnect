@@ -8,8 +8,7 @@ const cors         = require('cors');
 const bcrypt       = require('bcryptjs');
 const jwt          = require('jsonwebtoken');
 const rateLimit    = require('express-rate-limit');
-const nodemailer   = require('nodemailer');
-const { Resend }   = require('resend');
+// nodemailer et resend chargés à la demande dans sendEmail() si configurés
 const crypto       = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const webPush      = require('web-push');
@@ -916,42 +915,50 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
   }
 });
 
-// ─── Email (Brevo SMTP → Resend → désactivé) ─────────────────────────────────
-let resendClient = null;
-let mailer = null;
+// ─── Email (Brevo API → Resend API → désactivé) ──────────────────────────────
+// SMTP bloqué par Railway sur port 587 → on utilise les APIs HTTPS (port 443)
+const EMAIL_FROM_NAME  = 'SkillConnect';
+const EMAIL_FROM_ADDR  = process.env.EMAIL_FROM_ADDR || process.env.BREVO_SMTP_USER || 'noreply@skillconnect.app';
 
-if (process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_KEY) {
-  // Brevo (ex-Sendinblue) : pas de domaine requis, 300 emails/jour gratuit
-  try {
-    mailer = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      secure: false,
-      auth: { user: process.env.BREVO_SMTP_USER, pass: process.env.BREVO_SMTP_KEY },
-    });
-    console.log('✅ Email activé via Brevo SMTP');
-  } catch (e) { console.log('⚠️  Brevo SMTP erreur :', e.message); }
+if (process.env.BREVO_API_KEY) {
+  console.log('✅ Email activé via Brevo API');
 } else if (process.env.RESEND_API_KEY) {
-  // Resend — nécessite un domaine vérifié sur resend.com/domains
-  resendClient = new Resend(process.env.RESEND_API_KEY);
-  console.log('✅ Email activé via Resend');
+  console.log('✅ Email activé via Resend API');
 } else {
-  console.log('ℹ️  Email désactivé — configurez BREVO_SMTP_USER + BREVO_SMTP_KEY dans Railway');
+  console.log('ℹ️  Email désactivé — ajoutez BREVO_API_KEY dans Railway');
 }
-
-// Si EMAIL_FROM n'est pas défini, utiliser l'adresse Brevo (déjà vérifiée chez eux)
-const EMAIL_FROM = process.env.EMAIL_FROM ||
-  (process.env.BREVO_SMTP_USER ? `SkillConnect <${process.env.BREVO_SMTP_USER}>` : 'SkillConnect <no-reply@skillconnect.app>');
 
 async function sendEmail(to, subject, html) {
   if (!to) return;
-  if (resendClient) {
-    const { error } = await resendClient.emails.send({ from: EMAIL_FROM, to, subject, html });
+
+  if (process.env.BREVO_API_KEY) {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender:      { name: EMAIL_FROM_NAME, email: EMAIL_FROM_ADDR },
+        to:          [{ email: to }],
+        subject,
+        htmlContent: html,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || JSON.stringify(data));
+    console.log('📧 Email (Brevo API) →', to);
+
+  } else if (process.env.RESEND_API_KEY) {
+    const { Resend } = require('resend');
+    const client = new Resend(process.env.RESEND_API_KEY);
+    const { error } = await client.emails.send({
+      from: `${EMAIL_FROM_NAME} <${EMAIL_FROM_ADDR}>`,
+      to, subject, html,
+    });
     if (error) throw new Error(error.message);
-    console.log('📧 Email (Resend) →', to);
-  } else if (mailer) {
-    await mailer.sendMail({ from: EMAIL_FROM, to, subject, html });
-    console.log('📧 Email (SMTP) →', to);
+    console.log('📧 Email (Resend API) →', to);
   }
 }
 // Wrapper silencieux pour les emails de notification (non bloquants)
