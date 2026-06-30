@@ -683,6 +683,57 @@ async function getDashboardData(userId) {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 7);
 
+  // ── Wallet : solde disponible + séquestre ───────────────────────────────────
+  const [txRows] = await pool.execute(
+    'SELECT * FROM transactions WHERE sender_id = ? OR receiver_id = ?',
+    [userId, userId]
+  );
+  const escrowTxs      = txRows.filter(t => t.receiver_id === userId && t.status === 'escrow');
+  const completedTxs   = txRows.filter(t => t.receiver_id === userId && t.status === 'completed');
+  const withdrawalTxs  = txRows.filter(t => t.sender_id   === userId && t.type   === 'withdrawal');
+  const totalEarned    = completedTxs.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0);
+  const totalWithdrawn = withdrawalTxs.reduce((s, t) => s + t.amount, 0);
+  const inEscrow       = escrowTxs.reduce((s, t) => s + (t.net_amount || t.amount - t.commission), 0);
+  const availableBalance = Math.max(0, totalEarned - totalWithdrawn);
+
+  // ── Demandes en attente ─────────────────────────────────────────────────────
+  const [[{ pendingJobApps }]] = await pool.execute(
+    `SELECT COUNT(*) as pendingJobApps FROM job_applications a
+     JOIN job_posts j ON j.id = a.job_id
+     WHERE j.user_id = ? AND a.status = 'pending'`,
+    [userId]
+  );
+  const pendingRequests = escrowTxs.length + Number(pendingJobApps);
+
+  // ── Taux de conversion (vues → missions) ───────────────────────────────────
+  const conversionRate = views > 0 ? Math.min(100, Math.round((completed.length / views) * 100)) : 0;
+
+  // ── Missions actives (séquestre) ───────────────────────────────────────────
+  const activeMissions = escrowTxs
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5)
+    .map(t => ({
+      id:          t.id,
+      description: t.description,
+      amount:      t.net_amount || t.amount - t.commission,
+      date:        t.created_at,
+      network:     t.network || 'Mobile Money',
+    }));
+
+  // ── Classement parmi les talents de même compétence ────────────────────────
+  let ranking = null;
+  if (user.skill) {
+    const [[{ totalPeers }]] = await pool.execute(
+      'SELECT COUNT(*) as totalPeers FROM users WHERE skill = ? AND id != ? AND is_active = 1',
+      [user.skill, userId]
+    );
+    const [[{ betterCount }]] = await pool.execute(
+      'SELECT COUNT(*) as betterCount FROM users WHERE skill = ? AND id != ? AND is_active = 1 AND rating > ?',
+      [user.skill, userId, user.rating || 0]
+    );
+    ranking = { position: betterCount + 1, total: Number(totalPeers) + 1, skill: user.skill };
+  }
+
   const { password_hash: _ph, ...safeUser } = user;
   safeUser.has_password = !!_ph;
   return {
@@ -696,6 +747,12 @@ async function getDashboardData(userId) {
     unreadNotifs,
     skillStats,
     recentActivity,
+    inEscrow,
+    availableBalance,
+    pendingRequests,
+    conversionRate,
+    activeMissions,
+    ranking,
   };
 }
 

@@ -1084,6 +1084,123 @@ section{padding:5rem 2.5rem;max-width:1200px;margin:0 auto}
 .activity-text strong{color:var(--ink)}
 .activity-time{font-size:.78rem;color:var(--subtle);font-family:var(--font-mono);flex-shrink:0}
 
+/* ── Dashboard Finance Cards ──────────────────────────────────────────────── */
+@keyframes dash-pop-in{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes dash-bar-fill{from{width:0}to{width:var(--bar-w)}}
+@keyframes dash-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes dash-rank-spin{0%{transform:rotate(-10deg) scale(.85);opacity:0}100%{transform:none;opacity:1}}
+@keyframes dash-pulse-ring{0%{box-shadow:0 0 0 0 rgba(29,158,117,.35)}70%{box-shadow:0 0 0 10px rgba(29,158,117,0)}100%{box-shadow:0 0 0 0 rgba(29,158,117,0)}}
+
+.metrics-grid-finance{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+.mcard{
+  background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);
+  padding:1.25rem 1.5rem;position:relative;overflow:hidden;
+  transition:transform .3s var(--ease-spring),box-shadow .3s;
+  animation:dash-pop-in .45s var(--ease-out-expo) both;
+}
+.mcard:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.mcard-icon{font-size:1.4rem;margin-bottom:.6rem;display:block}
+.mcard-label{font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.3rem}
+.mcard-val{font-family:var(--font-display);font-size:1.65rem;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+.mcard-sub{font-size:.75rem;color:var(--muted);margin-top:.25rem}
+.mcard::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;background:var(--mcard-accent,var(--g500))}
+.mcard.escrow{--mcard-accent:#f59e0b}
+.mcard.available{--mcard-accent:#1D9E75}
+.mcard.conversion{--mcard-accent:#8b5cf6}
+.mcard.demands{--mcard-accent:#ef4444}
+.mcard.demands .mcard-val{color:#ef4444}
+html.dark .mcard{background:#171B26;border-color:#232836}
+
+/* Goal card */
+.goal-card{
+  background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);
+  padding:1.5rem;margin-bottom:1.5rem;
+  animation:dash-pop-in .5s var(--ease-out-expo) both;
+}
+.goal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
+.goal-title{font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--ink)}
+.goal-edit-btn{
+  background:none;border:1px solid var(--hairline);border-radius:var(--r-full);
+  padding:.28rem .75rem;font-size:.75rem;color:var(--muted);cursor:pointer;font-weight:600;
+  transition:.2s;display:flex;align-items:center;gap:.3rem
+}
+.goal-edit-btn:hover{border-color:var(--g500);color:var(--g500)}
+.goal-amounts{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.6rem}
+.goal-current{font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--g500)}
+.goal-target{font-size:.82rem;color:var(--muted)}
+.goal-track{height:10px;background:var(--g50);border-radius:10px;overflow:hidden;position:relative}
+.goal-fill{
+  height:100%;border-radius:10px;
+  background:linear-gradient(90deg,var(--g500),#34d399);
+  width:var(--bar-w,0%);
+  transition:width 1.2s var(--ease-out-expo);
+  position:relative;overflow:hidden;
+}
+.goal-fill::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.35) 50%,transparent 100%);
+  background-size:200% 100%;
+  animation:dash-shimmer 2s linear infinite;
+}
+.goal-pct{font-size:.8rem;font-weight:700;color:var(--g500);text-align:right;margin-top:.4rem}
+.goal-input-row{display:flex;gap:.5rem;margin-top:.75rem;align-items:center}
+.goal-input-row input{flex:1;padding:.4rem .75rem;border-radius:var(--r-md);border:1px solid var(--hairline);background:var(--surface);color:var(--ink);font-size:.85rem}
+.goal-input-row button{padding:.4rem .9rem;border-radius:var(--r-md);background:var(--g500);color:#fff;border:none;font-size:.82rem;font-weight:600;cursor:pointer}
+html.dark .goal-card{background:#171B26;border-color:#232836}
+
+/* Active missions cards */
+.active-missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.85rem;margin-top:.75rem}
+.amission-card{
+  background:linear-gradient(135deg,rgba(29,158,117,.07) 0%,rgba(29,158,117,.02) 100%);
+  border:1px solid rgba(29,158,117,.2);border-radius:var(--r-lg);
+  padding:1rem 1.1rem;position:relative;overflow:hidden;
+  animation:dash-pop-in .4s var(--ease-out-expo) both;
+  transition:transform .2s,box-shadow .2s;
+}
+.amission-card:hover{transform:translateY(-3px);box-shadow:0 6px 24px rgba(29,158,117,.12)}
+.amission-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--g500);border-radius:3px 0 0 3px}
+.amission-title{font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:.35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amission-amount{font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--g500)}
+.amission-meta{font-size:.75rem;color:var(--muted);margin-top:.3rem;display:flex;align-items:center;gap:.4rem}
+.amission-badge{
+  display:inline-flex;align-items:center;gap:.25rem;
+  background:rgba(245,158,11,.12);color:#d97706;
+  border-radius:var(--r-full);padding:.15rem .55rem;font-size:.7rem;font-weight:700;
+}
+html.dark .amission-card{background:rgba(29,158,117,.08);border-color:rgba(29,158,117,.18)}
+
+/* Ranking card */
+.ranking-card{
+  background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-xl);
+  padding:1.5rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;
+  margin-bottom:1.5rem;animation:dash-pop-in .55s var(--ease-out-expo) both;
+}
+.ranking-badge{
+  width:72px;height:72px;border-radius:50%;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#fef3c7,#fde68a);
+  border:3px solid #f59e0b;
+  animation:dash-rank-spin .6s var(--ease-out-expo) both;
+  animation-delay:.2s;
+}
+.ranking-badge.top3{
+  background:linear-gradient(135deg,#d4f1e8,#a7f3d0);
+  border-color:var(--g500);
+  animation:dash-pulse-ring 2s ease-out infinite, dash-rank-spin .6s var(--ease-out-expo) both;
+}
+.ranking-pos{font-family:var(--font-display);font-size:1.5rem;font-weight:900;color:#92400e;line-height:1}
+.ranking-badge.top3 .ranking-pos{color:var(--g600)}
+.ranking-suffix{font-size:.65rem;font-weight:700;color:#b45309}
+.ranking-badge.top3 .ranking-suffix{color:var(--g600)}
+.ranking-info{flex:1;min-width:0}
+.ranking-title{font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:.25rem}
+.ranking-desc{font-size:.82rem;color:var(--muted)}
+.ranking-bar-wrap{width:100%;margin-top:.75rem}
+.ranking-track{height:6px;background:var(--g50);border-radius:6px;overflow:hidden}
+.ranking-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#f59e0b,#fbbf24);transition:width 1.2s var(--ease-out-expo)}
+.ranking-badge.top3 + .ranking-info .ranking-bar-wrap .ranking-fill{background:linear-gradient(90deg,var(--g500),#34d399)}
+html.dark .ranking-card{background:#171B26;border-color:#232836}
+
 /* ═══════════════════════════════════════════════════════════════
    MESSENGER
 ═══════════════════════════════════════════════════════════════ */
@@ -3402,6 +3519,57 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
       </div>
     </div>
 
+    <!-- ── Finance metrics ─────────────────────────────────────────────────── -->
+    <div class="metrics-grid-finance">
+      <div class="mcard available fade-up">
+        <span class="mcard-icon">💰</span>
+        <div class="mcard-label">Solde disponible</div>
+        <div class="mcard-val" id="mcardAvailable">0 FCFA</div>
+        <div class="mcard-sub">Prêt à retirer</div>
+      </div>
+      <div class="mcard escrow fade-up">
+        <span class="mcard-icon">🔒</span>
+        <div class="mcard-label">En séquestre</div>
+        <div class="mcard-val" id="mcardEscrow">0 FCFA</div>
+        <div class="mcard-sub">En attente de validation</div>
+      </div>
+      <div class="mcard conversion fade-up">
+        <span class="mcard-icon">📈</span>
+        <div class="mcard-label">Taux de conversion</div>
+        <div class="mcard-val" id="mcardConversion">0%</div>
+        <div class="mcard-sub">Vues → missions</div>
+      </div>
+      <div class="mcard demands fade-up">
+        <span class="mcard-icon">📬</span>
+        <div class="mcard-label">Demandes actives</div>
+        <div class="mcard-val" id="mcardDemands">0</div>
+        <div class="mcard-sub">Missions + candidatures</div>
+      </div>
+    </div>
+
+    <!-- ── Objectif mensuel ────────────────────────────────────────────────── -->
+    <div class="goal-card fade-up" id="goalCard">
+      <div class="goal-header">
+        <div class="goal-title">🎯 Objectif mensuel</div>
+        <button class="goal-edit-btn" onclick="toggleGoalEdit()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Modifier
+        </button>
+      </div>
+      <div class="goal-amounts">
+        <span class="goal-current" id="goalCurrentVal">0 FCFA</span>
+        <span class="goal-target">sur <strong id="goalTargetVal">—</strong></span>
+      </div>
+      <div class="goal-track">
+        <div class="goal-fill" id="goalFill" style="--bar-w:0%"></div>
+      </div>
+      <div class="goal-pct" id="goalPct">0%</div>
+      <div class="goal-input-row" id="goalInputRow" style="display:none">
+        <input type="number" id="goalTargetInput" placeholder="Ex: 150000" min="1000" step="1000">
+        <button onclick="saveGoalTarget()">Enregistrer</button>
+      </div>
+    </div>
+
     <!-- Carte complétion du profil -->
     <div class="completion-card fade-up" id="profileCompletionCard" style="display:none">
       <div class="completion-header">
@@ -3443,6 +3611,29 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
         <canvas id="dashRevenueChart"></canvas>
       </div>
       <div id="dashChartEmpty" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem" data-i18n="dash_chart_empty">Pas encore de données — complétez votre première mission !</div>
+    </div>
+
+    <!-- ── Classement ─────────────────────────────────────────────────────── -->
+    <div class="ranking-card fade-up" id="dashRankingCard" style="display:none">
+      <div class="ranking-badge" id="dashRankingBadge">
+        <span class="ranking-pos" id="dashRankingPos">—</span>
+        <span class="ranking-suffix" id="dashRankingSuffix">er</span>
+      </div>
+      <div class="ranking-info">
+        <div class="ranking-title" id="dashRankingTitle">Classement</div>
+        <div class="ranking-desc" id="dashRankingDesc">—</div>
+        <div class="ranking-bar-wrap">
+          <div class="ranking-track">
+            <div class="ranking-fill" id="dashRankingFill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Missions en cours (séquestre) ──────────────────────────────────── -->
+    <div class="dash-panel fade-up" id="activeMissionsPanel" style="margin-bottom:1.5rem;display:none">
+      <div class="dash-panel-title">⏳ Missions en cours</div>
+      <div class="active-missions-grid" id="activeMissionsGrid"></div>
     </div>
 
     <!-- ═══ Mes Missions ════════════════════════════════════════════════ -->
@@ -5456,7 +5647,12 @@ async function initDashboard(){
       animCount(document.getElementById('metricMissions'),data.missions);
       document.getElementById('metricNote').textContent=u.rating+' / 5';
       animCount(document.getElementById('metricVues'),data.views);
-    },200);
+      // Finance cards
+      animCount(document.getElementById('mcardAvailable'), data.availableBalance || 0, ' FCFA');
+      animCount(document.getElementById('mcardEscrow'), data.inEscrow || 0, ' FCFA');
+      document.getElementById('mcardConversion').textContent = (data.conversionRate || 0) + '%';
+      document.getElementById('mcardDemands').textContent = data.pendingRequests || 0;
+    }, 200);
 
     const bars=data.skillStats.length?data.skillStats.map(s=>({label:s.title,val:Math.round((s.cnt/data.missions)*100)||10,n:s.cnt})):
       [{label:u.skill||'Compétence principale',val:80,n:data.missions||0}];
@@ -5478,6 +5674,16 @@ async function initDashboard(){
     // Profile completion
     const portfolioItems = await api('/portfolio/' + u.id) || [];
     renderProfileCompletion(u, portfolioItems.length);
+
+    // Objectif mensuel
+    renderDashGoal(data.revenue || 0);
+
+    // Missions actives (séquestre)
+    renderActiveMissions(data.activeMissions || []);
+
+    // Classement
+    renderDashRanking(data.ranking);
+
   } else {
     // Fallback: use localStorage profile data
     const initials=localStorage.getItem('sc_user_initials')||'?';
@@ -5503,6 +5709,92 @@ async function initDashboard(){
     renderDashActivity(ACTIVITIES);
   }
   triggerFadeUps();
+}
+
+function renderDashGoal(currentRevenue) {
+  const target = parseInt(localStorage.getItem('sc_goal_target') || '0');
+  const goalFill = document.getElementById('goalFill');
+  const goalPct  = document.getElementById('goalPct');
+  document.getElementById('goalCurrentVal').textContent = currentRevenue.toLocaleString('fr-FR') + ' FCFA';
+  if (!target) {
+    document.getElementById('goalTargetVal').textContent = 'non défini';
+    if (goalFill) { goalFill.style.setProperty('--bar-w','0%'); goalFill.style.width='0%'; }
+    if (goalPct) goalPct.textContent = 'Définissez un objectif →';
+    return;
+  }
+  const pct = Math.min(100, Math.round((currentRevenue / target) * 100));
+  document.getElementById('goalTargetVal').textContent = target.toLocaleString('fr-FR') + ' FCFA';
+  if (goalPct) goalPct.textContent = pct + '%';
+  // Animate bar after a short delay for the transition to be visible
+  setTimeout(() => {
+    if (goalFill) { goalFill.style.setProperty('--bar-w', pct+'%'); goalFill.style.width = pct+'%'; }
+  }, 350);
+}
+
+function toggleGoalEdit() {
+  const row = document.getElementById('goalInputRow');
+  if (!row) return;
+  const open = row.style.display === 'flex';
+  row.style.display = open ? 'none' : 'flex';
+  if (!open) {
+    const input = document.getElementById('goalTargetInput');
+    const saved = localStorage.getItem('sc_goal_target');
+    if (saved) input.value = saved;
+    input.focus();
+  }
+}
+
+function saveGoalTarget() {
+  const val = parseInt(document.getElementById('goalTargetInput').value);
+  if (!val || val < 1000) { toast('Entrez un objectif valide (min 1 000 FCFA)', 'error'); return; }
+  localStorage.setItem('sc_goal_target', val);
+  document.getElementById('goalInputRow').style.display = 'none';
+  const revenue = parseInt(document.getElementById('mcardAvailable')?.textContent?.replace(/\D/g,'')) || 0;
+  renderDashGoal(revenue);
+  toast('Objectif enregistré !');
+}
+
+function renderActiveMissions(missions) {
+  const panel = document.getElementById('activeMissionsPanel');
+  const grid  = document.getElementById('activeMissionsGrid');
+  if (!panel || !grid) return;
+  if (!missions.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  grid.innerHTML = missions.map((m, i) => `
+    <div class="amission-card" style="animation-delay:${i * 0.07}s">
+      <div class="amission-title">${escHtml(m.description || 'Mission')}</div>
+      <div class="amission-amount">${(m.amount || 0).toLocaleString('fr-FR')} FCFA</div>
+      <div class="amission-meta">
+        <span class="amission-badge">⏳ Séquestre</span>
+        ${m.network ? `<span>${escHtml(m.network)}</span>` : ''}
+        <span>· ${timeAgo(m.date)}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderDashRanking(ranking) {
+  const card = document.getElementById('dashRankingCard');
+  if (!card || !ranking || ranking.total < 2) { if(card) card.style.display='none'; return; }
+  card.style.display = 'flex';
+  const pos     = ranking.position;
+  const total   = ranking.total;
+  const isTop3  = pos <= 3;
+  const suffix  = pos === 1 ? 'er' : 'ème';
+  const pctRank = Math.round(((total - pos) / Math.max(total - 1, 1)) * 100);
+  const badge   = document.getElementById('dashRankingBadge');
+  badge.className = 'ranking-badge' + (isTop3 ? ' top3' : '');
+  document.getElementById('dashRankingPos').textContent    = pos;
+  document.getElementById('dashRankingSuffix').textContent = suffix;
+  document.getElementById('dashRankingTitle').textContent  = isTop3
+    ? `🏆 Top ${pos} — ${ranking.skill}`
+    : `Classement — ${ranking.skill}`;
+  document.getElementById('dashRankingDesc').textContent = isTop3
+    ? `Vous êtes dans le top ${pos} parmi ${total} talents "${ranking.skill}" sur SkillConnect !`
+    : `Vous êtes ${pos}${suffix} sur ${total} talents "${ranking.skill}". Continuez à collecter des avis !`;
+  setTimeout(() => {
+    const fill = document.getElementById('dashRankingFill');
+    if (fill) fill.style.width = pctRank + '%';
+  }, 400);
 }
 
 // ═══ DASHBOARD CHART ═════════════════════════════════════════════════
