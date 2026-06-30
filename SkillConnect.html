@@ -202,6 +202,11 @@ html.dark .wa-input-main        { background: #1E2533; color: var(--ink); }
 html.dark .wa-input-main::placeholder { color: var(--subtle); }
 html.dark .wa-emoji-btn, html.dark .wa-attach-btn { color: var(--muted); }
 html.dark .wa-emoji-btn:hover, html.dark .wa-attach-btn:hover { background: rgba(255,255,255,.07); }
+html.dark .devis-popover { background: #171B26; border-color: #232836; }
+html.dark .devis-popover::after { background: #171B26; border-color: #232836; }
+html.dark .devis-field input { background: #1E2533; border-color: #2A3244; color: var(--ink); }
+html.dark .devis-field input:focus { border-color: var(--g500); background: #1A2030; }
+html.dark .devis-preview-box { background: rgba(29,158,117,.06); border-color: rgba(29,158,117,.18); }
 html.dark .wa-send-btn          { box-shadow: 0 2px 12px rgba(29,158,117,.4); }
 html.dark .wa-translation       { color: var(--subtle); border-top-color: rgba(255,255,255,.08); }
 html.dark .wa-translate-btn     { color: var(--g400); }
@@ -1757,6 +1762,31 @@ html.dark .toast{background:#0d1117;border:1px solid rgba(255,255,255,.08)}
 .tx-empty-icon{font-size:2.5rem;margin-bottom:.75rem;opacity:.4}
 .tx-empty p{color:var(--muted);font-size:.9rem}
 
+/* ── Paiement — responsive mobile ── */
+@media(max-width:600px){
+  .pay-hero{padding:1.5rem 1rem 1.25rem}
+  .pay-hero h1{font-size:1.4rem}
+  .pay-hero-badges{gap:.35rem}
+  .pay-hero-badge{font-size:.7rem;padding:.25rem .6rem}
+  .pay-tabs-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;padding:0 .25rem;scrollbar-width:none}
+  .pay-tabs-wrap::-webkit-scrollbar{display:none}
+  .pay-tabs{flex-shrink:0}
+  .pay-tab{padding:.48rem .9rem;font-size:.78rem}
+  .pay-steps-header{padding:1.25rem 1rem}
+  .pay-form-body{padding:1.1rem 1rem}
+  .pay-form-group select,.pay-form-group input[type=text],.pay-form-group input[type=number]{font-size:16px}
+  .pay-total-line span:last-child{font-size:1.3rem}
+  .wallet-hero{padding:1.5rem 1rem}
+  .wallet-hero-amount{font-size:2rem}
+  .wallet-grid{grid-template-columns:1fr 1fr}
+  .withdraw-card{padding:1.25rem 1rem}
+  .tx-item{padding:.8rem 1rem;gap:.75rem}
+}
+@media(max-width:380px){
+  .pay-tab{padding:.45rem .65rem;font-size:.72rem}
+  .wallet-grid{grid-template-columns:1fr}
+}
+
 /* Skill custom input */
 .skill-custom-group{display:none}
 .skill-custom-group.visible{display:flex;flex-direction:column;gap:.4rem}
@@ -1951,6 +1981,80 @@ html.dark .wa-emoji-picker button:hover{background:rgba(255,255,255,.1)}
 .wa-send-btn:hover{background:var(--g600);transform:scale(1.08)}
 .wa-send-btn svg{width:20px;height:20px;stroke:#fff}
 
+/* ─── Bouton Devis pill ─── */
+.devis-popover-wrap{position:relative;display:flex;align-items:center}
+.wa-devis-btn{
+  display:flex;align-items:center;gap:.35rem;
+  padding:.42rem .85rem .42rem .6rem;
+  background:linear-gradient(135deg,var(--g600),var(--g500));
+  color:#fff;border:none;border-radius:var(--r-full);
+  font-size:.78rem;font-weight:700;cursor:pointer;flex-shrink:0;
+  transition:all .2s var(--ease-spring);
+  box-shadow:0 2px 8px rgba(29,158,117,.3);
+  white-space:nowrap;
+}
+.wa-devis-btn:hover{background:linear-gradient(135deg,var(--g700,#0a6147),var(--g600));transform:translateY(-1px);box-shadow:0 4px 14px rgba(29,158,117,.45)}
+.wa-devis-btn.active{background:linear-gradient(135deg,var(--g700,#0a6147),var(--g600));box-shadow:0 0 0 3px rgba(29,158,117,.25),0 3px 10px rgba(29,158,117,.3)}
+.wa-devis-btn svg{flex-shrink:0}
+/* Popover */
+.devis-popover{
+  display:none;position:absolute;
+  bottom:calc(100% + 10px);right:0;
+  width:300px;max-width:calc(100vw - 24px);
+  background:var(--card);border:1px solid var(--hairline);
+  border-radius:var(--r-xl);
+  box-shadow:0 8px 32px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.08);
+  overflow:hidden;z-index:200;
+  animation:devis-pop-in .22s var(--ease-out-expo) both;
+  transform-origin:bottom right;
+}
+.devis-popover.open{display:block}
+@keyframes devis-pop-in{from{opacity:0;transform:scale(.9) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.devis-popover::after{
+  content:'';position:absolute;bottom:-6px;right:20px;
+  width:12px;height:12px;background:var(--card);
+  border-right:1px solid var(--hairline);border-bottom:1px solid var(--hairline);
+  transform:rotate(45deg);
+}
+.devis-popover-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.8rem 1rem;
+  background:linear-gradient(135deg,var(--g700,#0a6147),var(--g500));
+  color:#fff;
+}
+.devis-popover-title{display:flex;align-items:center;gap:.45rem;font-size:.88rem;font-weight:700;font-family:var(--font-display)}
+.devis-popover-close{
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.15);border:none;border-radius:50%;color:#fff;
+  font-size:.72rem;cursor:pointer;transition:background .2s;flex-shrink:0;
+}
+.devis-popover-close:hover{background:rgba(255,255,255,.28)}
+.devis-popover-body{padding:.9rem;display:flex;flex-direction:column;gap:.7rem}
+.devis-field{display:flex;flex-direction:column;gap:.28rem}
+.devis-field label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.devis-field input{
+  padding:.58rem .8rem;border:1.5px solid var(--hairline);border-radius:var(--r-md);
+  background:var(--surface);color:var(--ink);font-size:.875rem;outline:none;
+  transition:border-color .2s,box-shadow .2s;font-family:var(--font-body);
+}
+.devis-field input:focus{border-color:var(--g400);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+.devis-preview-box{
+  display:none;background:rgba(29,158,117,.06);
+  border:1px solid rgba(29,158,117,.15);border-radius:var(--r-md);
+  padding:.5rem .8rem;font-size:.8rem;color:var(--muted);
+}
+.devis-preview-box strong{color:var(--g500);font-weight:700}
+.devis-send-btn{
+  display:flex;align-items:center;justify-content:center;gap:.4rem;
+  width:100%;padding:.68rem;
+  background:linear-gradient(135deg,var(--g600),var(--g500));
+  color:#fff;border:none;border-radius:var(--r-full);
+  font-size:.875rem;font-weight:700;font-family:var(--font-display);
+  cursor:pointer;transition:all .25s var(--ease-spring);
+  box-shadow:0 3px 12px rgba(29,158,117,.35);
+}
+.devis-send-btn:hover{background:linear-gradient(135deg,var(--g700,#0a6147),var(--g600));transform:translateY(-1px);box-shadow:0 6px 20px rgba(29,158,117,.45)}
+
 @media(max-width:768px){
   /* Sidebar = plein écran, cachée quand conversation ouverte */
   .wa-sidebar{width:100%;min-height:0}
@@ -1972,7 +2076,6 @@ html.dark .wa-emoji-picker button:hover{background:rgba(255,255,255,.1)}
   /* Header : plus compact, boutons non-essentiels cachés */
   .wa-chat-header{padding:8px 10px;gap:.5rem;min-height:54px}
   .wa-chat-header .wa-icon-btn[title="Rechercher"]{display:none}
-  .pay-confirm-btn{display:none}
 
   /* Zone messages : flex:1 borné */
   .wa-messages-wrap{padding:.6rem .75rem;min-height:0}
@@ -1986,6 +2089,8 @@ html.dark .wa-emoji-picker button:hover{background:rgba(255,255,255,.1)}
   .wa-input-main{font-size:16px} /* évite le zoom auto sur iOS */
   .wa-emoji-btn,.wa-attach-btn{width:36px;height:36px}
   .wa-send-btn{width:42px;height:42px}
+  .wa-devis-btn{padding:.38rem .65rem .38rem .5rem;font-size:.72rem}
+  .devis-popover{width:calc(100vw - 24px);right:-8px}
 
   /* Picker emoji : contraint à la largeur de l'écran */
   .wa-emoji-picker{
@@ -3813,9 +3918,38 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
           </div>
           <input class="wa-input-main" id="waInput" placeholder="Tapez un message" data-i18n-placeholder="msg_placeholder" oninput="emitTyping()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWAMsg()}"/>
           <input type="file" id="waFileInput" style="display:none" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" onchange="onWAFileSelect(this)">
-          <button class="wa-attach-btn" title="Envoyer un devis" onclick="openDevisModal()" style="color:#1D9E75" id="waBtnDevis">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:22px;height:22px"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><path d="M14 15h4"/></svg>
-          </button>
+          <div class="devis-popover-wrap" id="devisPopoverWrap">
+            <button class="wa-devis-btn" id="waBtnDevis" onclick="toggleDevisPopover()" title="Envoyer un devis">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><path d="M14 15h4"/></svg>
+              <span>Devis</span>
+            </button>
+            <div class="devis-popover" id="devisPopover">
+              <div class="devis-popover-head">
+                <div class="devis-popover-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><path d="M14 15h4"/></svg>
+                  Envoyer un devis
+                </div>
+                <button class="devis-popover-close" onclick="closeDevisPopover()" title="Fermer">✕</button>
+              </div>
+              <div class="devis-popover-body">
+                <div class="devis-field">
+                  <label>Description *</label>
+                  <input type="text" id="devisDesc" placeholder="Ex: Création logo, Cours de maths…" maxlength="150">
+                </div>
+                <div class="devis-field">
+                  <label>Montant (FCFA) *</label>
+                  <input type="number" id="devisAmount" placeholder="Ex: 25 000" min="500" step="500" oninput="updateDevisPreview()">
+                </div>
+                <div id="devisPreview" class="devis-preview-box">
+                  Net reçu : <strong id="devisNetVal">—</strong> <span style="opacity:.75">(après commission 7%)</span>
+                </div>
+                <button class="devis-send-btn" onclick="sendDevis()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+                  Envoyer
+                </button>
+              </div>
+            </div>
+          </div>
           <button class="wa-attach-btn" title="Joindre un fichier" data-i18n-title="attach_file" onclick="openFileAttach()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px;height:24px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
@@ -4116,32 +4250,6 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
 </div>
 
 <!-- DEVIS MODAL -->
-<div class="modal-overlay" id="devisOverlay" onclick="if(event.target===this)closeDevisModal()" style="display:none">
-  <div class="modal" id="devisModal" style="max-width:400px">
-    <div class="modal-header" style="border-bottom:1px solid var(--hairline);padding-bottom:1rem;margin-bottom:1.5rem">
-      <div>
-        <div class="modal-name">💼 Envoyer un devis</div>
-        <div style="font-size:.82rem;color:var(--muted);margin-top:.2rem">Le client devra l'accepter avant de payer</div>
-      </div>
-      <button class="modal-close" onclick="closeDevisModal()">✕</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:1rem">
-      <div>
-        <label style="font-size:.82rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.4rem">Description de la mission *</label>
-        <input type="text" id="devisDesc" class="form-input" placeholder="Ex: Création logo, Cours de maths…" maxlength="150">
-      </div>
-      <div>
-        <label style="font-size:.82rem;font-weight:600;color:var(--muted);display:block;margin-bottom:.4rem">Montant (FCFA) *</label>
-        <input type="number" id="devisAmount" class="form-input" placeholder="Ex: 25000" min="500" step="500" oninput="updateDevisPreview()">
-      </div>
-      <div id="devisPreview" style="display:none;background:var(--g50);border-radius:var(--r-md);padding:.75rem;font-size:.82rem;color:var(--muted)">
-        Net reçu : <strong id="devisNetVal" style="color:var(--g500)">—</strong> (après commission 7%)
-      </div>
-      <button class="form-submit" onclick="sendDevis()" style="margin:0">Envoyer le devis</button>
-    </div>
-  </div>
-</div>
-
 <!-- LOGIN MODAL -->
 <div class="modal-overlay" id="loginOverlay" onclick="closeLoginModal(event)">
   <div class="modal login-modal" id="loginModal">
@@ -6388,23 +6496,40 @@ function fmtLastSeen(dateStr) {
 }
 
 // ─── Devis ──────────────────────────────────────────────────
-function openDevisModal() {
+function toggleDevisPopover() {
   if (!waActiveContactId) { toast('Sélectionnez une conversation d\'abord.'); return; }
   const myId = parseInt(localStorage.getItem('sc_user_id'));
   if (!myId) { openLoginModal(); return; }
-  document.getElementById('devisDesc').value = '';
-  document.getElementById('devisAmount').value = '';
-  document.getElementById('devisPreview').style.display = 'none';
-  document.getElementById('devisOverlay').style.display = 'flex';
+  const pop = document.getElementById('devisPopover');
+  if (pop.classList.contains('open')) {
+    closeDevisPopover();
+  } else {
+    document.getElementById('devisDesc').value = '';
+    document.getElementById('devisAmount').value = '';
+    document.getElementById('devisPreview').style.display = 'none';
+    pop.classList.add('open');
+    document.getElementById('waBtnDevis').classList.add('active');
+    document.getElementById('devisDesc').focus();
+    setTimeout(() => document.addEventListener('click', _devisOutsideClick), 0);
+  }
 }
-function closeDevisModal() { document.getElementById('devisOverlay').style.display = 'none'; }
+function _devisOutsideClick(e) {
+  if (!document.getElementById('devisPopoverWrap')?.contains(e.target)) closeDevisPopover();
+}
+function closeDevisPopover() {
+  document.getElementById('devisPopover')?.classList.remove('open');
+  document.getElementById('waBtnDevis')?.classList.remove('active');
+  document.removeEventListener('click', _devisOutsideClick);
+}
+function openDevisModal() { toggleDevisPopover(); }
+function closeDevisModal() { closeDevisPopover(); }
 function updateDevisPreview() {
   const amt = parseInt(document.getElementById('devisAmount').value) || 0;
   const prev = document.getElementById('devisPreview');
   if (amt >= 500) {
     const net = amt - Math.round(amt * 0.07);
     document.getElementById('devisNetVal').textContent = net.toLocaleString('fr-FR') + ' FCFA';
-    prev.style.display = 'block';
+    prev.style.display = 'flex';
   } else {
     prev.style.display = 'none';
   }
@@ -6420,7 +6545,7 @@ async function sendDevis() {
     body: { senderId: myId, receiverId: waActiveContactId, text: `Devis : ${desc} — ${amount.toLocaleString('fr-FR')} FCFA`, msgType: 'devis', meta: { amount, description: desc, status: 'pending' } }
   });
   if (result?.success) {
-    closeDevisModal();
+    closeDevisPopover();
     toast('Devis envoyé !');
     appendWAMessage({ ...result.message, msg_type: 'devis', meta: { amount, description: desc, status: 'pending' } });
     loadWAContacts();
