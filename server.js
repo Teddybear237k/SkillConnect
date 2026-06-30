@@ -431,6 +431,7 @@ app.post('/api/messages/:id/accept-devis', authenticateToken, async (req, res) =
     if (req.user.userId !== msg.receiver_id) return res.status(403).json({ error: 'Seul le destinataire peut accepter un devis.' });
     const meta = typeof msg.meta === 'string' ? JSON.parse(msg.meta) : msg.meta;
     if (!meta?.amount) return res.status(400).json({ error: 'Données du devis invalides.' });
+    if (meta?.status && meta.status !== 'pending') return res.status(400).json({ error: 'Ce devis a déjà été traité.' });
     // Marquer le devis comme accepté
     await db.pool.execute('UPDATE messages SET meta = ? WHERE id = ?', [
       JSON.stringify({ ...meta, status: 'accepted' }), msg.id
@@ -444,6 +445,27 @@ app.post('/api/messages/:id/accept-devis', authenticateToken, async (req, res) =
     emitToUser(msg.sender_id, 'new_notification', notif);
     emitToUser(msg.sender_id, 'devis_accepted', { messageId: msg.id, amount: meta.amount, description: meta.description, clientId: req.user.userId });
     res.json({ success: true, amount: meta.amount, description: meta.description, talentId: msg.sender_id });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/messages/:id/decline-devis', authenticateToken, async (req, res) => {
+  try {
+    const [[msg]] = await db.pool.execute('SELECT * FROM messages WHERE id = ?', [parseInt(req.params.id)]);
+    if (!msg) return res.status(404).json({ error: 'Message non trouvé.' });
+    if (msg.msg_type !== 'devis') return res.status(400).json({ error: 'Ce message n\'est pas un devis.' });
+    if (req.user.userId !== msg.receiver_id) return res.status(403).json({ error: 'Seul le destinataire peut refuser un devis.' });
+    const meta = typeof msg.meta === 'string' ? JSON.parse(msg.meta) : msg.meta;
+    if (meta?.status && meta.status !== 'pending') return res.status(400).json({ error: 'Ce devis a déjà été traité.' });
+    await db.pool.execute('UPDATE messages SET meta = ? WHERE id = ?', [
+      JSON.stringify({ ...meta, status: 'declined' }), msg.id
+    ]);
+    const notif = await db.createNotification({
+      userId: msg.sender_id,
+      type: 'message',
+      message: `Votre devis de ${parseInt(meta.amount).toLocaleString('fr-FR')} FCFA a été refusé.`,
+    });
+    emitToUser(msg.sender_id, 'new_notification', notif);
+    res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

@@ -1780,7 +1780,15 @@ html.dark .toast{background:#0d1117;border:1px solid rgba(255,255,255,.08)}
   .wallet-hero-amount{font-size:2rem}
   .wallet-grid{grid-template-columns:1fr 1fr}
   .withdraw-card{padding:1.25rem 1rem}
-  .tx-item{padding:.8rem 1rem;gap:.75rem}
+  .tx-item{padding:.8rem 1rem;gap:.75rem;flex-wrap:wrap}
+  .tx-right{
+    flex:1 1 100%;
+    display:flex;flex-wrap:wrap;align-items:center;
+    justify-content:flex-end;gap:.35rem;
+    text-align:right;
+  }
+  .tx-amount{font-size:.9rem}
+  .validate-btn,.dispute-btn,.invoice-btn,.rapport-btn{font-size:.72rem;padding:.28rem .6rem}
 }
 @media(max-width:380px){
   .pay-tab{padding:.45rem .65rem;font-size:.72rem}
@@ -2090,7 +2098,14 @@ html.dark .wa-emoji-picker button:hover{background:rgba(255,255,255,.1)}
   .wa-emoji-btn,.wa-attach-btn{width:36px;height:36px}
   .wa-send-btn{width:42px;height:42px}
   .wa-devis-btn{padding:.38rem .65rem .38rem .5rem;font-size:.72rem}
-  .devis-popover{width:calc(100vw - 24px);right:-8px}
+  .devis-popover{
+    position:fixed;
+    bottom:72px;
+    left:12px;right:12px;
+    width:auto;
+    transform-origin:bottom center;
+  }
+  .devis-popover::after{display:none}
 
   /* Picker emoji : contraint à la largeur de l'écran */
   .wa-emoji-picker{
@@ -6574,8 +6589,11 @@ async function acceptDevis(msgId) {
 }
 async function declineDevis(msgId) {
   if (!confirm('Refuser ce devis ?')) return;
-  await api('/messages/' + msgId + '/accept-devis', { method: 'POST', body: { action: 'declined' } });
-  if (waActiveContactId) loadWAMessages(waActiveContactId);
+  const result = await api('/messages/' + msgId + '/decline-devis', { method: 'POST', body: {} });
+  if (result?.success) {
+    toast('Devis refusé.');
+    if (waActiveContactId) loadWAMessages(waActiveContactId);
+  } else { toast(result?.error || 'Erreur', 'error'); }
 }
 
 // ─── Message vocal ────────────────────────────────────────────
