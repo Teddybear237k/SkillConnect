@@ -4817,17 +4817,6 @@ window.addEventListener('popstate', e => {
   triggerFadeUps();
 });
 
-// Restaurer la section depuis l'URL au chargement initial
-(function(){
-  const params = new URLSearchParams(window.location.search);
-  const page = params.get('page');
-  if (page && document.getElementById('page-'+page)) {
-    const link = document.querySelector(`.nav-link[onclick*="'${page}'"]`) || null;
-    showPage(page, link);
-  }
-  const profil = params.get('profil');
-  if (profil) { showPage('profil', null); loadTalentProfile(profil); }
-})();
 
 // ═══ FADE-UP ═════════════════════════════════════════════════════════
 const fadeObs = new IntersectionObserver(entries=>{
@@ -10381,6 +10370,20 @@ function urlBase64ToUint8Array(base64String) {
   const rawData = window.atob(base64);
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
+
+// ── Restaurer la section depuis l'URL au chargement (placé ici car
+//    loadDashPortfolio / initDashMissions / initPushNotifications sont
+//    définis dans ce même bloc script) ──────────────────────────────────
+(function restorePageFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const page = params.get('page');
+  if (page && document.getElementById('page-' + page)) {
+    const link = document.querySelector(`.nav-link[onclick*="'${page}'"]`) || null;
+    showPage(page, link);
+  }
+  const profil = params.get('profil');
+  if (profil && !page) { showPage('profil', null); loadTalentProfile(profil); }
+})();
 </script>
 </body>
 </html>
