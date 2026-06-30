@@ -1081,6 +1081,9 @@ section{padding:5rem 2.5rem;max-width:1200px;margin:0 auto}
   padding:1.5rem;
 }
 .dash-panel-title{font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:1.25rem}
+.chart-period-btn{font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:var(--r-full);border:none;background:none;color:var(--muted);cursor:pointer;transition:.18s;line-height:1.4}
+.chart-period-btn:hover{color:var(--ink)}
+.chart-period-btn.active{background:var(--card);color:var(--g600);box-shadow:0 1px 4px rgba(0,0,0,.1)}
 
 .bar-item{display:flex;align-items:center;gap:.75rem;margin-bottom:.85rem}
 .bar-label{font-size:.82rem;color:var(--muted);width:110px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -3727,16 +3730,23 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
     <!-- ═══ Graphe revenus & missions 6 mois ══════════════════════════ -->
     <div class="dash-panel fade-up" id="dashChartPanel" style="margin-bottom:1.5rem">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
-        <div class="dash-panel-title" style="margin-bottom:0" data-i18n="dash_chart_title">Évolution sur 6 mois</div>
-        <div style="display:flex;gap:.5rem">
-          <button onclick="switchDashChart('revenue',this)" id="chartBtnRevenue" style="font-size:.75rem;padding:.25rem .7rem;border-radius:var(--r-full);border:1.5px solid var(--g500);background:var(--g500);color:#fff;cursor:pointer;font-weight:700;transition:.2s" data-i18n="dash_chart_revenue">Revenus</button>
-          <button onclick="switchDashChart('missions',this)" id="chartBtnMissions" style="font-size:.75rem;padding:.25rem .7rem;border-radius:var(--r-full);border:1.5px solid var(--hairline);background:none;color:var(--muted);cursor:pointer;font-weight:600;transition:.2s" data-i18n="dash_chart_missions">Missions</button>
+        <div class="dash-panel-title" style="margin-bottom:0" id="dashChartTitle">Évolution</div>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <div style="display:flex;gap:.3rem;background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-full);padding:3px">
+            <button onclick="switchDashPeriod(1,this)" id="chartPeriod1" class="chart-period-btn">1M</button>
+            <button onclick="switchDashPeriod(3,this)" id="chartPeriod3" class="chart-period-btn">3M</button>
+            <button onclick="switchDashPeriod(6,this)" id="chartPeriod6" class="chart-period-btn active">6M</button>
+          </div>
+          <div style="display:flex;gap:.3rem">
+            <button onclick="switchDashChart('revenue',this)" id="chartBtnRevenue" style="font-size:.75rem;padding:.25rem .7rem;border-radius:var(--r-full);border:1.5px solid var(--g500);background:var(--g500);color:#fff;cursor:pointer;font-weight:700;transition:.2s">Revenus</button>
+            <button onclick="switchDashChart('missions',this)" id="chartBtnMissions" style="font-size:.75rem;padding:.25rem .7rem;border-radius:var(--r-full);border:1.5px solid var(--hairline);background:none;color:var(--muted);cursor:pointer;font-weight:600;transition:.2s">Missions</button>
+          </div>
         </div>
       </div>
       <div style="position:relative;height:200px">
         <canvas id="dashRevenueChart"></canvas>
       </div>
-      <div id="dashChartEmpty" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem" data-i18n="dash_chart_empty">Pas encore de données — complétez votre première mission !</div>
+      <div id="dashChartEmpty" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem">Pas encore de données — complétez votre première mission !</div>
     </div>
 
     <!-- ── Classement ─────────────────────────────────────────────────────── -->
@@ -5996,12 +6006,13 @@ function renderDashRanking(ranking) {
 let _dashChartInstance = null;
 let _dashMonthlyStats = [];
 let _dashChartMode = 'revenue';
+let _dashChartPeriod = 6; // months: 1, 3, or 6
 
-function buildMonthlyData(stats, mode) {
-  // Generate last 6 months labels
+function buildMonthlyData(stats, mode, period) {
   const months = [];
   const now = new Date();
-  for (let i = 5; i >= 0; i--) {
+  const n = period || _dashChartPeriod || 6;
+  for (let i = n - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     months.push({
       key: d.toISOString().slice(0, 7),
@@ -6026,6 +6037,11 @@ function renderDashChart(stats, mode) {
   const canvas = document.getElementById('dashRevenueChart');
   const empty = document.getElementById('dashChartEmpty');
   if (!canvas) return;
+
+  const titleEl = document.getElementById('dashChartTitle');
+  const periodLabel = _dashChartPeriod === 1 ? 'ce mois' : `${_dashChartPeriod} derniers mois`;
+  if (titleEl) titleEl.textContent = `Évolution — ${periodLabel}`;
+
   if (!hasData) {
     canvas.style.display = 'none';
     if (empty) empty.style.display = 'block';
@@ -6037,18 +6053,21 @@ function renderDashChart(stats, mode) {
   const { labels, values } = buildMonthlyData(_dashMonthlyStats, _dashChartMode);
   const isDark = document.documentElement.classList.contains('dark');
   const gridColor = isDark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.06)';
-  const textColor = isDark ? '#8892a4' : '#8892a4';
+  const textColor = '#8892a4';
   const lineColor = _dashChartMode === 'revenue' ? '#38a169' : '#4299e1';
   const fillColor = _dashChartMode === 'revenue' ? 'rgba(56,161,105,.12)' : 'rgba(66,153,225,.12)';
 
   if (_dashChartInstance) { _dashChartInstance.destroy(); _dashChartInstance = null; }
+
+  // Start with empty data, then fill point by point for progressive animation
+  const emptyValues = values.map(() => null);
 
   _dashChartInstance = new Chart(canvas, {
     type: 'line',
     data: {
       labels,
       datasets: [{
-        data: values,
+        data: emptyValues,
         borderColor: lineColor,
         backgroundColor: fillColor,
         borderWidth: 2.5,
@@ -6057,11 +6076,13 @@ function renderDashChart(stats, mode) {
         pointBackgroundColor: lineColor,
         fill: true,
         tension: 0.4,
+        spanGaps: false,
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 400, easing: 'easeInOutQuart' },
       plugins: { legend: { display: false }, tooltip: {
         callbacks: {
           label: ctx => _dashChartMode === 'revenue'
@@ -6082,6 +6103,16 @@ function renderDashChart(stats, mode) {
       }
     }
   });
+
+  // Reveal data points one by one with a short delay between each
+  const stepDelay = Math.min(220, Math.round(1200 / values.length));
+  values.forEach((val, i) => {
+    setTimeout(() => {
+      if (!_dashChartInstance) return;
+      _dashChartInstance.data.datasets[0].data[i] = val;
+      _dashChartInstance.update('active');
+    }, (i + 1) * stepDelay);
+  });
 }
 
 function switchDashChart(mode, btn) {
@@ -6091,6 +6122,13 @@ function switchDashChart(mode, btn) {
   });
   btn.style.background = 'var(--g500)'; btn.style.color = '#fff'; btn.style.borderColor = 'var(--g500)';
   renderDashChart(_dashMonthlyStats, mode);
+}
+
+function switchDashPeriod(period, btn) {
+  _dashChartPeriod = period;
+  document.querySelectorAll('.chart-period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDashChart(_dashMonthlyStats, _dashChartMode);
 }
 
 function updateMetricTrends(monthly) {
