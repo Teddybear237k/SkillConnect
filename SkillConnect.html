@@ -4780,6 +4780,18 @@ function toggleTheme(){
 })();
 
 // ═══ PAGE ROUTING ════════════════════════════════════════════════════
+const PAGE_META = {
+  accueil:    { title: 'SkillConnect Cameroun — Trouve un talent. Gagne de l\'argent.', desc: 'Trouve des talents vérifiés au Cameroun. Paiement sécurisé via MTN MoMo & Orange Money.' },
+  explorer:   { title: 'Explorer les talents — SkillConnect', desc: 'Parcourez des centaines de talents camerounais vérifiés : développeurs, graphistes, tuteurs, couturiers et plus.' },
+  offres:     { title: 'Offres de missions — SkillConnect', desc: 'Trouvez des missions freelance au Cameroun publiées par des clients sérieux. Postulez gratuitement.' },
+  dashboard:  { title: 'Tableau de bord — SkillConnect', desc: 'Gérez vos missions, revenus et messages depuis votre espace personnel SkillConnect.' },
+  messages:   { title: 'Messages — SkillConnect', desc: 'Discutez avec vos clients et talents directement sur SkillConnect.' },
+  paiement:   { title: 'Paiement sécurisé — SkillConnect', desc: 'Payez vos missions en toute sécurité via MTN MoMo ou Orange Money avec SkillConnect.' },
+  inscription:{ title: 'Créer un profil talent — SkillConnect', desc: 'Inscrivez-vous sur SkillConnect et commencez à gagner de l\'argent avec vos compétences au Cameroun.' },
+  profil:     { title: 'Profil talent — SkillConnect', desc: 'Consultez le profil d\'un talent SkillConnect et demandez un devis.' },
+  admin:      { title: 'Administration — SkillConnect', desc: '' },
+};
+
 function showPage(id,linkEl){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -4788,6 +4800,11 @@ function showPage(id,linkEl){
   window.scrollTo({top:0,behavior:'smooth'});
   document.body.style.overflow = '';
   closeMobileMenu();
+  // SEO : titre + meta description dynamiques
+  const meta = PAGE_META[id] || PAGE_META.accueil;
+  document.title = meta.title;
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc && meta.desc) metaDesc.setAttribute('content', meta.desc);
   // Mettre à jour l'URL sans recharger la page
   const pageParam = id === 'accueil' ? '' : '?page=' + id;
   if (window.location.search !== pageParam || (id==='accueil' && window.location.search)) {
