@@ -57,6 +57,13 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'SkillConnect.html'));
 });
 
+// Catch-all : toute route non-API inconnue renvoie le SPA (gestion 404 côté client)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(path.join(__dirname, 'SkillConnect.html'));
+});
+
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) { console.error('FATAL: JWT_SECRET manquant dans .env'); process.exit(1); }
 
@@ -297,9 +304,11 @@ app.get('/api/talents/:id', async (req, res) => {
 });
 
 // ─── Tableau de bord ──────────────────────────────────────────────────────────
-app.get('/api/dashboard/:userId', async (req, res) => {
+app.get('/api/dashboard/:userId', authenticateToken, async (req, res) => {
+  const uid = parseInt(req.params.userId);
+  if (req.user.userId !== uid)
+    return res.status(403).json({ error: 'Accès refusé.' });
   try {
-    const uid = parseInt(req.params.userId);
     const data = await db.getDashboardData(uid);
     if (!data) return res.status(404).json({ error: 'Utilisateur non trouvé' });
     data.monthlyStats = await db.getMonthlyStats(uid);
@@ -550,6 +559,22 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
           <p style="color:#9ca3af;font-size:.8rem;margin-top:24px">SkillConnect — La plateforme des talents camerounais</p>
         </div>`
       );
+      // Reçu pour le client (sender)
+      if (sender?.email) sendEmailSafe(sender.email,
+        `Reçu de paiement — SkillConnect`,
+        `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px">
+          <h2 style="color:#1D9E75;margin-top:0">SkillConnect</h2>
+          <p>Bonjour <strong>${escHtmlSrv(sender.prenom||'')}</strong>,</p>
+          <p>Votre paiement a bien été initié :</p>
+          <div style="background:#f0fdf4;border-left:4px solid #1D9E75;border-radius:6px;padding:14px 16px;margin:16px 0">
+            <p style="margin:0"><strong>${escHtmlSrv(tx.description)}</strong></p>
+            <p style="margin:6px 0 0;color:#1D9E75;font-size:1.1rem;font-weight:700">${tx.amount.toLocaleString('fr-FR')} FCFA</p>
+            <p style="margin:4px 0 0;font-size:.85rem;color:#6b7280">Talent : ${escHtmlSrv((receiver?.prenom||'')+' '+(receiver?.nom||''))}</p>
+          </div>
+          <p style="color:#6b7280;font-size:.9rem">Les fonds seront libérés au talent après validation de la mission.</p>
+          <a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;margin-top:.5rem">Voir mes paiements</a>
+        </div>`
+      );
       return res.json({
         success: true, transaction: tx,
         monetbil: {
@@ -569,9 +594,13 @@ app.post('/api/pay', authenticateToken, async (req, res) => {
     });
     if (sender?.phone)   sendSMS(sender.phone,   `SkillConnect : Paiement de ${tx.amount.toLocaleString('fr-FR')} FCFA envoyé. Fonds en séquestre.`);
     if (receiver?.phone) sendSMS(receiver.phone,  `SkillConnect : Vous allez recevoir ${net.toLocaleString('fr-FR')} FCFA. Libéré après validation.`);
+    if (sender?.email) sendEmailSafe(sender.email,
+      `Reçu de paiement — SkillConnect`,
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px"><h2 style="color:#1D9E75;margin-top:0">SkillConnect</h2><p>Bonjour <strong>${escHtmlSrv(sender.prenom||'')}</strong>,</p><p>Votre paiement de <strong>${tx.amount.toLocaleString('fr-FR')} FCFA</strong> pour &quot;${escHtmlSrv(tx.description)}&quot; a bien été enregistré. Les fonds sont en <strong>séquestre sécurisé</strong> jusqu'à validation de la mission.</p><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;margin-top:1rem">Voir mes paiements</a></div>`
+    );
     if (receiver?.email) sendEmailSafe(receiver.email,
       `Nouveau paiement reçu — SkillConnect`,
-      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${receiver.prenom},</p><p><strong>${sender?.prenom||'Un client'}</strong> vous a envoyé <strong>${net.toLocaleString('fr-FR')} FCFA</strong> pour &quot;${tx.description}&quot;.</p><p>Ces fonds sont en <strong>séquestre sécurisé</strong> et seront libérés une fois la mission validée.</p><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;margin-top:1rem">Voir sur SkillConnect</a></div>`
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px"><h2 style="color:#1D9E75;margin-top:0">SkillConnect</h2><p>Bonjour ${escHtmlSrv(receiver.prenom||'')},</p><p><strong>${escHtmlSrv((sender?.prenom||'Un client')+' '+(sender?.nom||''))}</strong> vous a envoyé <strong>${net.toLocaleString('fr-FR')} FCFA</strong> pour &quot;${escHtmlSrv(tx.description)}&quot;.</p><p>Ces fonds sont en <strong>séquestre sécurisé</strong> et seront libérés une fois la mission validée.</p><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;margin-top:1rem">Voir sur SkillConnect</a></div>`
     );
 
     res.json({ success: true, transaction: tx, simulated: true });
@@ -601,12 +630,17 @@ app.put('/api/transactions/:id/validate', authenticateToken, async (req, res) =>
     });
     emitToUser(tx.receiver_id, 'new_notification', notif);
 
+    const sender = await db.getTalentById(tx.sender_id);
     if (receiver?.phone) {
       sendSMS(receiver.phone, `SkillConnect : Mission validée ! ${net.toLocaleString('fr-FR')} FCFA crédités sur votre compte.`);
     }
     if (receiver?.email) sendEmailSafe(receiver.email,
       `Mission validée — ${net.toLocaleString('fr-FR')} FCFA libérés`,
-      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto"><h2 style="color:#1D9E75">SkillConnect</h2><p>Bonjour ${receiver.prenom},</p><p>Votre mission &quot;${tx.description}&quot; a été validée par le client. <strong>${net.toLocaleString('fr-FR')} FCFA</strong> ont été libérés sur votre compte SkillConnect.</p></div>`
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px"><h2 style="color:#1D9E75;margin-top:0">SkillConnect</h2><p>Bonjour ${escHtmlSrv(receiver.prenom||'')},</p><p>Votre mission &quot;${escHtmlSrv(tx.description)}&quot; a été validée par le client. <strong>${net.toLocaleString('fr-FR')} FCFA</strong> ont été libérés sur votre compte SkillConnect.</p><a href="${process.env.APP_URL||'http://localhost:3000'}" style="display:inline-block;background:#1D9E75;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;margin-top:1rem">Voir mon tableau de bord</a></div>`
+    );
+    if (sender?.email) sendEmailSafe(sender.email,
+      `Mission terminée — SkillConnect`,
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px"><h2 style="color:#1D9E75;margin-top:0">SkillConnect</h2><p>Bonjour ${escHtmlSrv(sender.prenom||'')},</p><p>Vous avez validé la mission &quot;${escHtmlSrv(tx.description)}&quot;. <strong>${net.toLocaleString('fr-FR')} FCFA</strong> ont été transférés à ${escHtmlSrv((receiver?.prenom||'')+' '+(receiver?.nom||''))}.</p><p style="color:#6b7280;font-size:.9rem">Merci d'utiliser SkillConnect !</p></div>`
     );
 
     res.json({ success: true, transaction: updated });
@@ -869,8 +903,11 @@ app.post('/api/reviews', authenticateToken, async (req, res) => {
 });
 
 // ─── Notifications ────────────────────────────────────────────────────────────
-app.get('/api/notifications/:userId', async (req, res) => {
-  try { res.json(await db.getNotifications(parseInt(req.params.userId))); }
+app.get('/api/notifications/:userId', authenticateToken, async (req, res) => {
+  const uid = parseInt(req.params.userId);
+  if (req.user.userId !== uid)
+    return res.status(403).json({ error: 'Accès refusé.' });
+  try { res.json(await db.getNotifications(uid)); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 

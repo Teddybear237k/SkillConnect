@@ -1726,6 +1726,8 @@ html.dark .toast{background:#0d1117;border:1px solid rgba(255,255,255,.08)}
   cursor:pointer;transition:all .2s;
 }
 .tx-filter.active{border-color:var(--g400);background:rgba(29,158,117,.06);color:var(--g600)}
+.tx-period-btn{font-size:.72rem;font-weight:700;padding:.2rem .5rem;border-radius:var(--r-full);border:none;background:none;color:var(--muted);cursor:pointer;transition:.18s}
+.tx-period-btn.active{background:var(--card);color:var(--g600);box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .tx-list{display:flex;flex-direction:column;gap:.6rem}
 .tx-item{
   display:flex;align-items:center;gap:1rem;
@@ -2262,6 +2264,7 @@ html.dark .email-banner-btn:hover{background:#F9A825;color:#1a1a1a}
 /* ─── Job offer cards ────────────────────────────────────────────────── */
 .jobs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem;margin-top:1.5rem}
 .job-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-lg);padding:1.25rem;display:flex;flex-direction:column;gap:.75rem;transition:box-shadow .2s,transform .2s;cursor:pointer}
+.job-card-old{opacity:.8}
 .job-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
 .job-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem}
 .job-card-title{font-weight:700;font-size:.97rem;color:var(--ink);line-height:1.3;flex:1}
@@ -2815,16 +2818,16 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
 
     <div class="hero-stats">
       <div class="hero-stat">
-        <div class="hero-stat-num" data-count="2400">0</div>
-        <div class="hero-stat-label" data-i18n="stat_talents">Talents inscrits</div>
+        <div class="hero-stat-num" id="heroStatTalents">—</div>
+        <div class="hero-stat-label">Talents inscrits</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-num" data-count="580">0</div>
-        <div class="hero-stat-label" data-i18n="stat_missions">Missions réalisées</div>
+        <div class="hero-stat-num" id="heroStatMissions">—</div>
+        <div class="hero-stat-label">Missions réalisées</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-num" data-count="12">0</div>
-        <div class="hero-stat-label" data-i18n="stat_cities">Villes couvertes</div>
+        <div class="hero-stat-num" id="heroStatVilles">—</div>
+        <div class="hero-stat-label">Villes couvertes</div>
       </div>
     </div>
 
@@ -3500,10 +3503,21 @@ html.dark .group-add-btn{border-color:var(--g600);color:var(--g400)}
     <div class="pay-panel" id="ppanel-history" style="display:none">
       <div class="tx-header">
         <h3>Mes transactions</h3>
-        <div class="tx-filters">
-          <button class="tx-filter active" onclick="filterTx('all',this)">Tous</button>
-          <button class="tx-filter" onclick="filterTx('in',this)">Reçus</button>
-          <button class="tx-filter" onclick="filterTx('out',this)">Envoyés</button>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          <div class="tx-filters">
+            <button class="tx-filter active" onclick="filterTx('all',this)">Tous</button>
+            <button class="tx-filter" onclick="filterTx('in',this)">Reçus</button>
+            <button class="tx-filter" onclick="filterTx('out',this)">Envoyés</button>
+          </div>
+          <div style="display:flex;gap:.3rem;background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-full);padding:2px">
+            <button class="tx-period-btn active" onclick="filterTxPeriod(0,this)">Tout</button>
+            <button class="tx-period-btn" onclick="filterTxPeriod(30,this)">30j</button>
+            <button class="tx-period-btn" onclick="filterTxPeriod(90,this)">90j</button>
+          </div>
+          <button onclick="exportTxCSV()" style="display:flex;align-items:center;gap:.3rem;background:var(--g500);color:#fff;border:none;border-radius:var(--r-full);padding:.3rem .75rem;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV
+          </button>
         </div>
       </div>
       <div class="tx-list" id="txList">
@@ -4675,16 +4689,7 @@ const MISSIONS = [
   {name:"Traduction (5 pages)", detail:"Traduction", val:15000},
 ];
 
-const TESTIMONIALS = [
-  {name:"Paul Nkwenti",role:"Étudiant, UYI",text:"J'ai trouvé un prof de maths excellent en 30 minutes. Ma note est passée de 8 à 15 au partiel !",av:"PN"},
-  {name:"Claire Essama",role:"Commerçante, Douala",text:"SkillConnect m'a permis de faire refaire le logo de ma boutique pour un prix raisonnable. Très professionnel.",av:"CE"},
-  {name:"David Ondoa",role:"Chef d'entreprise",text:"J'ai recruté 3 freelances via la plateforme. Le système de paiement Mobile Money est top, très sécurisé.",av:"DO"},
-  {name:"Amina Tchougang",role:"Couturière, Bafoussam",text:"Depuis que je suis sur SkillConnect, j'ai 10 clients réguliers. Je gagne 3x plus qu'avant !",av:"AT"},
-  {name:"Rodrigue Mbida",role:"Photographe, Yaoundé",text:"La plateforme est simple et efficace. En 2 mois j'ai réalisé 15 shootings trouvés via SkillConnect.",av:"RM"},
-  {name:"Isabelle Foko",role:"Élève, Terminale",text:"Mon prof d'anglais trouvé sur SkillConnect m'a aidée à avoir 17 au BAC. Merci !!!",av:"IF"},
-  {name:"Narcisse Bikono",role:"Startup, Douala",text:"Excellent service. J'ai mon site e-commerce développé en 2 semaines, livré dans les délais.",av:"NB"},
-  {name:"Sophie Mvouto",role:"RH, PME Yaoundé",text:"On utilise SkillConnect pour tous nos besoins ponctuels. La messagerie intégrée est super pratique.",av:"SM"},
-];
+// Section témoignages : chargée dynamiquement depuis /reviews/featured, masquée si pas assez d'avis réels
 
 const ACTIVITIES = [
   {text:"<strong>Kevin Nkomo</strong> vous a envoyé un message","time":"Il y a 5 min"},
@@ -5423,6 +5428,7 @@ let paySelectedMM = 'MTN';
 let payCurrentTalentId = null;
 let allTxs = [];
 let txFilter = 'all';
+let txPeriod = 0; // jours, 0 = tout
 
 // ── Init & tab switching ─────────────────────────────────────────────
 async function initPayPage(){
@@ -5765,8 +5771,12 @@ function renderTxList(userId){
   const list = document.getElementById('txList');
   const uid  = parseInt(localStorage.getItem('sc_user_id') || userId);
   let filtered = allTxs;
-  if(txFilter==='in')  filtered = allTxs.filter(t => t.receiver_id === uid);
-  if(txFilter==='out') filtered = allTxs.filter(t => t.sender_id   === uid);
+  if(txFilter==='in')  filtered = filtered.filter(t => t.receiver_id === uid);
+  if(txFilter==='out') filtered = filtered.filter(t => t.sender_id   === uid);
+  if(txPeriod > 0) {
+    const cutoff = Date.now() - txPeriod * 86400000;
+    filtered = filtered.filter(t => t.created_at && new Date(t.created_at).getTime() >= cutoff);
+  }
 
   if(!filtered.length){
     list.innerHTML=`<div class="tx-empty"><div class="tx-empty-icon">🧾</div><p>Aucune transaction ${txFilter!=='all'?'dans cette catégorie':''} pour l'instant.</p></div>`;
@@ -5819,6 +5829,47 @@ function filterTx(f, btn){
   document.querySelectorAll('.tx-filter').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderTxList();
+}
+
+function filterTxPeriod(days, btn){
+  txPeriod = days;
+  document.querySelectorAll('.tx-period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTxList();
+}
+
+function exportTxCSV(){
+  const uid = parseInt(localStorage.getItem('sc_user_id'));
+  let rows = allTxs;
+  if(txFilter==='in')  rows = rows.filter(t => t.receiver_id === uid);
+  if(txFilter==='out') rows = rows.filter(t => t.sender_id   === uid);
+  if(txPeriod > 0) {
+    const cutoff = Date.now() - txPeriod * 86400000;
+    rows = rows.filter(t => t.created_at && new Date(t.created_at).getTime() >= cutoff);
+  }
+  if(!rows.length) { toast('Aucune transaction à exporter.', 'error'); return; }
+  const headers = ['Date','Description','Montant (FCFA)','Net (FCFA)','Réseau','Statut','Type'];
+  const csvRows = rows.map(t => {
+    const isIn = t.receiver_id === uid;
+    const net = t.net_amount || (t.amount - t.commission);
+    const date = t.created_at ? new Date(t.created_at).toLocaleDateString('fr-FR') : '';
+    return [
+      date,
+      `"${(t.description||'Mission').replace(/"/g,'""')}"`,
+      (isIn ? '+' : '-') + (t.amount||0),
+      net,
+      t.network||'Mobile Money',
+      t.status||'',
+      isIn ? 'Reçu' : 'Envoyé'
+    ].join(',');
+  });
+  const csv = [headers.join(','), ...csvRows].join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `transactions_skillconnect_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Export CSV téléchargé !');
 }
 
 // ── Depuis Messages ───────────────────────────────────────────────────
@@ -9467,9 +9518,13 @@ async function loadJobs(page) {
     const initials = escHtml(j.initials || ((j.prenom||'?')[0]).toUpperCase());
     const clientName = escHtml(((j.prenom||'')+' '+(j.nom||'')).trim() || 'Anonyme');
     const nbApps = parseInt(j.applicants) || 0;
-    const isNew = j.created_at && (now - new Date(j.created_at).getTime()) < 86400000;
+    const ageMs = j.created_at ? now - new Date(j.created_at).getTime() : 0;
+    const isNew = ageMs > 0 && ageMs < 86400000;
+    const isOld = ageMs > 30 * 86400000;
+    const ageDays = Math.floor(ageMs / 86400000);
     const dlChip = j.deadline_days ? `<span class="job-badge" style="background:rgba(229,115,22,.1);color:#e56e22">⚡ ${j.deadline_days}j</span>` : '';
-    return `<div class="job-card" onclick="openJobModal(${j.id})">
+    const oldChip = isOld ? `<span class="job-badge" style="background:rgba(150,100,50,.08);color:#a06020" title="Publiée il y a ${ageDays} jours">📅 ${ageDays}j</span>` : '';
+    return `<div class="job-card${isOld ? ' job-card-old' : ''}" onclick="openJobModal(${j.id})">
       <div class="job-card-header">
         <div class="job-card-title">${isNew ? '<span class="job-new-badge">Nouveau</span> ' : ''}${escHtml(j.title)}</div>
         <div class="job-card-budget">${budget_fmt}<span style="font-size:.65rem;font-weight:500;margin-left:2px">FCFA</span></div>
@@ -9479,6 +9534,7 @@ async function loadJobs(page) {
         <span class="job-badge">${escHtml(j.category || 'Autres')}</span>
         ${j.ville ? `<span class="job-badge ville">📍 ${escHtml(j.ville)}</span>` : ''}
         ${dlChip}
+        ${oldChip}
         <span class="job-badge apps">👥 ${nbApps} candidat${nbApps > 1 ? 's' : ''}</span>
       </div>
       <div class="job-card-footer">
@@ -10427,17 +10483,60 @@ function urlBase64ToUint8Array(base64String) {
 // ── Restaurer la section depuis l'URL au chargement (placé ici car
 //    loadDashPortfolio / initDashMissions / initPushNotifications sont
 //    définis dans ce même bloc script) ──────────────────────────────────
+// ═══ HERO STATS LIVE ═════════════════════════════════════════════════
+(function loadHeroStats(){
+  fetch('/api/stats').then(r => r.ok ? r.json() : null).then(d => {
+    if (!d) return;
+    function countUp(el, target) {
+      if (!el || !target) return;
+      const dur = 1200, steps = 40, step = dur / steps;
+      let cur = 0;
+      const inc = Math.ceil(target / steps);
+      const t = setInterval(() => {
+        cur = Math.min(cur + inc, target);
+        el.textContent = cur.toLocaleString('fr-FR');
+        if (cur >= target) clearInterval(t);
+      }, step);
+    }
+    countUp(document.getElementById('heroStatTalents'), Number(d.users) || 0);
+    countUp(document.getElementById('heroStatMissions'), Number(d.missions) || 0);
+    countUp(document.getElementById('heroStatVilles'), Number(d.villes) || 0);
+  }).catch(() => {
+    ['heroStatTalents','heroStatMissions','heroStatVilles'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '—';
+    });
+  });
+})();
+
 (function restorePageFromUrl(){
   const params = new URLSearchParams(window.location.search);
   const page = params.get('page');
-  if (page && document.getElementById('page-' + page)) {
-    const link = document.querySelector(`.nav-link[onclick*="'${page}'"]`) || null;
-    showPage(page, link);
+  if (page) {
+    if (document.getElementById('page-' + page)) {
+      const link = document.querySelector(`.nav-link[onclick*="'${page}'"]`) || null;
+      showPage(page, link);
+    } else {
+      // Page inconnue → afficher 404
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const notFound = document.getElementById('page-notfound');
+      if (notFound) notFound.classList.add('active');
+      document.title = 'Page introuvable — SkillConnect';
+    }
   }
   const profil = params.get('profil');
   if (profil && !page) { showPage('profil', null); loadTalentProfile(profil); }
 })();
 </script>
+
+<div class="page" id="page-notfound" style="padding-top:80px;min-height:80vh;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:1rem">
+  <div style="font-size:5rem;line-height:1">🔍</div>
+  <div style="font-family:var(--font-display);font-size:2.5rem;font-weight:800;color:var(--ink)">404</div>
+  <div style="font-size:1.1rem;font-weight:600;color:var(--ink)">Page introuvable</div>
+  <div style="color:var(--muted);font-size:.92rem;max-width:320px">Cette page n'existe pas ou a été déplacée.</div>
+  <button onclick="showPage('accueil',document.querySelector('.nav-link'))" style="margin-top:.5rem;background:var(--g500);color:#fff;border:none;border-radius:var(--r-full);padding:.65rem 1.5rem;font-size:.92rem;font-weight:700;cursor:pointer">Retour à l'accueil</button>
+</div>
+
 </body>
 </html>
 
